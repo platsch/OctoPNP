@@ -1,0 +1,4 @@
+{{ _('Machine State') }}: <strong data-bind="text: PrinterState.stateString"></strong><br>
+{{ _('Tray_X') }}: <strong data-bind="text: settings.settings.plugin.OctoPNP.tray_x"></strong><br>
+test: {{ plugin_OctoPNP_tray_x|escape }} <br>
+<a href="#" data-bind="attr: {href: Navigation.settings.plugins.OctoPNP.tray_x}">Hello World!</a>
