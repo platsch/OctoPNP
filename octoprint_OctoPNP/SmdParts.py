@@ -13,17 +13,23 @@ class SmdParts():
 		self._et = ET.fromstring(xmlstring)
 
 		#print content for debug
-		print "root tag: " + self._et.tag
-		print "root attribute: "
-		print self._et.attrib
+		#print "root tag: " + self._et.tag
+		#print "root attribute: "
+		#print self._et.attrib
 
-		for child in self._et:
-			print "child t, a: "
-			print child.tag, child.attrib
-			print "\n"
+		#for child in self._et:
+		#	print "child t, a: "
+		#	print child.tag, child.attrib
+		#	print "\n"
+
+	def unload(self):
+		self._et = None
 
 	def getPartCount(self):
-		pass
+		count = 0
+		for elem in self._et.findall("./part"):
+			count += 1
+		return count
 
 	#return the nr of the box this part is supposed to be in
 	def getPartPosition(self, partnr):
