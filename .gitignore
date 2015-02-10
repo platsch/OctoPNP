@@ -2,6 +2,7 @@
 *.swp
 .idea
 *.iml
+*.*~
 build
 dist
 *.egg*
