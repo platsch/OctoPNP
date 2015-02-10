@@ -8,6 +8,20 @@ import re
 from .SmdParts import SmdParts
 
 
+__plugin_name__ = "OctoPNP"
+
+#instantiate plugin object and register hook for gcode injection
+def __plugin_init__():
+
+	octopnp = OctoPNP()
+
+	global __plugin_implementations__
+	__plugin_implementations__ = [octopnp]
+
+	global __plugin_hooks__
+	__plugin_hooks__ = {'octoprint.comm.protocol.gcode': octopnp.hook_gcode}
+
+
 class OctoPNP(octoprint.plugin.StartupPlugin,
 			  octoprint.plugin.TemplatePlugin,
 			  octoprint.plugin.EventHandlerPlugin,
@@ -20,8 +34,6 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
 	def on_after_startup(self):
-		#self._logger.info("Hello World! setting: %s" % self._settings.get(["tray_x"]))
-		#print self._settings.get(["tray_x"])
 		pass
 
 	def get_settings_defaults(self):
@@ -32,25 +44,24 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
 	def on_event(self, event, payload):
+		#extraxt part informations from inline xml
 		if event == "FileSelected":
-			self._logger.info("file: " + payload.get("file"))
 			xml = "";
 			f = open(payload.get("file"), 'r')
 			for line in f:
 				expression = re.search("<.*>", line)
 				if expression:
 					xml += expression.group() + "\n"
-					print expression.group()
 			if xml:
-				#check for root node existance
+				#check for root node existence
 				if not re.search("<object.*>", xml.splitlines()[0]):
 					xml = "<object name=\"defaultpart\">\n" + xml + "\n</object>"
 
 				#parse xml data
 				self.smdparts.load(xml)
-
-				print self.smdparts.getPartPosition(3)
+				self._logger.info("Extracted information on %d parts from gcode file %s", self.smdparts.getPartCount(), payload.get("file"))
 			else:
+				#gcode file contains no part information -> clear smdpart object
 				self.smdparts.unload()
 
 		#	self._printer.command("G1 X0 F5000")
@@ -60,39 +71,30 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		return [
 			dict(type="tab", custom_bindings=False),
 			dict(type="settings", custom_bindings=False)
-			#dict(type="tab", data_bind="stateString: teststring")
 		]
 
+	def hook_gcode(self, comm_obj, cmd):
+		command = re.search("M361\s*P\d*", cmd)
+		if command:
+			command = re.search("P\d*", command.group()).group() #strip the M361
+			self.placePart(int(command[1:]))
+			return "" #swallow M361 command, useless for printer
+
+	# executes the movements to find, pick and place a certain part
 	def placePart(self, partnr):
-		print "placing part nr " + str(partnr) + " which is at position " + str(self.smdparts.getPartPosition(3))
+		# move camera to part position
+		xval = self._settings.get(["tray_x"])
+		tray_offset = self._getTrayPosFromPartNr(partnr)
+		#self._printer.command("")
 
+	# get the position of the box containing part x relative to the [0,0] corner of the tray
+	def _getTrayPosFromPartNr(self, partnr):
+		row = partnr/int(self._settings.get(["tray_rows"]))+1
+		col = partnr%int(self._settings.get(["tray_rows"]))
+		self._logger.info("Selected object %d. Position: row %d, col %d", partnr, row, col)
 
-
-
-def hook_gcode(comm_obj, cmd):
-	command = re.search("M361\s*P\d*", cmd)
-	if command:
-		print "hook, command: " + command.group()
-		command = re.search("P\d*", command.group()).group() #strip the M361
-		opnp = OctoPNP()
-		opnp.placePart(int(command[1:]))
-
-	#t=OctoPNP()
-	#t.testprint()
-	"""if cmd == "G92 E0":
-		print "sleep"
-#		self._printer.command("M1234 P0")
-		#opnp.testprint()
-		time.sleep(10)
-		comm_obj._doSend("M1234 P0")
-		print "send M1234"
-		time.sleep(10)
-		return "M4321"
-		"""
-
-# If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
-# ("OctoPrint-PluginSkeleton"), you may define that here. Same goes for the other metadata derived from setup.py that
-# can be overwritten via __plugin_xyz__ control properties. See the documentation for that.
-__plugin_name__ = "OctoPNP"
-__plugin_hooks__ = {'octoprint.comm.protocol.gcode': hook_gcode}
-__plugin_implementations__ = [OctoPNP()]
+		boxsize = int(self._settings.get(["tray_boxsize"]))
+		rimsize = int(self._settings.get(["tray_rimsize"]))
+		x = (col-1)*boxsize + float(boxsize)/2 + col*rimsize
+		y = (row-1)*boxsize + float(boxsize)/2 + row*rimsize
+		return [x, y]
