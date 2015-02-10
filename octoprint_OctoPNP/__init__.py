@@ -89,9 +89,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 	# get the position of the box containing part x relative to the [0,0] corner of the tray
 	def _getTrayPosFromPartNr(self, partnr):
-		row = partnr/int(self._settings.get(["tray_rows"]))+1
-		col = partnr%int(self._settings.get(["tray_rows"]))
-		self._logger.info("Selected object %d. Position: row %d, col %d", partnr, row, col)
+		partPos = self.smdparts.getPartPosition(partnr)
+		row = partPos/int(self._settings.get(["tray_rows"]))+1
+		col = partPos%int(self._settings.get(["tray_rows"]))
+		self._logger.info("Selected object: %d. Position: box %d, row %d, col %d", partnr, partPos, row, col)
 
 		boxsize = int(self._settings.get(["tray_boxsize"]))
 		rimsize = int(self._settings.get(["tray_rimsize"]))
