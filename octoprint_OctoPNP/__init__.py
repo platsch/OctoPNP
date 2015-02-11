@@ -37,10 +37,31 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		pass
 
 	def get_settings_defaults(self):
-		return dict(tray_x="teststring")
+		return {
+			#"publicHost": None,
+			#"publicPort": None,
+			"tray": {
+				"x": 0,
+				"y": 0,
+				"z": 0,
+				"rows" : 5,
+				"columns": 5,
+				"boxsize": 10,
+				"rimsize": 1.0
+			},
+			"camera": {
+				"offset_x": 0,
+				"offset_y": 0,
+				"offset_z": 0
+			},
+			"vacuum": {
+				"offset_x": 0,
+				"offset_y": 0
+			}
+		}
 
 	def get_template_vars(self):
-		return dict(tray_x=self._settings.get(["tray_x"]))
+		return dict(tray_x=self._settings.get(["tray", "x"]))
 
 
 	def on_event(self, event, payload):
@@ -83,19 +104,37 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 	# executes the movements to find, pick and place a certain part
 	def placePart(self, partnr):
 		# move camera to part position
-		xval = self._settings.get(["tray_x"])
-		tray_offset = self._getTrayPosFromPartNr(partnr)
-		#self._printer.command("")
+		tray_offset = self._getTrayPosFromPartNr(partnr) # get box position on tray
+		tray_offset[0] += float(self._settings.get(["tray", "x"])) # get tray position on printbed
+		tray_offset[1] += float(self._settings.get(["tray", "y"]))
+		camera_offset = [tray_offset[0]-float(self._settings.get(["camera", "offset_x"])), tray_offset[1]-float(self._settings.get(["camera", "offset_y"])), float(self._settings.get(["camera", "offset_z"])) + float(self._settings.get(["tray", "z"]))]
+		cmd = "G1 X" + str(camera_offset[0]) + " Y" + str(camera_offset[1]) + " Z" + str(camera_offset[2]) + " F4000"
+		print cmd
+		#self._printer.command(cmd)
+
+		# take picture, extract position information
+
+		# move vac nozzle to part and pick
+
+		# move to bed camera
+
+		# take picture, extract position information
+
+		# rotate object, compute offset
+
+		# move to destination at the object
+
+		#release
 
 	# get the position of the box containing part x relative to the [0,0] corner of the tray
 	def _getTrayPosFromPartNr(self, partnr):
 		partPos = self.smdparts.getPartPosition(partnr)
-		row = partPos/int(self._settings.get(["tray_rows"]))+1
-		col = partPos%int(self._settings.get(["tray_rows"]))
+		row = partPos/int(self._settings.get(["tray", "rows"]))+1
+		col = partPos%int(self._settings.get(["tray", "rows"]))
 		self._logger.info("Selected object: %d. Position: box %d, row %d, col %d", partnr, partPos, row, col)
 
-		boxsize = int(self._settings.get(["tray_boxsize"]))
-		rimsize = int(self._settings.get(["tray_rimsize"]))
-		x = (col-1)*boxsize + float(boxsize)/2 + col*rimsize
-		y = (row-1)*boxsize + float(boxsize)/2 + row*rimsize
+		boxsize = float(self._settings.get(["tray", "boxsize"]))
+		rimsize = float(self._settings.get(["tray", "rimsize"]))
+		x = (col-1)*boxsize + boxsize/2 + col*rimsize
+		y = (row-1)*boxsize + boxsize/2 + row*rimsize
 		return [x, y]
