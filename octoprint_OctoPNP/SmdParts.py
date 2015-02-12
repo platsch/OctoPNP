@@ -35,6 +35,9 @@ class SmdParts():
 	def getPartPosition(self, partnr):
 		return int(self._et.find("./part[@id='" + str(partnr) + "']/position").get("box"))
 
+	def getPartHeight(self, partnr):
+		return int(self._et.find("./part[@id='" + str(partnr) + "']/size").get("height"))
+
 
 	def getPartDestination(self, partnr):
 		pass
