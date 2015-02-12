@@ -50,9 +50,16 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				"rimsize": 1.0
 			},
 			"camera": {
-				"offset_x": 0,
-				"offset_y": 0,
-				"offset_z": 0
+				"head": {
+					"offset_x": 0,
+					"offset_y": 0,
+					"offset_z": 0
+				},
+				"bed": {
+					"offset_x": 0,
+					"offset_y": 0,
+					"offset_z": 0
+				},
 			},
 			"vacuum": {
 				"offset_x": 0,
@@ -107,7 +114,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		tray_offset = self._getTrayPosFromPartNr(partnr) # get box position on tray
 		tray_offset[0] += float(self._settings.get(["tray", "x"])) # get tray position on printbed
 		tray_offset[1] += float(self._settings.get(["tray", "y"]))
-		camera_offset = [tray_offset[0]-float(self._settings.get(["camera", "offset_x"])), tray_offset[1]-float(self._settings.get(["camera", "offset_y"])), float(self._settings.get(["camera", "offset_z"])) + float(self._settings.get(["tray", "z"]))]
+		camera_offset = [tray_offset[0]-float(self._settings.get(["camera", "head", "offset_x"])), tray_offset[1]-float(self._settings.get(["camera", "head", "offset_y"])), float(self._settings.get(["camera", "head", "offset_z"])) + float(self._settings.get(["tray", "z"]))]
 		cmd = "G1 X" + str(camera_offset[0]) + " Y" + str(camera_offset[1]) + " Z" + str(camera_offset[2]) + " F4000"
 		print cmd
 		#self._printer.command(cmd)
@@ -115,6 +122,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		# take picture, extract position information
 
 		# move vac nozzle to part and pick
+		self._printer.command("M340 P0 S1500")
 
 		# move to bed camera
 
