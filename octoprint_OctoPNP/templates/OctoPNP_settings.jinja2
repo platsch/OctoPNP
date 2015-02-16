@@ -120,4 +120,13 @@
             </div>
         </div>
     </div>
+    <div class="control-group">
+        <label class="control-label">{{ _('Vacuum Nozzle Extruder Nr') }}</label>
+        <div class="controls form-inline">  
+            <label>Z:</label>
+            <div class="input-append">
+                <input type="number" step="1.0" class="input-mini text-right" data-bind="value: settings.plugins.OctoPNP.vacuum.extruder">
+            </div>
+        </div>
+    </div>    
 </form>
