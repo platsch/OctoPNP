@@ -31,11 +31,14 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 	STATE_ALIGN = 2
 	STATE_PLACE = 3
 
+	FEEDRATE = 4000.000
+
 	smdparts = SmdParts()
 
 	def __init__(self):
 		self._state = self.STATE_NONE
 		self._currentPart = 0
+		self._currentZ = None
 		pass
 
 
@@ -69,13 +72,19 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			},
 			"vacuum": {
 				"offset_x": 0,
-				"offset_y": 0
+				"offset_y": 0,
+				"extruder": 2
 			}
 		}
 
 	def get_template_vars(self):
 		return dict(tray_x=self._settings.get(["tray", "x"]))
 
+	def get_template_configs(self):
+		return [
+			dict(type="tab", custom_bindings=False),
+			dict(type="settings", custom_bindings=False)
+		]
 
 	def on_event(self, event, payload):
 		#extraxt part informations from inline xml
@@ -99,17 +108,12 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				self.smdparts.unload()
 
 
-	def get_template_configs(self):
-		return [
-			dict(type="tab", custom_bindings=False),
-			dict(type="settings", custom_bindings=False)
-		]
-
 	def hook_gcode(self, comm_obj, cmd):
 		if "M361" in cmd:
 			print "hook: " + cmd
 			if self._state == self.STATE_NONE:
 				self._state = self.STATE_PICK
+				self._currentZ = float(self._printer.getCurrentData()["currentZ"])
 				command = re.search("P\d*", cmd).group() #strip the M361
 				self._currentPart = int(command[1:])
 				self._moveCameraToPart(self._currentPart)
@@ -121,6 +125,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			if self._state == self.STATE_PICK:
 				self._state = self.STATE_ALIGN
 				self._pickPart(self._currentPart)
+				self._printer.command("M400")
+				self._printer.command("G4 P0")
+				self._printer.command("G4 P0")
 				self._printer.command("M361")
 				return "G4 P0" # return dummy command
 			if self._state == self.STATE_ALIGN:
@@ -129,7 +136,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				self._printer.command("M361")
 				return "G4 P0" # return dummy command
 			if self._state == self.STATE_PLACE:
-				print "Place Part"
+				self._placePart(self._currentPart)
 				self._state = self.STATE_NONE
 				return "G4 P0" # return dummy command
 
@@ -139,13 +146,13 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			return "" #swallow M361 command, useless for printer"""
 
 
-	# executes the movements to find, pick and place a certain part
 	def _moveCameraToPart(self, partnr):
 		# move camera to part position
 		tray_offset = self._getTrayPosFromPartNr(partnr) # get box position on tray
 		camera_offset = [tray_offset[0]-float(self._settings.get(["camera", "head", "offset_x"])), tray_offset[1]-float(self._settings.get(["camera", "head", "offset_y"])), float(self._settings.get(["camera", "head", "offset_z"])) + tray_offset[2]]
-		cmd = "G1 X" + str(camera_offset[0]) + " Y" + str(camera_offset[1]) + " Z" + str(camera_offset[2]) + " F4000"
+		cmd = "G1 X" + str(camera_offset[0]) + " Y" + str(camera_offset[1]) + " Z" + str(camera_offset[2]) + " F" + str(self.FEEDRATE)
 		print cmd
+		self._printer.command("G1 Z" + str(self._currentZ+5) + " F" + str(self.FEEDRATE)) # lift printhead
 		self._printer.command(cmd)
 
 
@@ -157,26 +164,52 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		part_offset = [0, 0]
 
 		tray_offset = self._getTrayPosFromPartNr(partnr)
-		vacuum_offset = [tray_offset[0]+part_offset[0]-float(self._settings.get(["vacuum", "offset_x"])),\
+		vacuum_dest = [tray_offset[0]+part_offset[0]-float(self._settings.get(["vacuum", "offset_x"])),\
 						 tray_offset[1]+part_offset[1]-float(self._settings.get(["vacuum", "offset_y"])),\
 						 tray_offset[2]+self.smdparts.getPartHeight(partnr)]
 
 		# move vac nozzle to part and pick
-		cmd = "G1 X" + str(vacuum_offset[0]) + " Y" + str(vacuum_offset[1]) + " Z" + str(vacuum_offset[2]+5) + " F4000"
+		cmd = "G1 X" + str(vacuum_dest[0]) + " Y" + str(vacuum_dest[1]) + " Z" + str(vacuum_dest[2]+5) + " F" + str(self.FEEDRATE)
 		self._printer.command(cmd)
 		self._printer.command("M340 P0 S1200")
-		self._printer.command("G1 Z" + str(vacuum_offset[2]) + "F500")
+		self._printer.command("M400")
+		self._printer.command("M400")
+		self._printer.command("G1 Z" + str(vacuum_dest[2]) + "F500")
 		self._printer.command("M340 P0 S1500")
 		self._printer.command("G4 S1")
-		self._printer.command("G1 Z" + str(vacuum_offset[2]+5) + "F500")
+		self._printer.command("G1 Z" + str(vacuum_dest[2]+5) + "F500")
 
 		# move to bed camera
+		vacuum_dest = [float(self._settings.get(["camera", "bed", "offset_x"]))-float(self._settings.get(["vacuum", "offset_x"])),\
+					   float(self._settings.get(["camera", "bed", "offset_y"]))-float(self._settings.get(["vacuum", "offset_y"])),\
+					   float(self._settings.get(["camera", "bed", "offset_z"]))]
 
+		cmd = "G1 X" + str(vacuum_dest[0]) + " Y" + str(vacuum_dest[1]) + " Z" + str(vacuum_dest[2]) + " F"  + str(self.FEEDRATE)
+		self._printer.command(cmd)
+		print self._logger.info("Moving to bed camera: %s", cmd)
+
+
+	def _placePart(self, partnr):
 		# take picture, extract position information
 
 		# rotate object, compute offset
 
 		# move to destination at the object
+		destination = self.smdparts.getPartDestination(partnr)
+		#rotate object
+		if destination[2] != 0:
+			# switch to vacuum extruder
+			self._printer.command("T" + self._settings.get(["vacuum", "extruder"]))
+			self._printer.command("G92 E0")
+			self._printer.command("G1 E" + str(destination[2]) + " F" + str(self.FEEDRATE))
+
+		cmd = "G1 X" + str(destination[0]-float(self._settings.get(["vacuum", "offset_x"]))) \
+			  + " Y" + str(destination[1]-float(self._settings.get(["vacuum", "offset_y"]))) \
+			  + " Z" + str(self._currentZ+self.smdparts.getPartHeight(partnr)+5) + " F"  + str(self.FEEDRATE)
+		print "object destination: " + cmd
+		self._printer.command(cmd)
+		self._printer.command("G1 Z" + str(self._currentZ+self.smdparts.getPartHeight(partnr)))
+
 
 		#release
 
