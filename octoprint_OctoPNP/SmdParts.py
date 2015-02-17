@@ -38,6 +38,8 @@ class SmdParts():
 	def getPartHeight(self, partnr):
 		return float(self._et.find("./part[@id='" + str(partnr) + "']/size").get("height"))
 
-
 	def getPartDestination(self, partnr):
-		pass
+		x = float(self._et.find("./part[@id='" + str(partnr) + "']/destination").get("x"))
+		y = float(self._et.find("./part[@id='" + str(partnr) + "']/destination").get("y"))
+		orientation = float(self._et.find("./part[@id='" + str(partnr) + "']/destination").get("orientation"))
+		return [x, y, orientation]
