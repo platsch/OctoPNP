@@ -10,7 +10,7 @@ import numpy as np
 #import scipy.signal as sig
 #from matplotlib import pyplot as plt
 
-class Image_Preprocessing:
+class ImageProcessing:
         
     def __init__(self,img_input):
         self.img=img_input
