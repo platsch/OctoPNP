@@ -5,6 +5,7 @@ from __future__ import absolute_import
 import octoprint.plugin
 import re
 from .SmdParts import SmdParts
+from .ImageProcessing import ImageProcessing
 
 
 __plugin_name__ = "OctoPNP"
@@ -32,13 +33,18 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 	STATE_PLACE = 3
 
 	FEEDRATE = 4000.000
-
+	img_path="utils/testimages/large_component.tiff"
+	box_size=15
+	
 	smdparts = SmdParts()
+	
 
 	def __init__(self):
 		self._state = self.STATE_NONE
 		self._currentPart = 0
 		self._currentZ = None
+		print "INIT: image_path",self.img_path
+		self.imgproc = ImageProcessing(self.img_path,self.box_size)
 		pass
 
 
@@ -161,7 +167,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		self._printer.command("G4 S10")
 
 		# take picture, extract position information
-		part_offset = [0, 0]
+		cm_x,cm_y=self.imgproc.get_cm()
+		part_offset = [cm_x, cm_y]
+		print "PART OFFSET:", part_offset
 
 		tray_offset = self._getTrayPosFromPartNr(partnr)
 		vacuum_dest = [tray_offset[0]+part_offset[0]-float(self._settings.get(["vacuum", "offset_x"])),\
