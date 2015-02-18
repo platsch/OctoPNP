@@ -1,0 +1,10 @@
+#! /bin/bash -e
+
+# setup the pylon environment
+source /opt/pylon4/bin/pylon-setup-env.sh /opt/pylon4
+
+#disable usb cameras to avoid conflict between on board built-in Webcam or USB2 Web Cam and Pylon4Linux V4.
+export PYLON_USE_TL=BaslerGigE
+
+#start the image grabber
+./grab

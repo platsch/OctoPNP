@@ -2,6 +2,8 @@
 *.swp
 .idea
 *.iml
+*.tiff
+*.o
 *.*~
 build
 dist
