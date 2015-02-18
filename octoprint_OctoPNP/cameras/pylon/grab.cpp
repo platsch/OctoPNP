@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
         }
 
 		//grab images and save to disk
-		while(true) {
+		//while(true) {
 			for ( size_t i = 0; i < cameras.GetSize(); ++i) {
 				if ( cameras[i].GrabOne( 5000, ptrGrabResult))
 				{
@@ -103,12 +103,12 @@ int main(int argc, char* argv[])
 				    CImagePersistence::Save( ImageFileFormat_Tiff, filename, ptrGrabResult);
 				}
 			}
-			#ifdef WIN32
+			/*#ifdef WIN32
 			Sleep(500);
 			#else
 			usleep(500 * 1000);
 			#endif // win32
-        }
+        }*/
 
       
     }
