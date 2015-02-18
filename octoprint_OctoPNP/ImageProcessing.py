@@ -7,6 +7,8 @@ Created on Tue Feb 17 02:12:51 2015
 
 import cv2
 import numpy as np
+
+import shutil
 #import scipy.signal as sig
 #from matplotlib import pyplot as plt
 
@@ -14,15 +16,18 @@ class ImageProcessing:
 
 	def __init__(self,img_path,box_size):
 		print "IP: ",img_path
-		self.img=cv2.imread(img_path,cv2.IMREAD_COLOR)
+		self.img_path = img_path
 		self.box_size=box_size
-		print "Imahe Loaded....."
-		print "Shape of image",np.shape(self.img)     
 
 	def get_cm(self):
-		
+		# open image file
+		img=cv2.imread(self.img_path,cv2.IMREAD_COLOR)
+
+		# make a copy of the file for later inspection
+		shutil.copyfile(self.img_path, '/home/wasserfall/OctoPNP.tiff')
+
 		#detect boundary and crop
-		crop_image=self.boundaryDetect(self.img)
+		crop_image=self.boundaryDetect(img)
 		#Get the center of mass
 		gray_img=cv2.cvtColor(crop_image,cv2.COLOR_BGR2GRAY)
 		cmx,cmy=self.centerofMass(gray_img)

@@ -33,7 +33,6 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 	STATE_PLACE = 3
 
 	FEEDRATE = 4000.000
-	img_path="utils/testimages/large_component.tiff"
 	box_size=15
 	
 	smdparts = SmdParts()
@@ -43,13 +42,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		self._state = self.STATE_NONE
 		self._currentPart = 0
 		self._currentZ = None
-		print "INIT: image_path",self.img_path
-		self.imgproc = ImageProcessing(self.img_path,self.box_size)
-		pass
 
 
 	def on_after_startup(self):
-		pass
+		self.imgproc = ImageProcessing(self._settings.get(["camera", "head", "path"]), self.box_size)
 
 	def get_settings_defaults(self):
 		return {
@@ -124,7 +120,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				self._currentPart = int(command[1:])
 				self._moveCameraToPart(self._currentPart)
 				self._printer.command("M400")
-				self._printer.command("G4 P0")
+				self._printer.command("G4 S1")
 				self._printer.command("G4 P0")
 				self._printer.command("M361")
 				return "G4 P0" # return dummy command
@@ -164,8 +160,6 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 	def _pickPart(self, partnr):
 		print "TAKING PICTURE NOW!!!!!!"
-		self._printer.command("G4 S10")
-
 		# take picture, extract position information
 		cm_x,cm_y=self.imgproc.get_cm()
 		part_offset = [cm_x, cm_y]
