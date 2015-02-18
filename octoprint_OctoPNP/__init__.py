@@ -171,15 +171,17 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 						 tray_offset[2]+self.smdparts.getPartHeight(partnr)]
 
 		# move vac nozzle to part and pick
-		cmd = "G1 X" + str(vacuum_dest[0]) + " Y" + str(vacuum_dest[1]) + " Z" + str(vacuum_dest[2]+5) + " F" + str(self.FEEDRATE)
+		cmd = "G1 X" + str(vacuum_dest[0]) + " Y" + str(vacuum_dest[1]) + " F" + str(self.FEEDRATE)
+		self._printer.command(cmd)
+		cmd = "G1 Z" + str(vacuum_dest[2]+5)
 		self._printer.command(cmd)
 		self._printer.command("M340 P0 S1200")
 		self._printer.command("M400")
 		self._printer.command("M400")
-		self._printer.command("G1 Z" + str(vacuum_dest[2]) + "F500")
+		self._printer.command("G1 Z" + str(vacuum_dest[2]) + "F1000")
 		self._printer.command("M340 P0 S1500")
 		self._printer.command("G4 S1")
-		self._printer.command("G1 Z" + str(vacuum_dest[2]+5) + "F500")
+		self._printer.command("G1 Z" + str(vacuum_dest[2]+5) + "F1000")
 
 		# move to bed camera
 		vacuum_dest = [float(self._settings.get(["camera", "bed", "offset_x"]))-float(self._settings.get(["vacuum", "offset_x"])),\
@@ -212,6 +214,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		self._printer.command(cmd)
 		self._printer.command("G1 Z" + str(self._currentZ+self.smdparts.getPartHeight(partnr)))
 
+		#release part
+		self._releaseVacuum()
+
 
 		#release
 
@@ -227,3 +232,13 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		x = (col-1)*boxsize + boxsize/2 + col*rimsize + float(self._settings.get(["tray", "x"]))
 		y = (row-1)*boxsize + boxsize/2 + row*rimsize + float(self._settings.get(["tray", "y"]))
 		return [x, y, float(self._settings.get(["tray", "z"]))]
+
+	def _gripVacuum(self):
+		self._printer.command("M400")
+		self._printer.command("M400")
+		self._printer.command("M340 P0 S1500")
+
+	def _releaseVacuum(self):
+		self._printer.command("M400")
+		self._printer.command("M400")
+		self._printer.command("M340 P0 S1200")

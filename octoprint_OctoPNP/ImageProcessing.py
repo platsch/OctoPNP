@@ -43,7 +43,7 @@ class ImageProcessing:
 		n_rows=crop_image.shape[0]
 		n_cols=crop_image.shape[1]
 		displacement_x=(cmx-n_rows/2)*self.box_size/n_rows
-		displacement_y=(cmy-n_cols/2)*self.box_size/n_cols
+		displacement_y=((n_cols-cmy)-n_cols/2)*self.box_size/n_cols
 		
 		#cmx=200
 		#cmy=200
