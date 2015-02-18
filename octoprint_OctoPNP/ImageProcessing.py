@@ -8,7 +8,9 @@ Created on Tue Feb 17 02:12:51 2015
 import cv2
 import numpy as np
 
+from subprocess import call
 import shutil
+import os
 #import scipy.signal as sig
 #from matplotlib import pyplot as plt
 
@@ -21,6 +23,10 @@ class ImageProcessing:
 
 	def get_cm(self):
 		# open image file
+		grabScript = os.path.dirname(os.path.realpath(__file__)) + "/cameras/pylon/grab.sh"
+		if call([grabScript]) != 0:
+			print "ERROR: camera not ready!"
+			return 0, 0
 		img=cv2.imread(self.img_path,cv2.IMREAD_COLOR)
 
 		# make a copy of the file for later inspection
@@ -144,8 +150,8 @@ class ImageProcessing:
 		# Calculating center of mass for the max area 
 		#==============================================================================
 		M = cv2.moments(contours[flag])
-		cx1 = int(M['m10']/M['m00'])
-		cy1 = int(M['m01']/M['m00'])
+		cx1 = float(M['m10']/M['m00'])
+		cy1 = float(M['m01']/M['m00'])
 #		cv2.circle(img_bkp,(cx1,cy1), 5, (255,0,0), -1)
 #		cv2.drawContours(img_bkp, contours, -1, (0,255,0), 3)
 		
