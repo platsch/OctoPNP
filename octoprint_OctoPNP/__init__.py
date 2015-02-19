@@ -153,7 +153,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		tray_offset = self._getTrayPosFromPartNr(partnr) # get box position on tray
 		camera_offset = [tray_offset[0]-float(self._settings.get(["camera", "head", "offset_x"])), tray_offset[1]-float(self._settings.get(["camera", "head", "offset_y"])), float(self._settings.get(["camera", "head", "offset_z"])) + tray_offset[2]]
 		cmd = "G1 X" + str(camera_offset[0]) + " Y" + str(camera_offset[1]) + " Z" + str(camera_offset[2]) + " F" + str(self.FEEDRATE)
-		print cmd
+		print "Move camera to: " + cmd
 		self._printer.command("G1 Z" + str(self._currentZ+5) + " F" + str(self.FEEDRATE)) # lift printhead
 		self._printer.command(cmd)
 
