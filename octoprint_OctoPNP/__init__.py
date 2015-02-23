@@ -25,7 +25,8 @@ def __plugin_init__():
 class OctoPNP(octoprint.plugin.StartupPlugin,
 			  octoprint.plugin.TemplatePlugin,
 			  octoprint.plugin.EventHandlerPlugin,
-			  octoprint.plugin.SettingsPlugin):
+			  octoprint.plugin.SettingsPlugin,
+			  octoprint.plugin.AssetPlugin):
 
 	STATE_NONE = 0
 	STATE_PICK = 1
@@ -79,12 +80,17 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			}
 		}
 
+	def get_assets(self):
+		return dict(
+			js=["js/OctoPNP.js"],
+		)
+
 	def get_template_vars(self):
 		return dict(tray_x=self._settings.get(["tray", "x"]))
 
 	def get_template_configs(self):
 		return [
-			dict(type="tab", custom_bindings=False),
+			dict(type="tab", custom_bindings=True, data_bind="testvar3: testvar"),
 			dict(type="settings", custom_bindings=False)
 		]
 
