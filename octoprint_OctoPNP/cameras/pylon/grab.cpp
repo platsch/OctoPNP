@@ -85,6 +85,11 @@ int main(int argc, char* argv[])
         {
             cameras[ i ].Attach( tlFactory.CreateDevice( devices[ i ]));
 
+			// Register an additional configuration handler to set the image format and adjust the AOI.
+        	// By setting the registration mode to RegistrationMode_Append, the configuration handler is added instead of replacing
+        	// the already registered configuration handler.
+        	cameras[i].RegisterConfiguration( new CPixelFormatAndAoiConfiguration, RegistrationMode_Append, Cleanup_Delete);
+
             // Print the model name of the camera.
             cout << "Using device " << cameras[ i ].GetDeviceInfo().GetModelName() << " device name: " << cameras[i].GetDeviceInfo().GetUserDefinedName() << endl;
         }
