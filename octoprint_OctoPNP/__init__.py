@@ -44,7 +44,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
 	def on_after_startup(self):
-		self.imgproc = ImageProcessing(self._settings.get(["camera", "head", "path"]), self.box_size)
+		self.imgproc = ImageProcessing(self._settings.get(["camera", "head", "path"]), self._settings.get(["tray", "boxsize"]))
 		self._pluginManager = octoprint.plugin.plugin_manager()
 
 	def get_settings_defaults(self):
@@ -94,7 +94,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		)
 
 	def on_event(self, event, payload):
-		#extraxt part informations from inline xml
+		#extraxt part informations from inline xmly
 		if event == "FileSelected":
 			xml = "";
 			f = open(payload.get("file"), 'r')
