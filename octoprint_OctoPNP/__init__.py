@@ -22,9 +22,10 @@ def __plugin_init__():
 
 
 class OctoPNP(octoprint.plugin.StartupPlugin,
-			  octoprint.plugin.TemplatePlugin,
-			  octoprint.plugin.EventHandlerPlugin,
-			  octoprint.plugin.SettingsPlugin):
+			octoprint.plugin.TemplatePlugin,
+			octoprint.plugin.EventHandlerPlugin,
+			octoprint.plugin.SettingsPlugin,
+			octoprint.plugin.AssetPlugin):
 
 	STATE_NONE = 0
 	STATE_PICK = 1
@@ -43,7 +44,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
 	def on_after_startup(self):
-		pass
+		self._pluginManager = octoprint.plugin.plugin_manager()
 
 	def get_settings_defaults(self):
 		return {
@@ -82,9 +83,14 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 	def get_template_configs(self):
 		return [
-			dict(type="tab", custom_bindings=False),
+			dict(type="tab", custom_bindings=True),
 			dict(type="settings", custom_bindings=False)
 		]
+
+	def get_assets(self):
+		return dict(
+			js=["js/OctoPNP.js"]
+		)
 
 	def on_event(self, event, payload):
 		#extraxt part informations from inline xml
@@ -107,6 +113,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				#gcode file contains no part information -> clear smdpart object
 				self.smdparts.unload()
 
+			#Update UI
+			self._updateUI("FILE", "")
+
 
 	def hook_gcode(self, comm_obj, cmd):
 		if "M361" in cmd:
@@ -116,6 +125,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				self._currentZ = float(self._printer.getCurrentData()["currentZ"])
 				command = re.search("P\d*", cmd).group() #strip the M361
 				self._currentPart = int(command[1:])
+				self._updateUI("OPERATION", "pick")
 				self._moveCameraToPart(self._currentPart)
 				self._printer.command("M400")
 				self._printer.command("G4 P0")
@@ -225,3 +235,30 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		x = (col-1)*boxsize + boxsize/2 + col*rimsize + float(self._settings.get(["tray", "x"]))
 		y = (row-1)*boxsize + boxsize/2 + row*rimsize + float(self._settings.get(["tray", "y"]))
 		return [x, y, float(self._settings.get(["tray", "z"]))]
+
+
+	def _updateUI(self, event, parameter):
+		data = dict(
+			info="dummy"
+		)
+		if event == "FILE":
+			if self.smdparts.isFileLoaded():
+				print "update is file loaded"
+				data = dict(
+					parts=self.smdparts.getPartCount()
+				)
+		elif event == "OPERATION":
+			data = dict(
+				type = parameter,
+				part = self._currentPart
+			)
+		elif event is "IMAGE":
+			data = dict(
+				src = parameter
+			)
+
+		message = dict(
+			event=event,
+			data=data
+		)
+		self._pluginManager.send_plugin_message("OctoPNP", message)

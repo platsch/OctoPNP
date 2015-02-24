@@ -12,18 +12,14 @@ class SmdParts():
 	def load(self, xmlstring):
 		self._et = ET.fromstring(xmlstring)
 
-		#print content for debug
-		#print "root tag: " + self._et.tag
-		#print "root attribute: "
-		#print self._et.attrib
-
-		#for child in self._et:
-		#	print "child t, a: "
-		#	print child.tag, child.attrib
-		#	print "\n"
-
 	def unload(self):
 		self._et = None
+
+	def isFileLoaded(self):
+		if self._et is not None:
+			return True
+		else:
+			return False
 
 	def getPartCount(self):
 		count = 0
