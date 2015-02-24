@@ -23,10 +23,10 @@ def __plugin_init__():
 
 
 class OctoPNP(octoprint.plugin.StartupPlugin,
-			  octoprint.plugin.TemplatePlugin,
-			  octoprint.plugin.EventHandlerPlugin,
-			  octoprint.plugin.SettingsPlugin,
-			  octoprint.plugin.AssetPlugin):
+			octoprint.plugin.TemplatePlugin,
+			octoprint.plugin.EventHandlerPlugin,
+			octoprint.plugin.SettingsPlugin,
+			octoprint.plugin.AssetPlugin):
 
 	STATE_NONE = 0
 	STATE_PICK = 1
@@ -34,10 +34,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 	STATE_PLACE = 3
 
 	FEEDRATE = 4000.000
-	box_size=15
-	
+
 	smdparts = SmdParts()
-	
 
 	def __init__(self):
 		self._state = self.STATE_NONE
@@ -47,6 +45,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 	def on_after_startup(self):
 		self.imgproc = ImageProcessing(self._settings.get(["camera", "head", "path"]), self.box_size)
+		self._pluginManager = octoprint.plugin.plugin_manager()
 
 	def get_settings_defaults(self):
 		return {
@@ -80,19 +79,19 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			}
 		}
 
-	def get_assets(self):
-		return dict(
-			js=["js/OctoPNP.js"],
-		)
-
 	def get_template_vars(self):
 		return dict(tray_x=self._settings.get(["tray", "x"]))
 
 	def get_template_configs(self):
 		return [
-			dict(type="tab", custom_bindings=True, data_bind="testvar3: testvar"),
+			dict(type="tab", custom_bindings=True),
 			dict(type="settings", custom_bindings=False)
 		]
+
+	def get_assets(self):
+		return dict(
+			js=["js/OctoPNP.js"]
+		)
 
 	def on_event(self, event, payload):
 		#extraxt part informations from inline xml
@@ -115,6 +114,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				#gcode file contains no part information -> clear smdpart object
 				self.smdparts.unload()
 
+			#Update UI
+			self._updateUI("FILE", "")
+
 
 	def hook_gcode(self, comm_obj, cmd):
 		if "M361" in cmd:
@@ -124,6 +126,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				self._currentZ = float(self._printer.getCurrentData()["currentZ"])
 				command = re.search("P\d*", cmd).group() #strip the M361
 				self._currentPart = int(command[1:])
+				self._updateUI("OPERATION", "pick")
 				self._moveCameraToPart(self._currentPart)
 				self._printer.command("M400")
 				self._printer.command("G4 S1")
@@ -248,3 +251,29 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		self._printer.command("M400")
 		self._printer.command("M400")
 		self._printer.command("M340 P0 S1200")
+
+	def _updateUI(self, event, parameter):
+		data = dict(
+			info="dummy"
+		)
+		if event == "FILE":
+			if self.smdparts.isFileLoaded():
+				print "update is file loaded"
+				data = dict(
+					parts=self.smdparts.getPartCount()
+				)
+		elif event == "OPERATION":
+			data = dict(
+				type = parameter,
+				part = self._currentPart
+			)
+		elif event is "IMAGE":
+			data = dict(
+				src = parameter
+			)
+
+		message = dict(
+			event=event,
+			data=data
+		)
+		self._pluginManager.send_plugin_message("OctoPNP", message)
