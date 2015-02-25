@@ -8,9 +8,7 @@ Created on Tue Feb 17 02:12:51 2015
 import cv2
 import numpy as np
 
-from subprocess import call
 import shutil
-import os
 #import scipy.signal as sig
 #from matplotlib import pyplot as plt
 
@@ -23,10 +21,6 @@ class ImageProcessing:
 
 	def get_cm(self):
 		# open image file
-		grabScript = os.path.dirname(os.path.realpath(__file__)) + "/cameras/pylon/grab.sh"
-		if call([grabScript]) != 0:
-			print "ERROR: camera not ready!"
-			return 0, 0
 		img=cv2.imread(self.img_path,cv2.IMREAD_COLOR)
 
 		# make a copy of the file for later inspection
