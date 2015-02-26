@@ -10,7 +10,7 @@ import numpy as np
 
 import shutil
 #import scipy.signal as sig
-#from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt
 
 class ImageProcessing:
 
@@ -58,16 +58,14 @@ class ImageProcessing:
 		mask = cv2.inRange(hsv, lower_green, upper_green)
 		
 		# Bitwise-AND mask and original image
-		res = cv2.bitwise_and(img,img, mask= mask)
-		
+		res = cv2.bitwise_and(img,img, mask= mask)		
 		#Show Images
 #		cv2.imshow('Green Channel',res)
 #		cv2.waitKey(0)
 #		cv2.destroyAllWindows()
 		
 			   
-		#Find Lines
-		
+		#Find Lines		
 		# Converting Image to Gray Scale
 		gray_img=cv2.cvtColor(cv2.cvtColor(res,cv2.COLOR_HSV2BGR),cv2.COLOR_BGR2GRAY)
 		
@@ -112,46 +110,124 @@ class ImageProcessing:
 		img_crop=img_bkp[x:x+w-1,y:y+h-1]
 		#cv2.imwrite("cropped_output.jpg",img1)
 		return img_crop
+
+#==============================================================================
+# Center of Array - Generalized
+#==============================================================================
+
+	def center_of_array(self,hist,arr_len):
+		hist1=np.asarray(hist)
+		boundary_limit=0
+		delta=0
+		
+		#Discarding boundary region
+		print "Discarding boundary region"
+		
+		#Lower Boundary - Starting from beginning, if hist does not increase for 20 consecutive steps
+		for i in range(0,arr_len-1,1):
+			delta=hist1[i+1]-hist1[i]
+			if boundary_limit<=20:
+				if delta<=0:
+					boundary_limit=boundary_limit+1
+			else:
+				lower=i
+				break
+		
+		print "Lower boundary:",lower
+		
+		#Upper Boundary - Starting from end, if hist does not increase for 20 consecutive steps
+		boundary_limit=0
+		delta=0
+		
+		for i in range(arr_len-1,1,-1):
+			delta=hist1[i]-hist1[i-1]
+			if boundary_limit<=20:
+				if delta>=0:
+					boundary_limit=boundary_limit+1
+			else:
+				upper=i
+				break
+		
+		print "Upper boundary:",upper
+		
+		#REPLACING BOUNDARY WITH HIGH INTENSITY
+		
+		hist1[0:lower]=hist1[lower]
+		hist1[upper:arr_len]=hist1[upper]
+		
+		#Plotting boundary processed hist
+		len_idx=np.asanyarray(range(0,arr_len,1))
+		plt.plot(len_idx,hist1,color='green')
+		
+		
+		# HIST STATISTICS
+		index_min=np.argmin(hist1)	
+		hist_min=np.min(hist1)
+		hist_max=np.max(hist1)
+		
+		print "Histogram Statistics"
+		print "===================="
+		print "Hist Minimum Index",index_min
+		print "Hist Minimum value:",hist1[index_min],hist_min
+		print "Hist Maximum value:",hist_max
+		
+		# INTERSECTION OF (Max + Min)/2 AND HIST
+		
+		
+		# DIVIDING HIST IN TWO PARTS - (0 to min) and (min+1, end)
+		hist1_part1=hist1[0:index_min]
+		hist1_part1=hist1_part1[::-1]
+		hist1_part2=hist1[index_min+1:arr_len]
+		
+		check_value=(hist_max+hist_min)/2
+		print "CHECK VALUE:",check_value
+			
+		mean_intersection1=index_min-(np.abs(hist1_part1 - check_value)).argmin()
+		mean_intersection2=index_min+(np.abs(hist1_part2 - check_value)).argmin()
+		
+		print "Intersection of Mean and Row_Hist"
+		print mean_intersection1, mean_intersection2
+		
+		center=ceil((mean_intersection1+mean_intersection2)/2)
+		return center
+
+
+
 	
 	def centerofMass(self,crop_img):
-		img_bkp=crop_img.copy()
+		row_hist=[]
+		col_hist=[]
 		
+		print np.shape(crop_img)
+		n_rows=crop_img.shape[0]
+		n_cols=crop_img.shape[1]
 		
-		# Finding contours
-		ret,thresh = cv2.threshold(crop_img,50,255,cv2.THRESH_BINARY_INV)
-#		cv2.imshow("threshold",thresh)
-#		cv2.waitKey(0)
-#		cv2.destroyAllWindows()
+		print "n_rows,n_cols:",n_rows,n_cols
 		
+		#Finding Row wise Intensity average  
+		for y in range(0,n_rows,1):
+			row_avg=np.mean(crop_img[y,:])
+			row_hist.append(row_avg)
 		
-		contours, hierarchy = cv2.findContours(thresh,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-		print "number of contours", len(contours)
+		#Finding Column wise Intensity average  
+		for x in range(0,n_cols,1):
+			col_avg=np.mean(crop_img[:,x])
+			col_hist.append(col_avg)
+			
+			
+		#Plotting row and column histogram
+		len_id_row=np.asanyarray(range(0,n_rows,1))
+		len_id_col=np.asanyarray(range(0,n_cols,1))
+		plt.plot(len_id_row,row_hist,color='red') 
+		plt.plot(len_id_col,col_hist,color='blue')
 		
-		# Finding the contour with the max area
-		cnt=0
-		maxArea=0
-		flag=0
-		
-		for i in contours:
-			currArea=cv2.contourArea(i)
-			if currArea > 0.0:
-				
-				if currArea>maxArea:
-					maxArea=currArea
-					flag=cnt
-			cnt=cnt+1
-		#==============================================================================
-		# Calculating center of mass for the max area 
-		#==============================================================================
-		M = cv2.moments(contours[flag])
-		cx1 = float(M['m10']/M['m00'])
-		cy1 = float(M['m01']/M['m00'])
-#		cv2.circle(img_bkp,(cx1,cy1), 5, (255,0,0), -1)
-#		cv2.drawContours(img_bkp, contours, -1, (0,255,0), 3)
-		
-#		cv2.imshow("Contours",img_bkp)
-#		cv2.waitKey(0)
-#		cv2.destroyAllWindows()
-		print "Center of Mass : ",cx1,cy1
-		return cx1,cy1
+		#Calling Center Of Array for row_hist and col_hist
+		print "Calling Center of Array for row_hist"
+		cx=self.center_of_array(row_hist,n_rows)
+		print "Row Center:",cx
+		print "Calling Center of Array for col_hist"	
+		cy=self.center_of_array(col_hist,n_cols)	
+		print "Col Center:",cy
+		return cx,cy
+
 		
