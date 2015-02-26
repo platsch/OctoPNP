@@ -6,6 +6,7 @@ import octoprint.plugin
 import re
 from subprocess import call
 import os
+import time
 
 from .SmdParts import SmdParts
 from .ImageProcessing import ImageProcessing
@@ -47,7 +48,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
 	def on_after_startup(self):
-		self.imgproc = ImageProcessing(self._settings.get(["camera", "head", "path"]), self._settings.get(["tray", "boxsize"]))
+		headPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "head", "path"])
+		self.imgproc = ImageProcessing(headPath, float(self._settings.get(["tray", "boxsize"])))
 		#used for communication to UI
 		self._pluginManager = octoprint.plugin.plugin_manager()
 
@@ -68,7 +70,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				"head": {
 					"offset_x": 0,
 					"offset_y": 0,
-					"offset_z": 0
+					"offset_z": 0,
+					"path": ""
 				},
 				"bed": {
 					"offset_x": 0,
@@ -172,6 +175,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
 	def _pickPart(self, partnr):
+		# wait n seconds to make sure cameras are ready
+		time.sleep(1)
 		print "TAKING PICTURE NOW!!!!!!"
 		# take picture
 		if self._grabImages():
@@ -268,7 +273,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 	def _grabImages(self):
 		result = True
-		grabScript = os.path.dirname(os.path.realpath(__file__)) + "/cameras/pylon/grab.sh"
+		grabScript = os.path.dirname(os.path.realpath(__file__)) + "/cameras/grab.sh"
 		if call([grabScript]) != 0:
 			self._logger.info("ERROR: camera not ready!")
 			result = False
@@ -281,7 +286,6 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		)
 		if event == "FILE":
 			if self.smdparts.isFileLoaded():
-				print "update is file loaded"
 				data = dict(
 					parts=self.smdparts.getPartCount()
 				)

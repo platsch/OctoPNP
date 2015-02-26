@@ -62,6 +62,12 @@ int main(int argc, char* argv[])
     // is initialized during the lifetime of this object
     Pylon::PylonAutoInitTerm autoInitTerm;
 
+	//use basedir given by parameter
+	String_t basedir = "";
+	if(argc > 1) {
+		basedir = argv[1];
+	}
+
     try
     {
         // Get the transport layer factory.
@@ -100,11 +106,12 @@ int main(int argc, char* argv[])
 				if ( cameras[i].GrabOne( 5000, ptrGrabResult))
 				{
 					// use user defined camera name as filename
-					String_t filename = cameras[i].GetDeviceInfo().GetUserDefinedName() + ".tiff";
+					String_t filename = basedir + "/" + cameras[i].GetDeviceInfo().GetUserDefinedName() + ".tiff";
 
 				    // The pylon grab result smart pointer classes provide a cast operator to the IImage
 				    // interface. This makes it possible to pass a grab result directly to the
 				    // function that saves an image to disk.
+					cout << "Save image to " << filename << endl;
 				    CImagePersistence::Save( ImageFileFormat_Tiff, filename, ptrGrabResult);
 				}
 			}

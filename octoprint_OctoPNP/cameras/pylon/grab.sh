@@ -10,6 +10,8 @@ ROOT=$(readlink -f $(dirname $0))
 
 pwd
 #start the image grabber
-$ROOT/grab
+$ROOT/grab $ROOT
 
-convert $ROOT/head.tiff -rotate 270 $ROOT/head.tiff
+convert $ROOT/head.tiff -rotate 270 $ROOT/../head.tiff
+rm $ROOT/head.tiff
+mv $ROOT/bed.tiff $ROOT/../bed.tiff
