@@ -226,12 +226,12 @@ class ImageProcessing:
 		
 		#Calling Center Of Array for row_hist and col_hist
 		print "Calling Center of Array for row_hist"
-		cx=self.center_of_array(row_hist,n_rows)
-		print "Row Center:",cx
+		cy=self.center_of_array(row_hist,n_rows)
+		print "Y Center:",cy
 		print "Calling Center of Array for col_hist"	
-		cy=self.center_of_array(col_hist,n_cols)	
-		print "Col Center:",cy
-		cv2.circle(crop_img,(int(cy),int(cx)), 5, (0,255,0), -1)
+		cx=self.center_of_array(col_hist,n_cols)
+		print "X Center:",cx
+		cv2.circle(crop_img,(int(cx),int(cy)), 5, (0,255,0), -1)
 		filename="/finalcm_"+os.path.basename(self.img_path)
 		finalcm_path=os.path.dirname(self.img_path)+filename
 		cv2.imwrite(finalcm_path,crop_img)
