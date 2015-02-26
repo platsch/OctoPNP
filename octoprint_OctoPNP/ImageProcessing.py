@@ -8,7 +8,7 @@ Created on Tue Feb 17 02:12:51 2015
 import cv2
 import numpy as np
 import math
-
+import os
 import shutil
 #import scipy.signal as sig
 #from matplotlib import pyplot as plt
@@ -109,7 +109,9 @@ class ImageProcessing:
 #		cv2.destroyAllWindows()
 		#img1=img
 		img_crop=img_bkp[x:x+w-1,y:y+h-1]
-		#cv2.imwrite("cropped_output.jpg",img1)
+		filename="/cropped_"+os.path.basename(self.img_path)
+		cropped_boundary_path=os.path.dirname(self.img_path)+filename
+		cv2.imwrite(cropped_boundary_path,img_crop)
 		return img_crop
 
 #==============================================================================
@@ -229,6 +231,10 @@ class ImageProcessing:
 		print "Calling Center of Array for col_hist"	
 		cy=self.center_of_array(col_hist,n_cols)	
 		print "Col Center:",cy
+		cv2.circle(crop_img,(int(cy),int(cx)), 5, (0,255,0), -1)
+		filename="/finalcm_"+os.path.basename(self.img_path)
+		finalcm_path=os.path.dirname(self.img_path)+filename
+		cv2.imwrite(finalcm_path,crop_img)
 		return cx,cy
 
 		
