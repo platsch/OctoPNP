@@ -7,10 +7,11 @@ Created on Tue Feb 17 02:12:51 2015
 
 import cv2
 import numpy as np
+import math
 
 import shutil
 #import scipy.signal as sig
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 
 class ImageProcessing:
 
@@ -156,8 +157,8 @@ class ImageProcessing:
 		hist1[upper:arr_len]=hist1[upper]
 		
 		#Plotting boundary processed hist
-		len_idx=np.asanyarray(range(0,arr_len,1))
-		plt.plot(len_idx,hist1,color='green')
+		#len_idx=np.asanyarray(range(0,arr_len,1))
+		#plt.plot(len_idx,hist1,color='green')
 		
 		
 		# HIST STATISTICS
@@ -188,7 +189,7 @@ class ImageProcessing:
 		print "Intersection of Mean and Row_Hist"
 		print mean_intersection1, mean_intersection2
 		
-		center=ceil((mean_intersection1+mean_intersection2)/2)
+		center=math.ceil((mean_intersection1+mean_intersection2)/2)
 		return center
 
 
@@ -218,8 +219,8 @@ class ImageProcessing:
 		#Plotting row and column histogram
 		len_id_row=np.asanyarray(range(0,n_rows,1))
 		len_id_col=np.asanyarray(range(0,n_cols,1))
-		plt.plot(len_id_row,row_hist,color='red') 
-		plt.plot(len_id_col,col_hist,color='blue')
+		#plt.plot(len_id_row,row_hist,color='red')
+		#plt.plot(len_id_col,col_hist,color='blue')
 		
 		#Calling Center Of Array for row_hist and col_hist
 		print "Calling Center of Array for row_hist"
