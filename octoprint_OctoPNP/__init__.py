@@ -122,7 +122,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			print "hook: " + cmd
 			if self._state == self.STATE_NONE:
 				self._state = self.STATE_PICK
-				self._currentZ = float(self._printer.getCurrentData()["currentZ"])
+				if self._printer.getCurrentData()["currentZ"]:
+					self._currentZ = float(self._printer.getCurrentData()["currentZ"])
+				else:
+					self._currentZ = 0.0
 				command = re.search("P\d*", cmd).group() #strip the M361
 				self._currentPart = int(command[1:])
 				self._updateUI("OPERATION", "pick")
