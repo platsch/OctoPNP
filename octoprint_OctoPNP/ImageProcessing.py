@@ -71,7 +71,7 @@ class ImageProcessing:
 		gray_img=cv2.cvtColor(cv2.cvtColor(res,cv2.COLOR_HSV2BGR),cv2.COLOR_BGR2GRAY)
 		
 		# Smoothing Image
-		gray_img = cv2.GaussianBlur(gray_img, (15, 15), 0)
+		gray_img = cv2.GaussianBlur(gray_img, (25, 25), 0)
 		
 		# Invert Image 
 		ret,thresh = cv2.threshold(gray_img,0,255,cv2.THRESH_BINARY_INV)
@@ -178,9 +178,9 @@ class ImageProcessing:
 		
 		
 		# DIVIDING HIST IN TWO PARTS - (0 to min) and (min+1, end)
-		hist1_part1=hist1[0:index_min]
+		hist1_part1=hist1[0:index_min+1]
 		hist1_part1=hist1_part1[::-1]
-		hist1_part2=hist1[index_min+1:arr_len]
+		hist1_part2=hist1[index_min+2:arr_len]
 		
 		check_value=(hist_max+hist_min)/2
 		print "CHECK VALUE:",check_value
