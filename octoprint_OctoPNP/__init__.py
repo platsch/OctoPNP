@@ -267,12 +267,16 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 	def _gripVacuum(self):
 		self._printer.command("M400")
 		self._printer.command("M400")
+		self._printer.command("G4 S1")
 		self._printer.command("M340 P0 S1500")
+		self._printer.command("G4 S1")
 
 	def _releaseVacuum(self):
 		self._printer.command("M400")
 		self._printer.command("M400")
+		self._printer.command("G4 S1")
 		self._printer.command("M340 P0 S1200")
+		self._printer.command("G4 S1")
 
 	def _grabImages(self):
 		result = True
