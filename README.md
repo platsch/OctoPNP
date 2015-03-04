@@ -44,7 +44,7 @@ M361 P2
 ;    <pad x1="-0.4" y1="-0.8" x2="0.1" y2="0.3"/>
 ;    <pad x1="-1.4" y1="-0.8" x2="-0.9" y2="0.3"/>
 ;  </pads>
-;  <destination x="104.938" y="27.987" orientation="90"/>
+;  <destination x="104.938" y="27.987" z="4.650" orientation="90"/>
 ;</part>
 
 
@@ -59,7 +59,7 @@ M361 P2
 ;    <pad x1="-0.4" y1="-0.8" x2="0.1" y2="0.3"/>
 ;    <pad x1="-1.4" y1="-0.8" x2="-0.9" y2="0.3"/>
 ;  </pads>
-;  <destination x="104.938" y="27.987" orientation="90"/>
+;  <destination x="104.938" y="27.987" z="4.200" orientation="90"/>
 ;</part>
 
 ;<part id="4" name="ATTINY">
@@ -73,7 +73,7 @@ M361 P2
 ;    <pad x1="-0.4" y1="-0.8" x2="0.1" y2="0.3"/>
 ;    <pad x1="-1.4" y1="-0.8" x2="-0.9" y2="0.3"/>
 ;  </pads>
-;  <destination x="90.938" y="20" orientation="45"/>
+;  <destination x="90.938" y="20" z="1.650" orientation="45"/>
 ;</part>
 ;</object>
 ```
