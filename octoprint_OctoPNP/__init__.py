@@ -233,16 +233,16 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		# find destination at the object
 		destination = self.smdparts.getPartDestination(partnr)
 		#rotate object
-		if destination[2] != 0:
+		if destination[3] != 0:
 			# switch to vacuum extruder
 			self._printer.command("T" + self._settings.get(["vacuum", "extruder"]))
 			self._printer.command("G92 E0")
-			self._printer.command("G1 E" + str(destination[2]) + " F" + str(self.FEEDRATE))
+			self._printer.command("G1 E" + str(destination[3]) + " F" + str(self.FEEDRATE))
 
 		# move to destination
 		cmd = "G1 X" + str(destination[0]-float(self._settings.get(["vacuum", "offset_x"]))) \
 			  + " Y" + str(destination[1]-float(self._settings.get(["vacuum", "offset_y"]))) \
-			  + " Z" + str(self._currentZ+self.smdparts.getPartHeight(partnr)+5) + " F"  + str(self.FEEDRATE)
+			  + " Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)+5) + " F" + str(self.FEEDRATE)
 		print "object destination: " + cmd
 		self._printer.command(cmd)
 		self._printer.command("G1 Z" + str(self._currentZ+self.smdparts.getPartHeight(partnr)))
