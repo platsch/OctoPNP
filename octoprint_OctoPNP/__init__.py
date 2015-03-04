@@ -4,7 +4,12 @@ from __future__ import absolute_import
 
 import octoprint.plugin
 import re
+from subprocess import call
+import os
+import time
+
 from .SmdParts import SmdParts
+from .ImageProcessing import ImageProcessing
 
 
 __plugin_name__ = "OctoPNP"
@@ -40,10 +45,12 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		self._state = self.STATE_NONE
 		self._currentPart = 0
 		self._currentZ = None
-		pass
 
 
 	def on_after_startup(self):
+		headPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "head", "path"])
+		self.imgproc = ImageProcessing(headPath, float(self._settings.get(["tray", "boxsize"])))
+		#used for communication to UI
 		self._pluginManager = octoprint.plugin.plugin_manager()
 
 	def get_settings_defaults(self):
@@ -63,7 +70,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				"head": {
 					"offset_x": 0,
 					"offset_y": 0,
-					"offset_z": 0
+					"offset_z": 0,
+					"path": ""
 				},
 				"bed": {
 					"offset_x": 0,
@@ -93,7 +101,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		)
 
 	def on_event(self, event, payload):
-		#extraxt part informations from inline xml
+		#extraxt part informations from inline xmly
 		if event == "FileSelected":
 			xml = "";
 			f = open(payload.get("file"), 'r')
@@ -131,7 +139,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				self._updateUI("OPERATION", "pick")
 				self._moveCameraToPart(self._currentPart)
 				self._printer.command("M400")
-				self._printer.command("G4 P0")
+				self._printer.command("G4 S1")
 				self._printer.command("G4 P0")
 				self._printer.command("M361")
 				return "G4 P0" # return dummy command
@@ -164,17 +172,25 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		tray_offset = self._getTrayPosFromPartNr(partnr) # get box position on tray
 		camera_offset = [tray_offset[0]-float(self._settings.get(["camera", "head", "offset_x"])), tray_offset[1]-float(self._settings.get(["camera", "head", "offset_y"])), float(self._settings.get(["camera", "head", "offset_z"])) + tray_offset[2]]
 		cmd = "G1 X" + str(camera_offset[0]) + " Y" + str(camera_offset[1]) + " Z" + str(camera_offset[2]) + " F" + str(self.FEEDRATE)
-		print cmd
+		print "Move camera to: " + cmd
 		self._printer.command("G1 Z" + str(self._currentZ+5) + " F" + str(self.FEEDRATE)) # lift printhead
 		self._printer.command(cmd)
 
 
 	def _pickPart(self, partnr):
+		# wait n seconds to make sure cameras are ready
+		time.sleep(1)
 		print "TAKING PICTURE NOW!!!!!!"
-		self._printer.command("G4 S10")
+		# take picture
+		if self._grabImages():
+			#extract position information
+			cm_x,cm_y=self.imgproc.get_cm()
+		else:
+			cm_x=cm_y=0
+			self._updateUI("ERROR", "Camera not ready")
 
-		# take picture, extract position information
-		part_offset = [0, 0]
+		part_offset = [cm_x, cm_y]
+		print "PART OFFSET:", part_offset
 
 		tray_offset = self._getTrayPosFromPartNr(partnr)
 		vacuum_dest = [tray_offset[0]+part_offset[0]-float(self._settings.get(["vacuum", "offset_x"])),\
@@ -182,15 +198,15 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 						 tray_offset[2]+self.smdparts.getPartHeight(partnr)]
 
 		# move vac nozzle to part and pick
-		cmd = "G1 X" + str(vacuum_dest[0]) + " Y" + str(vacuum_dest[1]) + " Z" + str(vacuum_dest[2]+5) + " F" + str(self.FEEDRATE)
+		cmd = "G1 X" + str(vacuum_dest[0]) + " Y" + str(vacuum_dest[1]) + " F" + str(self.FEEDRATE)
 		self._printer.command(cmd)
-		self._printer.command("M340 P0 S1200")
-		self._printer.command("M400")
-		self._printer.command("M400")
-		self._printer.command("G1 Z" + str(vacuum_dest[2]) + "F500")
-		self._printer.command("M340 P0 S1500")
+		cmd = "G1 Z" + str(vacuum_dest[2]+5)
+		self._printer.command(cmd)
+		self._releaseVacuum()
+		self._printer.command("G1 Z" + str(vacuum_dest[2]) + "F1000")
+		self._gripVacuum()
 		self._printer.command("G4 S1")
-		self._printer.command("G1 Z" + str(vacuum_dest[2]+5) + "F500")
+		self._printer.command("G1 Z" + str(vacuum_dest[2]+5) + "F1000")
 
 		# move to bed camera
 		vacuum_dest = [float(self._settings.get(["camera", "bed", "offset_x"]))-float(self._settings.get(["vacuum", "offset_x"])),\
@@ -203,11 +219,18 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
 	def _placePart(self, partnr):
-		# take picture, extract position information
+		# take picture
+		if self._grabImages():
+			pass
+			#extract position information
+			#cm_x,cm_y=self.imgproc.get_cm()
+		else:
+			self._updateUI("ERROR", "Camera not ready")
+
 
 		# rotate object, compute offset
 
-		# move to destination at the object
+		# find destination at the object
 		destination = self.smdparts.getPartDestination(partnr)
 		#rotate object
 		if destination[2] != 0:
@@ -216,6 +239,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			self._printer.command("G92 E0")
 			self._printer.command("G1 E" + str(destination[2]) + " F" + str(self.FEEDRATE))
 
+		# move to destination
 		cmd = "G1 X" + str(destination[0]-float(self._settings.get(["vacuum", "offset_x"]))) \
 			  + " Y" + str(destination[1]-float(self._settings.get(["vacuum", "offset_y"]))) \
 			  + " Z" + str(self._currentZ+self.smdparts.getPartHeight(partnr)+5) + " F"  + str(self.FEEDRATE)
@@ -223,8 +247,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		self._printer.command(cmd)
 		self._printer.command("G1 Z" + str(self._currentZ+self.smdparts.getPartHeight(partnr)))
 
+		#release part
+		self._releaseVacuum()
 
-		#release
 
 	# get the position of the box (center of the box) containing part x relative to the [0,0] corner of the tray
 	def _getTrayPosFromPartNr(self, partnr):
@@ -239,6 +264,28 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		y = (row-1)*boxsize + boxsize/2 + row*rimsize + float(self._settings.get(["tray", "y"]))
 		return [x, y, float(self._settings.get(["tray", "z"]))]
 
+	def _gripVacuum(self):
+		self._printer.command("M400")
+		self._printer.command("M400")
+		self._printer.command("G4 S1")
+		self._printer.command("M340 P0 S1500")
+		self._printer.command("G4 S1")
+
+	def _releaseVacuum(self):
+		self._printer.command("M400")
+		self._printer.command("M400")
+		self._printer.command("G4 S1")
+		self._printer.command("M340 P0 S1200")
+		self._printer.command("G4 S1")
+
+	def _grabImages(self):
+		result = True
+		grabScript = os.path.dirname(os.path.realpath(__file__)) + "/cameras/grab.sh"
+		if call([grabScript]) != 0:
+			self._logger.info("ERROR: camera not ready!")
+			result = False
+		return result
+
 
 	def _updateUI(self, event, parameter):
 		data = dict(
@@ -246,11 +293,15 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		)
 		if event == "FILE":
 			if self.smdparts.isFileLoaded():
-				print "update is file loaded"
 				data = dict(
 					parts=self.smdparts.getPartCount()
 				)
 		elif event == "OPERATION":
+			data = dict(
+				type = parameter,
+				part = self._currentPart
+			)
+		elif event == "ERROR":
 			data = dict(
 				type = parameter,
 				part = self._currentPart
