@@ -245,7 +245,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			  + " Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)+5) + " F" + str(self.FEEDRATE)
 		print "object destination: " + cmd
 		self._printer.command(cmd)
-		self._printer.command("G1 Z" + str(self._currentZ+self.smdparts.getPartHeight(partnr)))
+		self._printer.command("G1 Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)))
 
 		#release part
 		self._releaseVacuum()
