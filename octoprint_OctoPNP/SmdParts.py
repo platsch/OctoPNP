@@ -1,9 +1,9 @@
 # coding=utf-8
+from __future__ import absolute_import
+
 __author__ = "Florens Wasserfall <wasserfall@kalanka.de>"
 __license__ = 'GNU Affero General Public License http://www.gnu.org/licenses/agpl.html'
 
-
-from __future__ import absolute_import
 
 import xml.etree.ElementTree as ET
 
