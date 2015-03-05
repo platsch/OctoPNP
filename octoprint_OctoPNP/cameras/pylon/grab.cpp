@@ -18,8 +18,8 @@
 */
 
 /*
-	This is a simple program to fetch images from basler cameras based on the pylon API.
-	It will detect up to 5 attached cameras and save an uncompressed 1000x1000px image to the disk every 500ms to "cameraname.tiff".
+	This is a simple program to fetch images from basler GigE cameras based on the pylon API.
+	It will detect up to 5 attached cameras and save an uncompressed 1000x1000px image to the disk "cameraname.tiff" for each camera.
 */
 
 
@@ -29,11 +29,10 @@
 #    include <pylon/PylonGUI.h>
 #endif
 
-
 #include <pylon/gige/BaslerGigEInstantCamera.h>
 #include <pylon/gige/_BaslerGigECameraParams.h>
 
-#include "./inc/PixelFormatAndAoiConfiguration.h"
+#include "./inc/CameraConfiguration.h"
 
 #include <iostream>
 #ifdef WIN32
@@ -87,9 +86,6 @@ int main(int argc, char* argv[])
         // Create an array of instant cameras for the found devices and avoid exceeding a maximum number of devices.
         CInstantCameraArray cameras( min( devices.size(), c_maxCamerasToUse));
 
-		// This smart pointer will receive the grab result data.
-        CGrabResultPtr ptrGrabResult;
-
 		//switch off test image
 		for ( size_t i = 0; i < cameras.GetSize(); ++i)
         {
@@ -97,6 +93,9 @@ int main(int argc, char* argv[])
 			cam.Open();
 			cam.TestImageSelector = Basler_GigECameraParams::TestImageSelector_Off;
 		}
+
+		// This smart pointer will receive the grab result data.
+        CGrabResultPtr ptrGrabResult;
 
         // Create and attach all Pylon Devices.
         for ( size_t i = 0; i < cameras.GetSize(); ++i)
@@ -106,28 +105,26 @@ int main(int argc, char* argv[])
 			// Register an additional configuration handler to set the image format and adjust the AOI.
         	// By setting the registration mode to RegistrationMode_Append, the configuration handler is added instead of replacing
         	// the already registered configuration handler.
-        	cameras[i].RegisterConfiguration( new CPixelFormatAndAoiConfiguration, RegistrationMode_Append, Cleanup_Delete);
-
+        	cameras[i].RegisterConfiguration( new CCameraConfiguration, RegistrationMode_Append, Cleanup_Delete);
 
             // Print the model name of the camera.
             cout << "Using device " << cameras[ i ].GetDeviceInfo().GetModelName() << " device name: " << cameras[i].GetDeviceInfo().GetUserDefinedName() << endl;
         }
 
 		//grab images and save to disk
-		//while(true) {
-			for ( size_t i = 0; i < cameras.GetSize(); ++i) {
-				if ( cameras[i].GrabOne( 5000, ptrGrabResult))
-				{
-					// use user defined camera name as filename
-					String_t filename = basedir + "/" + cameras[i].GetDeviceInfo().GetUserDefinedName() + ".tiff";
+		for ( size_t i = 0; i < cameras.GetSize(); ++i) {
+			if ( cameras[i].GrabOne( 5000, ptrGrabResult))
+			{
+				// use user defined camera name as filename
+				String_t filename = basedir + "/" + cameras[i].GetDeviceInfo().GetUserDefinedName() + ".tiff";
 
-				    // The pylon grab result smart pointer classes provide a cast operator to the IImage
-				    // interface. This makes it possible to pass a grab result directly to the
-				    // function that saves an image to disk.
-					cout << "Save image to " << filename << endl;
-				    CImagePersistence::Save( ImageFileFormat_Tiff, filename, ptrGrabResult);
-				}
-			}      
+			    // The pylon grab result smart pointer classes provide a cast operator to the IImage
+			    // interface. This makes it possible to pass a grab result directly to the
+			    // function that saves an image to disk.
+				cout << "Save image to " << filename << endl;
+			    CImagePersistence::Save( ImageFileFormat_Tiff, filename, ptrGrabResult);
+			}
+		}
     }
     catch (GenICam::GenericException &e)
     {
