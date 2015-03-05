@@ -119,6 +119,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			js=["js/OctoPNP.js"]
 		)
 
+	# Use the on_event hook to extract XML data every time a new file has been loaded by the user
 	def on_event(self, event, payload):
 		#extraxt part informations from inline xmly
 		if event == "FileSelected":
@@ -148,6 +149,16 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				self._updateUI("FILE", "")
 
 
+	"""
+	Use the gcode hook to interrupt the printing job on custom M361 commands.
+	This hook is designed as some kind of a "state machine". The reason is,
+	that we have to circumvent the buffered gcode execution in the printer.
+	To take a picture, the buffer must be emptied to ensure that the printer has executed all previous moves
+	and is now at the desired position. To achieve this, a M400 command is injected after the
+	camera positioning command, followed by a M361. This causes the printer to send the
+	next acknowledging ok not until the positioning is finished. Since the next command is a M361,
+	octoprint will call the gcode hook again and we are back in the game, iterating to the next state.
+	"""
 	def hook_gcode(self, comm_obj, cmd):
 		if "M361" in cmd:
 			print "hook: " + cmd
