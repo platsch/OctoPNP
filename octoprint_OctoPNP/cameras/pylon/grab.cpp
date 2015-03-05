@@ -12,7 +12,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Repetier-Firmware.  If not, see <http://www.gnu.org/licenses/>.
+    along with OctoPNP.  If not, see <http://www.gnu.org/licenses/>.
 
     Main author: Florens Wasserfall <wasserfall@informatik.uni-hamburg.de>
 */
