@@ -29,6 +29,10 @@
 #    include <pylon/PylonGUI.h>
 #endif
 
+
+#include <pylon/gige/BaslerGigEInstantCamera.h>
+#include <pylon/gige/_BaslerGigECameraParams.h>
+
 #include "./inc/PixelFormatAndAoiConfiguration.h"
 
 #include <iostream>
@@ -86,6 +90,14 @@ int main(int argc, char* argv[])
 		// This smart pointer will receive the grab result data.
         CGrabResultPtr ptrGrabResult;
 
+		//switch off test image
+		for ( size_t i = 0; i < cameras.GetSize(); ++i)
+        {
+			Pylon::CBaslerGigEInstantCamera cam(tlFactory.CreateDevice( devices[ i ]));
+			cam.Open();
+			cam.TestImageSelector = Basler_GigECameraParams::TestImageSelector_Off;
+		}
+
         // Create and attach all Pylon Devices.
         for ( size_t i = 0; i < cameras.GetSize(); ++i)
         {
@@ -95,6 +107,7 @@ int main(int argc, char* argv[])
         	// By setting the registration mode to RegistrationMode_Append, the configuration handler is added instead of replacing
         	// the already registered configuration handler.
         	cameras[i].RegisterConfiguration( new CPixelFormatAndAoiConfiguration, RegistrationMode_Append, Cleanup_Delete);
+
 
             // Print the model name of the camera.
             cout << "Using device " << cameras[ i ].GetDeviceInfo().GetModelName() << " device name: " << cameras[i].GetDeviceInfo().GetUserDefinedName() << endl;
@@ -114,15 +127,7 @@ int main(int argc, char* argv[])
 					cout << "Save image to " << filename << endl;
 				    CImagePersistence::Save( ImageFileFormat_Tiff, filename, ptrGrabResult);
 				}
-			}
-			/*#ifdef WIN32
-			Sleep(500);
-			#else
-			usleep(500 * 1000);
-			#endif // win32
-        }*/
-
-      
+			}      
     }
     catch (GenICam::GenericException &e)
     {
