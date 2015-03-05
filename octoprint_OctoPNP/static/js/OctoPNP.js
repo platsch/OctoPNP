@@ -29,7 +29,10 @@ $(function() {
                     self.currentOperation(data.data.type + " part nr " + data.data.part);
                 }
                 else if(data.event == "ERROR") {
-                    self.stateString("ERROR: \"" + data.data.type + "\" appeared while processing part nr " + data.data.part);
+                    self.stateString("ERROR: \"" + data.data.type + "\"");
+                    if(data.data.hasOwnProperty("part")) {
+                        self.stateString(self.StateString + "appeared while processing part nr " + data.data.part);
+                    }
                 }
                 else if(data.event == "IMAGE") {
                     //self.cameraImage(data.data.src);

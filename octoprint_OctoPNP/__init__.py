@@ -122,6 +122,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 	def on_event(self, event, payload):
 		#extraxt part informations from inline xmly
 		if event == "FileSelected":
+			self._currentPart = None
 			xml = "";
 			f = open(payload.get("file"), 'r')
 			for line in f:
@@ -134,14 +135,17 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 					xml = "<object name=\"defaultpart\">\n" + xml + "\n</object>"
 
 				#parse xml data
-				self.smdparts.load(xml)
-				self._logger.info("Extracted information on %d parts from gcode file %s", self.smdparts.getPartCount(), payload.get("file"))
+				sane, msg = self.smdparts.load(xml)
+				if sane:
+					self._logger.info("Extracted information on %d parts from gcode file %s", self.smdparts.getPartCount(), payload.get("file"))
+					self._updateUI("FILE", "")
+				else:
+					self._logger.info("XML parsing error: " + msg)
+					self._updateUI("ERROR", "XML parsing error: " + msg)
 			else:
 				#gcode file contains no part information -> clear smdpart object
 				self.smdparts.unload()
-
-			#Update UI
-			self._updateUI("FILE", "")
+				self._updateUI("FILE", "")
 
 
 	def hook_gcode(self, comm_obj, cmd):
@@ -323,8 +327,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		elif event == "ERROR":
 			data = dict(
 				type = parameter,
-				part = self._currentPart
 			)
+			if self._currentPart: data["part"] = self._currentPart
 		elif event is "IMAGE":
 			data = dict(
 				src = parameter
