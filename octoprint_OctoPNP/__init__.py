@@ -217,7 +217,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			self._updateUI("ERROR", "Camera not ready")
 
 		part_offset = [cm_x, cm_y]
-		self._logger.info("PART OFFSET:" + part_offset)
+		self._logger.info("PART OFFSET:" + str(part_offset))
 
 		tray_offset = self._getTrayPosFromPartNr(partnr)
 		vacuum_dest = [tray_offset[0]+part_offset[0]-float(self._settings.get(["vacuum", "offset_x"])),\
