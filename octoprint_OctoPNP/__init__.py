@@ -219,11 +219,14 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
 	def _placePart(self, partnr):
+		orientation_offset = 0
 		# take picture
 		if self._grabImages():
 			pass
-			#extract position information
-			#cm_x,cm_y=self.imgproc.get_cm()
+			# get rotation offset
+			bedPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "bed", "path"])
+			orientation_offset = self.improc.get_orientation(bedPath)
+			self._printer.command()
 		else:
 			self._updateUI("ERROR", "Camera not ready")
 
@@ -233,11 +236,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		# find destination at the object
 		destination = self.smdparts.getPartDestination(partnr)
 		#rotate object
-		if destination[2] != 0:
-			# switch to vacuum extruder
-			self._printer.command("T" + self._settings.get(["vacuum", "extruder"]))
-			self._printer.command("G92 E0")
-			self._printer.command("G1 E" + str(destination[2]) + " F" + str(self.FEEDRATE))
+		# switch to vacuum extruder
+		self._printer.command("T" + self._settings.get(["vacuum", "extruder"]))
+		self._printer.command("G92 E0")
+		self._printer.command("G1 E" + str(destination[2]+orientation_offset) + " F" + str(self.FEEDRATE))
 
 		# move to destination
 		cmd = "G1 X" + str(destination[0]-float(self._settings.get(["vacuum", "offset_x"]))) \
