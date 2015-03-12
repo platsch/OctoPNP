@@ -4,6 +4,9 @@ $(function() {
 
         self.settings = parameters[0];
 
+        self.tray = {}
+        self.camera = []
+        self.nozzle = {}
 
         self.stateString = ko.observable("No file loaded");
         self.currentOperation = ko.observable("");
@@ -14,6 +17,9 @@ $(function() {
         // already been initialized. It is especially guaranteed that this method gets called _after_ the settings
         // have been retrieved from the OctoPrint backend and thus the SettingsViewModel been properly populated.
         self.onBeforeBinding = function() {
+            self.tray = self.settings.settings.plugins.OctoPNP.tray;
+            self.camera = self.settings.settings.plugins.OctoPNP.camera;
+            self.nozzle = self.settings.settings.plugins.OctoPNP.nozzle;
         }
 
          self.onDataUpdaterPluginMessage = function(plugin, data) {
@@ -40,6 +46,14 @@ $(function() {
                 self.debugvar("Plugin = OctoPNP");
             }
         };
+
+        self.removeCamera = function(cam) {
+            self.camera.remove(cam);
+        }
+
+        self.addCamera = function() {
+            self.camera.push({x: 0, y: 0, z: 0, name: "New Camera"});
+        }
     }
 
     // This is how our plugin registers itself with the application, by adding some configuration information to
@@ -54,6 +68,6 @@ $(function() {
         ["settingsViewModel"],
 
         // Finally, this is the list of all elements we want this view model to be bound to.
-        [document.getElementById("tab_plugin_OctoPNP")]
+        [document.getElementById("tab_plugin_OctoPNP"), document.getElementById("settings_plugin_OctoPNP")]
     ]);
 });

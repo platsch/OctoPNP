@@ -85,34 +85,31 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				"boxsize": 10,
 				"rimsize": 1.0,
 			},
-			"camera": {
-				"head": {
-					"offset_x": 0,
-					"offset_y": 0,
-					"offset_z": 0,
-					"path": ""
+			"camera": [
+				{
+					"x": 0,
+					"y": 0,
+					"z": 0,
+					"name": "head"
 				},
-				"bed": {
-					"offset_x": 0,
-					"offset_y": 0,
-					"offset_z": 0,
-					"path": ""
-				},
-			},
-			"vacuum": {
-				"offset_x": 0,
-				"offset_y": 0,
-				"extruder": 2
+				{
+					"x": 0,
+					"y": 0,
+					"z": 0,
+					"name": "bed"
+				}
+			],
+			"nozzle": {
+				"x": 0,
+				"y": 0,
+				"exnr": 2
 			}
 		}
-
-	def get_template_vars(self):
-		return dict(tray_x=self._settings.get(["tray", "x"]))
 
 	def get_template_configs(self):
 		return [
 			dict(type="tab", custom_bindings=True),
-			dict(type="settings", custom_bindings=False)
+			dict(type="settings", custom_bindings=True)
 		]
 
 	def get_assets(self):
