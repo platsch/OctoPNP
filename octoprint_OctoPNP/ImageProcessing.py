@@ -28,8 +28,8 @@ class ImageProcessing:
 		# make a copy of the file for later inspection
 
 		#DETECT BOUNDARY AND CROP
-		crop_image=self._boundaryDetect(img)
-
+		#crop_image=self._boundaryDetect(img)
+		crop_image=self._new_boundary_detect(img)
 		#GET CENTER OF MASS
 		gray_img=cv2.cvtColor(crop_image,cv2.COLOR_BGR2GRAY)
 		cmx,cmy=self.centerofMass(gray_img)
@@ -43,6 +43,86 @@ class ImageProcessing:
 		displacement_y=((n_cols-cmy)-n_cols/2)*self.box_size/n_cols
 
 		return displacement_x,displacement_y
+
+	def _new_boundary_detect(self,img):
+		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+		row=np.shape(gray_img)[0]
+		col=np.shape(gray_img)[1]
+
+		edges = cv2.Canny(gray_img,50,150,apertureSize = 3)
+
+		print max(row,col),int(max(row,col)/4)
+		lines = cv2.HoughLines(edges,1,np.pi/180,int(max(row,col)/4))
+
+		list_theta_ver=[]
+		list_theta_hor=[]
+		list_rho_ver=[]
+		list_rho_hor=[]
+		print len(lines[0])
+		for rho,theta in lines[0]:
+			theta_degree=(180/math.pi)*theta
+			if int(theta_degree)==90:
+				list_theta_hor.append(theta_degree)
+				list_rho_hor.append(rho)
+			elif int(theta_degree)==0:
+				list_theta_ver.append(theta_degree)
+				list_rho_ver.append(rho)
+
+			a = np.cos(theta)
+			b = np.sin(theta)
+			x0 = a*rho
+			y0 = b*rho
+			x1 = int(x0 + 1000*(-b))
+			y1 = int(y0 + 1000*(a))
+			x2 = int(x0 - 1000*(-b))
+			y2 = int(y0 - 1000*(a))
+			#print rho
+			cv2.line(img,(x1,y1),(x2,y2),(0,255,0),2)
+
+		arr_theta_ver=np.asanyarray(list_theta_ver)
+		arr_rho_ver=np.asanyarray(list_rho_ver)
+		arr_rho_ver=np.sort(arr_rho_ver)
+
+
+		arr_theta_hor=np.asanyarray(list_theta_hor)
+		arr_rho_hor=np.asanyarray(list_rho_hor)
+		arr_rho_hor=np.sort(arr_rho_hor)
+
+		print "arr_rho horizontal:",arr_rho_hor
+		print "arr_rho vertical:",arr_rho_ver
+
+
+
+
+
+		rho_ver_part1=arr_rho_ver[arr_rho_ver<=int(col/2)]
+		rho_ver_part2=arr_rho_ver[arr_rho_ver>int(col/2)]
+
+		rho_hor_part1=arr_rho_hor[arr_rho_hor<=int(row/2)]
+		rho_hor_part2=arr_rho_hor[arr_rho_hor>int(row/2)]
+
+		print "Vertical Part1:",rho_ver_part1
+		print "Vertical Part2:",rho_ver_part2
+		print "Part1 max,Part2 min:",np.max(rho_ver_part1),np.min(rho_ver_part2)
+
+		print "Horizontal Part1:",rho_hor_part1
+		print "Horizontal Part2:",rho_hor_part2
+		print "Part1 max,Part2 min:",np.max(rho_hor_part1),np.min(rho_hor_part2)
+
+		upper_left_x=np.max(rho_ver_part1)
+		upper_left_y=np.max(rho_hor_part1)
+		height=np.min(rho_hor_part2)-upper_left_y
+		width=np.min(rho_ver_part2)-upper_left_x
+
+		cv2.rectangle(img,(upper_left_x,upper_left_y),(upper_left_x+width,upper_left_y+height),(255,0,0),2)
+		cv2.circle(img,(upper_left_x,upper_left_y), 5, (0,255,0), -1)
+
+		img_crop=img[upper_left_x:upper_left_x+width,upper_left_y:upper_left_y+height]
+		filename="/cropped_"+os.path.basename(self._img_path)
+		cropped_boundary_path=os.path.dirname(self._img_path)+filename
+		cv2.imwrite(cropped_boundary_path,img_crop)
+		return img_crop
+
 
 	def _boundaryDetect(self,img):
 		print "Inside _boundaryDetect"
