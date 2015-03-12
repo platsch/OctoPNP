@@ -75,7 +75,7 @@ public:
 
 			//set a good exposure time
 			const CIntegerPtr exposureTimeRaw = control.GetNode("ExposureTimeRaw");
-			exposureTimeRaw->SetValue(600);
+			exposureTimeRaw->SetValue(700);
 
 			//tcp packet size
 			const CIntegerPtr packetSize = control.GetNode("GevSCPSPacketSize");
