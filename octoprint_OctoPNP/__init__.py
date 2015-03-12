@@ -48,8 +48,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
 	def on_after_startup(self):
-		headPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "head", "path"])
-		self.imgproc = ImageProcessing(headPath, float(self._settings.get(["tray", "boxsize"])))
+		self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])))
 		#used for communication to UI
 		self._pluginManager = octoprint.plugin.plugin_manager()
 
@@ -184,7 +183,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		# take picture
 		if self._grabImages():
 			#extract position information
-			cm_x,cm_y=self.imgproc.get_cm()
+			headPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "head", "path"])
+			cm_x,cm_y=self.imgproc.get_displacement(headPath)
 		else:
 			cm_x=cm_y=0
 			self._updateUI("ERROR", "Camera not ready")

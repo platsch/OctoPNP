@@ -15,18 +15,17 @@ import shutil
 
 class ImageProcessing:
 
-	def __init__(self,img_path,box_size):
-		print "IP: ",img_path
-		self.img_path = img_path
+	def __init__(self, box_size):
 		self.box_size=box_size
+		self._img_path = ""
 
-	def get_displacement(self,img):
+	def get_displacement(self,img_path):
 
+		self._img_path = img_path
 		print "Inside get_displacement"
 		# open image file
-		#img=cv2.imread(self.img_path,cv2.IMREAD_COLOR)
+		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
 		# make a copy of the file for later inspection
-		#shutil.copyfile(self.img_path, '/home/wasserfall/OctoPNP.tiff')
 
 		#DETECT BOUNDARY AND CROP
 		crop_image=self._boundaryDetect(img)
@@ -111,8 +110,8 @@ class ImageProcessing:
 #		cv2.destroyAllWindows()
 		#img1=img
 		img_crop=img_bkp[x:x+w-1,y:y+h-1]
-		filename="/cropped_"+os.path.basename(self.img_path)
-		cropped_boundary_path=os.path.dirname(self.img_path)+filename
+		filename="/cropped_"+os.path.basename(self._img_path)
+		cropped_boundary_path=os.path.dirname(self._img_path)+filename
 		cv2.imwrite(cropped_boundary_path,img_crop)
 		return img_crop
 
@@ -233,8 +232,8 @@ class ImageProcessing:
 		cx,x1,x2=self._center_of_array(col_hist,n_cols)
 
 		cv2.circle(crop_img,(int(cx),int(cy)), 5, (0,255,0), -1)
-		filename="/finalcm_"+os.path.basename(self.img_path)
-		finalcm_path=os.path.dirname(self.img_path)+filename
+		filename="/finalcm_"+os.path.basename(self._img_path)
+		finalcm_path=os.path.dirname(self._img_path)+filename
 		cv2.imwrite(finalcm_path,crop_img)
 
 		print "Center(X,Y):",cx,cy
