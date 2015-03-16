@@ -5,8 +5,8 @@ $(function() {
         self.settings = parameters[0];
 
         self.tray = {}
-        self.camera = []
-        self.nozzle = {}
+        self.camera = {}
+        self.vacnozzle = {}
 
         self.stateString = ko.observable("No file loaded");
         self.currentOperation = ko.observable("");
@@ -19,7 +19,7 @@ $(function() {
         self.onBeforeBinding = function() {
             self.tray = self.settings.settings.plugins.OctoPNP.tray;
             self.camera = self.settings.settings.plugins.OctoPNP.camera;
-            self.nozzle = self.settings.settings.plugins.OctoPNP.nozzle;
+            self.vacnozzle = self.settings.settings.plugins.OctoPNP.vacnozzle;
         }
 
          self.onDataUpdaterPluginMessage = function(plugin, data) {
@@ -46,14 +46,6 @@ $(function() {
                 self.debugvar("Plugin = OctoPNP");
             }
         };
-
-        self.removeCamera = function(cam) {
-            self.camera.remove(cam);
-        }
-
-        self.addCamera = function() {
-            self.camera.push({x: 0, y: 0, z: 0, name: "New Camera"});
-        }
     }
 
     // This is how our plugin registers itself with the application, by adding some configuration information to
