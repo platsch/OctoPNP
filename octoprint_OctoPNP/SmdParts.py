@@ -1,6 +1,10 @@
 # coding=utf-8
 from __future__ import absolute_import
 
+__author__ = "Florens Wasserfall <wasserfall@kalanka.de>"
+__license__ = 'GNU Affero General Public License http://www.gnu.org/licenses/agpl.html'
+
+
 import xml.etree.ElementTree as ET
 
 class SmdParts():
@@ -11,6 +15,10 @@ class SmdParts():
 
 	def load(self, xmlstring):
 		self._et = ET.fromstring(xmlstring)
+		sane, msg = self._sanitize()
+		if not sane:
+			self.unload()
+		return sane, msg
 
 	def unload(self):
 		self._et = None
@@ -37,5 +45,62 @@ class SmdParts():
 	def getPartDestination(self, partnr):
 		x = float(self._et.find("./part[@id='" + str(partnr) + "']/destination").get("x"))
 		y = float(self._et.find("./part[@id='" + str(partnr) + "']/destination").get("y"))
+		z = float(self._et.find("./part[@id='" + str(partnr) + "']/destination").get("z"))
 		orientation = float(self._et.find("./part[@id='" + str(partnr) + "']/destination").get("orientation"))
-		return [x, y, orientation]
+		return [x, y, z, orientation]
+
+	def _sanitize(self):
+		result = True
+		msg = ""
+
+		# valid object?
+		if self._et.tag != "object":
+			result = False
+			msg = "file contains XML data, but no valid <object>"
+		# object name
+		if not self._et.attrib.get("name"):
+			self._et.set("name", "Object 1")
+
+		count = 0
+
+		# Iterate over parts
+		for part in self._et.iter("part"):
+			if result:
+				count += 1
+				# id
+				try:
+					int(part.get("id"))
+				except:
+					result = False
+					msg = "Invalid or no id in part " + str(count)
+
+				# sanitize part name
+				if not part.get("name"):
+					part.set("name", "part " + str(count))
+
+				# box position
+				if result:
+					result, msg = self._sanitizePart(part, "position", ["box"], int)
+				# height
+				if result:
+					result, msg = self._sanitizePart(part, "size", ["height"], float)
+				# destination
+				if result:
+					result, msg = self._sanitizePart(part, "destination", ["x", "y", "z", "orientation"], float)
+
+		return result, msg
+
+
+	def _sanitizePart(self, part, tag, attributes, validate):
+		result = True
+		msg = ""
+
+		for attribute in attributes:
+			if result:
+				try:
+					validate(part.find(tag).get(attribute))
+				except:
+					result = False
+					msg = "Invalid or no " + attribute + " " + tag + " in part " + part.get("id") + " - " + part.get("name")
+
+		return result, msg
