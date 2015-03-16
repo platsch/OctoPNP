@@ -117,6 +117,11 @@ class ImageProcessing:
 		cv2.rectangle(img,(upper_left_x,upper_left_y),(upper_left_x+width,upper_left_y+height),(255,0,0),2)
 		cv2.circle(img,(upper_left_x,upper_left_y), 5, (0,255,0), -1)
 
+		print "x0: " + str(upper_left_x)
+		print "width: " + str(width)
+		print "y0: " + str(upper_left_y)
+		print "height: " + str(height)
+
 		img_crop=img[upper_left_x:upper_left_x+width,upper_left_y:upper_left_y+height]
 		filename="/cropped_"+os.path.basename(self._img_path)
 		cropped_boundary_path=os.path.dirname(self._img_path)+filename
@@ -333,8 +338,13 @@ class ImageProcessing:
 		print "Length of Diagonal:",len_diagonal
 		return len_diagonal
 
-	def get_orientation(self,img):
+	def get_orientation(self,img_path):
 		print "Inside get_orientation"
+		self._img_path = img_path
+
+		# open image file
+		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
+
 		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 		len_diagonal=self._get_lendiagonal(gray_img)
 
