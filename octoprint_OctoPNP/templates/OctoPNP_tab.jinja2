@@ -1,8 +1,33 @@
-{{ _('PNP State') }}: <strong data-bind="text: stateString"></strong><br>
-{{ _('Current operation') }}: <strong data-bind="text: currentOperation"></strong><br>
-{{ _('DEBUG') }}: <strong data-bind="text: debugvar"></strong><br>
-<!--test: {{ plugin_OctoPNP_tray_x|escape }} <br>-->
+<div class="accordion" id="info-accordion">
+    <div class="accordion-group">
+    	<div class="accordion-heading">
+            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#information"><h5>General information</h5></a>
+        </div>
+        <div id="information" class="accordion-body collapse in">
+            <div class="accordion-inner">
+				<div class="row-fluid">
+				    {{ _('PNP State') }}: <strong data-bind="text: stateString"></strong><br>
+					{{ _('Current operation') }}: <strong data-bind="text: currentOperation"></strong><br>
+					{{ _('DEBUG') }}: <strong data-bind="text: debugvar"></strong><br>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>	
 
-<div class="row" style="padding-left: 20px">
-	<img src="" id="cameraImage">
-</div>
+
+<div class="accordion" id="camera-accordion">
+    <div class="accordion-group">
+        <div class="accordion-heading">
+            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#camera-images"><h5>Camera images</h5></a>
+        </div>
+        <div id="camera-images" class="accordion-body collapse in">
+            <div class="accordion-inner">
+				<div class="row-fluid">
+				    <div class="span6"><img src="" id="headCameraImage"></div>
+				    <div class="span6"><img src="" id="bedCameraImage"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>	

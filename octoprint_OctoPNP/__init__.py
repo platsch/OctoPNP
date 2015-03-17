@@ -218,7 +218,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			headPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "head", "path"])
 
 			#update UI
-			self._updateUI("IMAGE", headPath)
+			self._updateUI("HEADIMAGE", headPath)
 
 			#extract position information
 			part_offset = self.imgproc.get_displacement(headPath)
@@ -265,12 +265,12 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		bedPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "bed", "path"])
 		if self._grabImages():
 			#update UI
-			self._updateUI("IMAGE", bedPath)
+			self._updateUI("BEDIMAGE", bedPath)
 
 			# get rotation offset
 			orientation_offset = self.imgproc.get_orientation(bedPath)
 			# update UI
-			self._updateUI("IMAGE", self.imgproc.get_last_saved_image_path())
+			self._updateUI("BEDIMAGE", self.imgproc.get_last_saved_image_path())
 		else:
 			self._updateUI("ERROR", "Camera not ready")
 
@@ -289,7 +289,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 			displacement = self.imgproc.get_centerOfMass(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM"])))
 			#update UI
-			self._updateUI("IMAGE", self.imgproc.get_last_saved_image_path())
+			self._updateUI("BEDIMAGE", self.imgproc.get_last_saved_image_path())
 		else:
 			self._updateUI("ERROR", "Camera not ready")
 
@@ -365,7 +365,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				type = parameter,
 			)
 			if self._currentPart: data["part"] = self._currentPart
-		elif event is "IMAGE":
+		elif event is "HEADIMAGE" or event is "BEDIMAGE":
 			# open image and convert to base64
 			f = open(parameter,"r")
 			data = dict(

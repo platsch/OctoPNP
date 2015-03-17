@@ -12,7 +12,8 @@ $(function() {
         self.currentOperation = ko.observable("");
         self.cameraImage = ko.observable("testfile");
         self.debugvar = ko.observable("a");
-        document.getElementById('cameraImage').setAttribute( 'src', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3wMRCQAfAmB4CgAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAAMSURBVAjXY/j//z8ABf4C/tzMWecAAAAASUVORK5CYII=');
+        document.getElementById('headCameraImage').setAttribute( 'src', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3wMRCQAfAmB4CgAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAAMSURBVAjXY/j//z8ABf4C/tzMWecAAAAASUVORK5CYII=');
+        document.getElementById('bedCameraImage').setAttribute( 'src', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3wMRCQAfAmB4CgAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAAMSURBVAjXY/j//z8ABf4C/tzMWecAAAAASUVORK5CYII=');
 
         // This will get called before the HelloWorldViewModel gets bound to the DOM, but after its depedencies have
         // already been initialized. It is especially guaranteed that this method gets called _after_ the settings
@@ -41,9 +42,11 @@ $(function() {
                         self.stateString(self.StateString + "appeared while processing part nr " + data.data.part);
                     }
                 }
-                else if(data.event == "IMAGE") {
-                    //document.getElementById('cameraImage').setAttribute( 'src', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==' );
-                    document.getElementById('cameraImage').setAttribute( 'src', data.data.src );
+                else if(data.event == "HEADIMAGE") {
+                    document.getElementById('headCameraImage').setAttribute( 'src', data.data.src );
+                }
+                else if(data.event == "BEDIMAGE") {
+                    document.getElementById('bedCameraImage').setAttribute( 'src', data.data.src );
                 }
                 //self.debugvar("Plugin = OctoPNP");
             }
