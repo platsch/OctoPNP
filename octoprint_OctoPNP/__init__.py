@@ -208,16 +208,12 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		time.sleep(1)
 		# take picture
 		if self._grabImages():
-			f = open(os.path.dirname(os.path.realpath(__file__)) + "/cameras/test.png","r")
-			self._updateUI("IMAGE", "data:image/png;base64,"+base64.b64encode(bytes(f.read())).rstrip('\n'))
+			self._updateUI("IMAGE", os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "head", "path"]))
 			#extract position information
 			cm_x,cm_y=self.imgproc.get_cm()
 		else:
 			cm_x=cm_y=0
 			self._updateUI("ERROR", "Camera not ready")
-
-		f = open(os.path.dirname(os.path.realpath(__file__)) + "/cameras/test.png","r")
-		self._updateUI("IMAGE", "data:image/png;base64,"+base64.b64encode(bytes(f.read())))
 
 		part_offset = [cm_x, cm_y]
 		self._logger.info("PART OFFSET:" + str(part_offset))
@@ -336,8 +332,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			)
 			if self._currentPart: data["part"] = self._currentPart
 		elif event is "IMAGE":
+			# open image and convert to base64
+			f = open(parameter,"r")
 			data = dict(
-				src = parameter
+				src = "data:image/" + os.path.splitext(parameter)[1] + ";base64,"+base64.b64encode(bytes(f.read()))
 			)
 
 		message = dict(
