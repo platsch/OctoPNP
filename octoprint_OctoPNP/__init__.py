@@ -101,6 +101,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 					"x": 0,
 					"y": 0,
 					"z": 0,
+					"pxPerMM": 50,
 					"path": ""
 				}
 			}
