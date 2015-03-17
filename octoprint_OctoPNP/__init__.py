@@ -239,7 +239,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		# move to bed camera
 		vacuum_dest = [float(self._settings.get(["camera", "bed", "x"]))-float(self._settings.get(["vacnozzle", "x"])),\
 					   float(self._settings.get(["camera", "bed", "y"]))-float(self._settings.get(["vacnozzle", "y"])),\
-					   float(self._settings.get(["camera", "bed", "z"]))]
+					   float(self._settings.get(["camera", "bed", "z"]))+self.smdparts.getPartHeight(partnr)]
 
 		cmd = "G1 X" + str(vacuum_dest[0]) + " Y" + str(vacuum_dest[1]) + " Z" + str(vacuum_dest[2]) + " F"  + str(self.FEEDRATE)
 		self._printer.command(cmd)
