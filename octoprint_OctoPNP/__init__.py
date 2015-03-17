@@ -26,6 +26,7 @@ import re
 from subprocess import call
 import os
 import time
+import base64
 
 from .SmdParts import SmdParts
 from .ImageProcessing import ImageProcessing
@@ -205,14 +206,18 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 	def _pickPart(self, partnr):
 		# wait n seconds to make sure cameras are ready
 		time.sleep(1)
-		self._updateUI("IMAGE", "test")
 		# take picture
 		if self._grabImages():
+			f = open(os.path.dirname(os.path.realpath(__file__)) + "/cameras/test.png","r")
+			self._updateUI("IMAGE", "data:image/png;base64,"+base64.b64encode(bytes(f.read())).rstrip('\n'))
 			#extract position information
 			cm_x,cm_y=self.imgproc.get_cm()
 		else:
 			cm_x=cm_y=0
 			self._updateUI("ERROR", "Camera not ready")
+
+		f = open(os.path.dirname(os.path.realpath(__file__)) + "/cameras/test.png","r")
+		self._updateUI("IMAGE", "data:image/png;base64,"+base64.b64encode(bytes(f.read())))
 
 		part_offset = [cm_x, cm_y]
 		self._logger.info("PART OFFSET:" + str(part_offset))
