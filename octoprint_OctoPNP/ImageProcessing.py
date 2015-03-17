@@ -145,12 +145,15 @@ class ImageProcessing:
 		col=np.shape(gray_img)[1]
 
 		#Increase contrast
-		gray_img = cv2.equalizeHist(gray_img)
+		#gray_img = cv2.equalizeHist(gray_img)
+
 		#Canny edge for line detection
 		edges = cv2.Canny(gray_img,50,150,apertureSize = 3)
+		cv2.imshow("Canny Image",edges)
 
 		#Hough Transform for line detection having minimum of max(row,col)/4
 		lines = cv2.HoughLines(edges,1,np.pi/180,int(max(row,col)/4))
+
 
 		list_theta_ver=[]
 		list_theta_hor=[]
@@ -170,16 +173,18 @@ class ImageProcessing:
 					list_theta_ver.append(theta_degree)  #remove later
 					list_rho_ver.append(rho)
 
-				#Drawing all lines
-				a = np.cos(theta)
-				b = np.sin(theta)
-				x0 = a*rho
-				y0 = b*rho
-				x1 = int(x0 + 1000*(-b))
-				y1 = int(y0 + 1000*(a))
-				x2 = int(x0 - 1000*(-b))
-				y2 = int(y0 - 1000*(a))
-				cv2.line(img,(x1,y1),(x2,y2),(0,255,0),2)
+				#Drawing horizontal/vertical lines
+				epsilon=2
+				if (int(theta_degree)>=90-epsilon or int(theta_degree)<=90+epsilon) or (int(theta_degree)>=0-epsilon or int(theta_degree)<=0+epsilon):
+					a = np.cos(theta)
+					b = np.sin(theta)
+					x0 = a*rho
+					y0 = b*rho
+					x1 = int(x0 + 1000*(-b))
+					y1 = int(y0 + 1000*(a))
+					x2 = int(x0 - 1000*(-b))
+					y2 = int(y0 - 1000*(a))
+					cv2.line(img,(x1,y1),(x2,y2),(0,255,0),2)
 
 			arr_rho_ver=np.sort(np.asanyarray(list_rho_ver))
 			arr_rho_hor=np.sort(np.asanyarray(list_rho_hor))
@@ -204,8 +209,11 @@ class ImageProcessing:
 			width=row
 			height=col
 
-		#cv2.circle(img,(ver_left_x,hor_up_y), 5, (0,255,0), -1)
-		#cv2.rectangle(img,(ver_left_x,hor_up_y),(ver_left_x+width,hor_up_y+height),(255,0,0),2)
+
+
+
+		cv2.circle(img,(ver_left_x,hor_up_y), 5, (0,255,0), -1)
+		cv2.rectangle(img,(ver_left_x,hor_up_y),(ver_left_x+width,hor_up_y+height),(255,0,0),2)
 
 		print "Bounding box details:"
 		print "x0,y0: " + str(ver_left_x) + str(hor_up_y)
@@ -216,6 +224,7 @@ class ImageProcessing:
 		img_crop=img[ver_left_x:ver_left_x+width,hor_up_y:hor_up_y+height]
 		filename="/cropped_"+os.path.basename(self._img_path)
 		cropped_boundary_path=os.path.dirname(self._img_path)+filename
+		print cropped_boundary_path
 		cv2.imwrite(cropped_boundary_path,img_crop)
 		self._last_saved_image_path = cropped_boundary_path
 		return img_crop
@@ -404,3 +413,5 @@ class ImageProcessing:
 		cx,cy,x1,y1,x2,y2=self._centerofMass(img)
 		len_diagonal=math.sqrt(((x1-x2)**2)+((y1-y2)**2))
 		return len_diagonal
+
+
