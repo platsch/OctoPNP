@@ -195,7 +195,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 	def _moveCameraToPart(self, partnr):
 		# move camera to part position
 		tray_offset = self._getTrayPosFromPartNr(partnr) # get box position on tray
-		camera_offset = [tray_offset[0]-float(self._settings.get(["camera", "head", "offset_x"])), tray_offset[1]-float(self._settings.get(["camera", "head", "offset_y"])), float(self._settings.get(["camera", "head", "offset_z"])) + tray_offset[2]]
+		camera_offset = [tray_offset[0]-float(self._settings.get(["camera", "head", "x"])), tray_offset[1]-float(self._settings.get(["camera", "head", "y"])), float(self._settings.get(["camera", "head", "z"])) + tray_offset[2]]
 		cmd = "G1 X" + str(camera_offset[0]) + " Y" + str(camera_offset[1]) + " Z" + str(camera_offset[2]) + " F" + str(self.FEEDRATE)
 		self._logger.info("Move camera to: " + cmd)
 		self._printer.command("G1 Z" + str(self._currentZ+5) + " F" + str(self.FEEDRATE)) # lift printhead
@@ -232,8 +232,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		self._printer.command("G1 Z" + str(vacuum_dest[2]+5) + "F1000")
 
 		# move to bed camera
-		vacuum_dest = [float(self._settings.get(["camera", "bed", "x"]))-float(self._settings.get(["vacuum", "x"])),\
-					   float(self._settings.get(["camera", "bed", "y"]))-float(self._settings.get(["vacuum", "y"])),\
+		vacuum_dest = [float(self._settings.get(["camera", "bed", "x"]))-float(self._settings.get(["vacnozzle", "x"])),\
+					   float(self._settings.get(["camera", "bed", "y"]))-float(self._settings.get(["vacnozzle", "y"])),\
 					   float(self._settings.get(["camera", "bed", "z"]))]
 
 		cmd = "G1 X" + str(vacuum_dest[0]) + " Y" + str(vacuum_dest[1]) + " Z" + str(vacuum_dest[2]) + " F"  + str(self.FEEDRATE)
