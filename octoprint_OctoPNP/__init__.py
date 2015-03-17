@@ -207,9 +207,12 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		time.sleep(1)
 		# take picture
 		if self._grabImages():
-			self._updateUI("IMAGE", os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "head", "path"]))
-			#extract position information
 			headPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "head", "path"])
+
+			#update UI
+			self._updateUI("IMAGE", headPath)
+
+			#extract position information
 			cm_x,cm_y=self.imgproc.get_displacement(headPath)
 		else:
 			cm_x=cm_y=0
@@ -253,6 +256,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		# take picture
 		bedPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "bed", "path"])
 		if self._grabImages():
+			#update UI
+			self._updateUI("IMAGE", bedPath)
+
 			# get rotation offset
 			orientation_offset = self.imgproc.get_orientation(bedPath)
 		else:
@@ -268,6 +274,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 		# take picture to find part offset
 		if self._grabImages():
+			#update UI
+			self._updateUI("IMAGE", bedPath)
+
 			displacement = self.imgproc.get_centerOfMass(bedPath)
 		else:
 			self._updateUI("ERROR", "Camera not ready")
