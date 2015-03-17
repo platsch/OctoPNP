@@ -102,20 +102,20 @@ class ImageProcessing:
 		return avg_deviation
 
 
-	def get_centerOfMass(self,img_path):
+	def get_centerOfMass(self,img_path, pxPerMM):
 		self._img_path = img_path
 		# open image file
 		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
 
-		cx,cy,x1,y1,x2,y2=self._centerofMass(img)
+		cx, cy=self._centerofMass(img)[0:2]
 
 		np.shape(img)
 		n_rows=img.shape[0]
 		n_cols=img.shape[1]
-		displacement_x=(cx-n_rows/2)*self.box_size/n_rows
-		displacement_y=((n_cols-cy)-n_cols/2)*self.box_size/n_cols
+		displacement_x=(cx-n_rows/2)/pxPerMM
+		displacement_y=(n_cols/2-cy)/pxPerMM
 
-		return [cx,cy]
+		return [displacement_x, displacement_y]
 
 	def _new_boundary_detect(self,img):
 		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)

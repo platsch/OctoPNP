@@ -101,7 +101,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 					"x": 0,
 					"y": 0,
 					"z": 0,
-					"pxPerMM": 50,
+					"pxPerMM": 50.0,
 					"path": ""
 				}
 			}
@@ -271,14 +271,14 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		self._printer.command("G92 E0")
 		self._printer.command("G1 E" + str(destination[3]-orientation_offset) + " F" + str(self.FEEDRATE))
 
-		time.sleep(2)
+		time.sleep(3)
 
 		# take picture to find part offset
 		if self._grabImages():
 			#update UI
 			self._updateUI("IMAGE", bedPath)
 
-			displacement = self.imgproc.get_centerOfMass(bedPath)
+			displacement = self.imgproc.get_centerOfMass(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM"])))
 		else:
 			self._updateUI("ERROR", "Camera not ready")
 
