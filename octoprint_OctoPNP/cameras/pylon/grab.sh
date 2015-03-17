@@ -12,6 +12,6 @@ pwd
 #start the image grabber
 $ROOT/grab $ROOT
 
-convert $ROOT/head.tiff -rotate 270 $ROOT/../head.tiff
+convert $ROOT/head.tiff -rotate 270 $ROOT/../head.png
 rm $ROOT/head.tiff
-mv $ROOT/bed.tiff $ROOT/../bed.tiff
+convert $ROOT/bed.tiff $ROOT/../bed.png
