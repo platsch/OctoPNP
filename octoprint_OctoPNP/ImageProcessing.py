@@ -115,7 +115,7 @@ class ImageProcessing:
 		displacement_x=(cx-n_rows/2)/pxPerMM
 		displacement_y=(n_cols/2-cy)/pxPerMM
 
-		return [displacement_x, displacement_y]
+		return [displacement_x, -displacement_y]
 
 	def _new_boundary_detect(self,img):
 		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
