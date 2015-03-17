@@ -26,6 +26,7 @@ import re
 from subprocess import call
 import os
 import time
+import base64
 
 from .SmdParts import SmdParts
 from .ImageProcessing import ImageProcessing
@@ -206,6 +207,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		time.sleep(1)
 		# take picture
 		if self._grabImages():
+			self._updateUI("IMAGE", os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "head", "path"]))
 			#extract position information
 			headPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "head", "path"])
 			cm_x,cm_y=self.imgproc.get_displacement(headPath)
@@ -340,8 +342,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			)
 			if self._currentPart: data["part"] = self._currentPart
 		elif event is "IMAGE":
+			# open image and convert to base64
+			f = open(parameter,"r")
 			data = dict(
-				src = parameter
+				src = "data:image/" + os.path.splitext(parameter)[1] + ";base64,"+base64.b64encode(bytes(f.read()))
 			)
 
 		message = dict(
