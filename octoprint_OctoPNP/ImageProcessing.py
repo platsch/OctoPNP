@@ -32,7 +32,7 @@ class ImageProcessing:
 		crop_image=self._new_boundary_detect(img)
 		#GET CENTER OF MASS
 		gray_img=cv2.cvtColor(crop_image,cv2.COLOR_BGR2GRAY)
-		cmx,cmy=self.centerofMass(gray_img)
+		cmx,cmy = self._centerofMass(gray_img)[0:2]
 
 		#RETURN DISPLACEMENT
 		print "Calculating Displacement..."
@@ -43,6 +43,79 @@ class ImageProcessing:
 		displacement_y=((n_cols-cmy)-n_cols/2)*self.box_size/n_cols
 
 		return displacement_x,displacement_y
+
+	def get_orientation(self,img_path):
+		print "Inside get_orientation"
+		self._img_path = img_path
+
+		# open image file
+		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
+
+		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+		len_diagonal=self._get_lendiagonal(gray_img)
+
+		#Detect Lines
+		edges = cv2.Canny(gray_img,50,150,apertureSize = 3)
+		lines = cv2.HoughLines(edges,1,np.pi/180,int(len_diagonal/4))
+		arr_theta=[]
+
+		#drawing the lines and storing theta in degree for future calculation
+		if len(lines[0])==0:
+			print "..........NO LINE DETECTED......."
+			avg_deviation=0
+		else:
+
+			for rho,theta in lines[0]:
+				theta_degree=(180/math.pi)*theta
+				if theta_degree>90:
+					arr_theta.append(90+(180-theta_degree))
+				elif theta_degree<=90:
+					arr_theta.append(90-theta_degree)
+
+				a = np.cos(theta)
+				b = np.sin(theta)
+				x0 = a*rho
+				y0 = b*rho
+				x1 = int(x0 + 1000*(-b))
+				y1 = int(y0 + 1000*(a))
+				x2 = int(x0 - 1000*(-b))
+				y2 = int(y0 - 1000*(a))
+				cv2.line(gray_img,(x1,y1),(x2,y2),(0,255,0),2)
+
+
+			##calculating deviation
+			dev=[]
+			for theta in arr_theta:
+				if theta>=0 and theta <=45:
+					dev.append(theta)
+				elif theta>=135 and theta<=180:
+					dev.append(theta-180)
+				else:
+					dev.append(theta-90)
+
+			arr_deviation=np.asanyarray(dev)
+			avg_deviation=np.average(arr_deviation)
+
+			print "Theta:",arr_theta
+			print "Deviation:",arr_deviation
+
+		return avg_deviation
+
+
+	def get_centerOfMass(self,img_path):
+		self._img_path = img_path
+		# open image file
+		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
+
+		cx,cy,x1,y1,x2,y2=self._centerofMass(img)
+
+		np.shape(img)
+		n_rows=img.shape[0]
+		n_cols=img.shape[1]
+		displacement_x=(cx-n_rows/2)*self.box_size/n_rows
+		displacement_y=((n_cols-cy)-n_cols/2)*self.box_size/n_cols
+
+		return [cx,cy]
 
 	def _new_boundary_detect(self,img):
 		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
@@ -326,71 +399,9 @@ class ImageProcessing:
 		return cx,cy,x1,y1,x2,y2
 
 
-	def centerofMass(self,crop_img):
-		print "Inside centerofMass"
-		cx,cy,x1,y1,x2,y2=self._centerofMass(crop_img)
-		return cx,cy
-
 	def _get_lendiagonal(self,img):
 		print "Inside _get_lendiagonal"
 		cx,cy,x1,y1,x2,y2=self._centerofMass(img)
 		len_diagonal=math.sqrt(((x1-x2)**2)+((y1-y2)**2))
 		print "Length of Diagonal:",len_diagonal
 		return len_diagonal
-
-	def get_orientation(self,img_path):
-		print "Inside get_orientation"
-		self._img_path = img_path
-
-		# open image file
-		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
-
-		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-		len_diagonal=self._get_lendiagonal(gray_img)
-
-		#Detect Lines
-		edges = cv2.Canny(gray_img,50,150,apertureSize = 3)
-		lines = cv2.HoughLines(edges,1,np.pi/180,int(len_diagonal/4))
-		arr_theta=[]
-
-		#drawing the lines and storing theta in degree for future calculation
-		if len(lines[0])==0:
-			print "..........NO LINE DETECTED......."
-			avg_deviation=0
-		else:
-
-			for rho,theta in lines[0]:
-				theta_degree=(180/math.pi)*theta
-				if theta_degree>90:
-					arr_theta.append(90+(180-theta_degree))
-				elif theta_degree<=90:
-					arr_theta.append(90-theta_degree)
-
-				a = np.cos(theta)
-				b = np.sin(theta)
-				x0 = a*rho
-				y0 = b*rho
-				x1 = int(x0 + 1000*(-b))
-				y1 = int(y0 + 1000*(a))
-				x2 = int(x0 - 1000*(-b))
-				y2 = int(y0 - 1000*(a))
-				cv2.line(gray_img,(x1,y1),(x2,y2),(0,255,0),2)
-
-
-			##calculating deviation
-			dev=[]
-			for theta in arr_theta:
-				if theta>=0 and theta <=45:
-					dev.append(theta)
-				elif theta>=135 and theta<=180:
-					dev.append(theta-180)
-				else:
-					dev.append(theta-90)
-
-			arr_deviation=np.asanyarray(dev)
-			avg_deviation=np.average(arr_deviation)
-
-			print "Theta:",arr_theta
-			print "Deviation:",arr_deviation
-
-		return avg_deviation

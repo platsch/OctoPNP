@@ -243,15 +243,15 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 	def _placePart(self, partnr):
 		orientation_offset = 0
+		displacement = [0, 0]
 
 		# find destination at the object
 		destination = self.smdparts.getPartDestination(partnr)
 
 		# take picture
+		bedPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "bed", "path"])
 		if self._grabImages():
-			pass
 			# get rotation offset
-			bedPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "bed", "path"])
 			orientation_offset = self.imgproc.get_orientation(bedPath)
 		else:
 			self._updateUI("ERROR", "Camera not ready")
@@ -262,16 +262,26 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		self._printer.command("G92 E0")
 		self._printer.command("G1 E" + str(destination[3]-orientation_offset) + " F" + str(self.FEEDRATE))
 
+		time.sleep(2)
+
+		# take picture to find part offset
+		if self._grabImages():
+			displacement = self.imgproc.get_centerOfMass(bedPath)
+		else:
+			self._updateUI("ERROR", "Camera not ready")
+
+		print "displacement - x: " + str(displacement[0]) + " y: " + str(displacement[1])
+
 		# move to destination
 		cmd = "G1 X" + str(destination[0]-float(self._settings.get(["vacnozzle", "x"]))) \
 			  + " Y" + str(destination[1]-float(self._settings.get(["vacnozzle", "y"]))) \
 			  + " Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)+5) + " F" + str(self.FEEDRATE)
 		self._logger.info("object destination: " + cmd)
-		self._printer.command(cmd)
-		self._printer.command("G1 Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)))
+		#self._printer.command(cmd)
+		#self._printer.command("G1 Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)))
 
 		#release part
-		self._releaseVacuum()
+		#self._releaseVacuum()
 
 
 	# get the position of the box (center of the box) containing part x relative to the [0,0] corner of the tray
