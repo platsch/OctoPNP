@@ -210,6 +210,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 	def _pickPart(self, partnr):
 		# wait n seconds to make sure cameras are ready
 		time.sleep(1)
+
+		part_offset = [0, 0]
+
 		# take picture
 		if self._grabImages():
 			headPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "head", "path"])
@@ -218,12 +221,14 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			self._updateUI("IMAGE", headPath)
 
 			#extract position information
-			cm_x,cm_y=self.imgproc.get_displacement(headPath)
+			part_offset = self.imgproc.get_displacement(headPath)
+
+			# update UI
+			self._updateUI("IMAGE", self.imgproc.get_last_saved_image_path())
 		else:
 			cm_x=cm_y=0
 			self._updateUI("ERROR", "Camera not ready")
 
-		part_offset = [cm_x, cm_y]
 		self._logger.info("PART OFFSET:" + str(part_offset))
 
 		tray_offset = self._getTrayPosFromPartNr(partnr)
@@ -264,6 +269,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 			# get rotation offset
 			orientation_offset = self.imgproc.get_orientation(bedPath)
+			# update UI
+			self._updateUI("IMAGE", self.imgproc.get_last_saved_image_path())
 		else:
 			self._updateUI("ERROR", "Camera not ready")
 

@@ -18,6 +18,7 @@ class ImageProcessing:
 	def __init__(self, box_size):
 		self.box_size=box_size
 		self._img_path = ""
+		self._last_saved_image_path = None
 
 #==============================================================================
 # get_displacement
@@ -122,6 +123,17 @@ class ImageProcessing:
 
 		return [displacement_x, -displacement_y]
 
+
+
+#==============================================================================
+# get_last_saved_image_path
+#==============================================================================
+	def get_last_saved_image_path(self):
+		if self._last_saved_image_path:
+			return self._last_saved_image_path
+		else:
+			return False
+
 #==============================================================================
 # _new_boundary_detect
 #==============================================================================
@@ -205,6 +217,7 @@ class ImageProcessing:
 		filename="/cropped_"+os.path.basename(self._img_path)
 		cropped_boundary_path=os.path.dirname(self._img_path)+filename
 		cv2.imwrite(cropped_boundary_path,img_crop)
+		self._last_saved_image_path = cropped_boundary_path
 		return img_crop
 
 #==============================================================================
@@ -379,6 +392,7 @@ class ImageProcessing:
 		filename="/finalcm_"+os.path.basename(self._img_path)
 		finalcm_path=os.path.dirname(self._img_path)+filename
 		cv2.imwrite(finalcm_path,crop_img)
+		self._last_saved_image_path = finalcm_path
 
 		return cx,cy,x1,y1,x2,y2
 
