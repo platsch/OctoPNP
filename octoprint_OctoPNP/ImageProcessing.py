@@ -221,7 +221,7 @@ class ImageProcessing:
 		print "height: " + str(height)
 
 		#Crop image and write
-		img_crop=img[ver_left_x:ver_left_x+width,hor_up_y:hor_up_y+height]
+		img_crop=img[hor_up_y:hor_up_y+height, ver_left_x:ver_left_x+width]
 		filename="/cropped_"+os.path.basename(self._img_path)
 		cropped_boundary_path=os.path.dirname(self._img_path)+filename
 		print cropped_boundary_path

@@ -286,10 +286,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		# take picture to find part offset
 		bedPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "bed", "path"])
 		if self._grabImages():
-			#update UI
-			self._updateUI("IMAGE", bedPath)
 
 			displacement = self.imgproc.get_centerOfMass(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM"])))
+			#update UI
+			self._updateUI("IMAGE", self.imgproc.get_last_saved_image_path())
 		else:
 			self._updateUI("ERROR", "Camera not ready")
 
