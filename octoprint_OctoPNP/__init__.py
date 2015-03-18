@@ -224,7 +224,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			part_offset = self.imgproc.get_displacement(headPath)
 
 			# update UI
-			self._updateUI("IMAGE", self.imgproc.get_last_saved_image_path())
+			self._updateUI("HEADIMAGE", self.imgproc.get_last_saved_image_path())
 		else:
 			cm_x=cm_y=0
 			self._updateUI("ERROR", "Camera not ready")
@@ -303,11 +303,11 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			  + " Y" + str(destination[1]-float(self._settings.get(["vacnozzle", "y"]))+displacement[1]) \
 			  + " Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)+5) + " F" + str(self.FEEDRATE)
 		self._logger.info("object destination: " + cmd)
-		#self._printer.command(cmd)
-		#self._printer.command("G1 Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)))
+		self._printer.command(cmd)
+		self._printer.command("G1 Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)))
 
 		#release part
-		#self._releaseVacuum()
+		self._releaseVacuum()
 
 
 	# get the position of the box (center of the box) containing part x relative to the [0,0] corner of the tray
