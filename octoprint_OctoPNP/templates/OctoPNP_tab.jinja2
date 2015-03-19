@@ -1,9 +1,31 @@
-{{ _('PNP State') }}: <strong data-bind="text: stateString"></strong><br>
-{{ _('Current operation') }}: <strong data-bind="text: currentOperation"></strong><br>
-{{ _('DEBUG') }}: <strong data-bind="text: debugvar"></strong><br>
-<!--test: {{ plugin_OctoPNP_tray_x|escape }} <br>-->
-<!--
-<div class="row" style="padding-left: 20px">
-	<img src="../static/img/white.png" data-bind="attr: {src: cameraImage}">
+<div class="row-fluid">
+    <div class="span6">
+		<h1>State</h1>
+		{{ _('PNP State') }}: <strong data-bind="text: stateString"></strong><br>
+		{{ _('Current operation') }}: <strong data-bind="text: currentOperation"></strong><br>
+		{{ _('DEBUG') }}: <strong data-bind="text: debugvar"></strong><br>
+	</div>
 </div>
--->
+
+<br>
+<div class="accordion" id="camera-accordion">
+    <div class="accordion-group">
+        <div class="accordion-heading">
+            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#camera-images"><h5>Camera images</h5></a>
+        </div>
+        <div id="camera-images" class="accordion-body collapse in">
+            <div class="accordion-inner">
+				<div class="row-fluid">
+				    <div class="span6">
+				    	<h1>Head camera</h1>
+				    	<img src="" id="headCameraImage">
+				    </div>
+				    <div class="span6">
+				    	<h1>Bed camera</h1>
+				    	<img src="" id="bedCameraImage">
+				    </div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>	

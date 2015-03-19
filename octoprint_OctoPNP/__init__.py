@@ -26,6 +26,7 @@ import re
 from subprocess import call
 import os
 import time
+import base64
 
 from .SmdParts import SmdParts
 from .ImageProcessing import ImageProcessing
@@ -67,8 +68,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
 	def on_after_startup(self):
-		headPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "head", "path"])
-		self.imgproc = ImageProcessing(headPath, float(self._settings.get(["tray", "boxsize"])))
+		self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])))
 		#used for communication to UI
 		self._pluginManager = octoprint.plugin.plugin_manager()
 
@@ -88,6 +88,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			"vacnozzle": {
 				"x": 0,
 				"y": 0,
+				"z_pressure": 0,
 				"extruder_nr": 2
 			},
 			"camera": {
@@ -101,6 +102,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 					"x": 0,
 					"y": 0,
 					"z": 0,
+					"pxPerMM": 50.0,
 					"path": ""
 				}
 			}
@@ -184,6 +186,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				return "G4 P0" # return dummy command
 			if self._state == self.STATE_ALIGN:
 				self._state = self.STATE_PLACE
+				self._alignPart(self._currentPart)
+				self._printer.command("M400")
+				self._printer.command("G4 P0")
+				self._printer.command("G4 P0")
 				self._printer.command("M361")
 				return "G4 P0" # return dummy command
 			if self._state == self.STATE_PLACE:
@@ -205,15 +211,25 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 	def _pickPart(self, partnr):
 		# wait n seconds to make sure cameras are ready
 		time.sleep(1)
+
+		part_offset = [0, 0]
+
 		# take picture
 		if self._grabImages():
+			headPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "head", "path"])
+
+			#update UI
+			self._updateUI("HEADIMAGE", headPath)
+
 			#extract position information
-			cm_x,cm_y=self.imgproc.get_cm()
+			part_offset = self.imgproc.get_displacement(headPath)
+
+			# update UI
+			self._updateUI("HEADIMAGE", self.imgproc.get_last_saved_image_path())
 		else:
 			cm_x=cm_y=0
 			self._updateUI("ERROR", "Camera not ready")
 
-		part_offset = [cm_x, cm_y]
 		self._logger.info("PART OFFSET:" + str(part_offset))
 
 		tray_offset = self._getTrayPosFromPartNr(partnr)
@@ -234,41 +250,62 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		# move to bed camera
 		vacuum_dest = [float(self._settings.get(["camera", "bed", "x"]))-float(self._settings.get(["vacnozzle", "x"])),\
 					   float(self._settings.get(["camera", "bed", "y"]))-float(self._settings.get(["vacnozzle", "y"])),\
-					   float(self._settings.get(["camera", "bed", "z"]))]
+					   float(self._settings.get(["camera", "bed", "z"]))+self.smdparts.getPartHeight(partnr)]
 
 		cmd = "G1 X" + str(vacuum_dest[0]) + " Y" + str(vacuum_dest[1]) + " Z" + str(vacuum_dest[2]) + " F"  + str(self.FEEDRATE)
 		self._printer.command(cmd)
 		self._logger.info("Moving to bed camera: %s", cmd)
 
-
-	def _placePart(self, partnr):
-		# take picture
-		if self._grabImages():
-			pass
-			#extract position information
-			#cm_x,cm_y=self.imgproc.get_cm()
-		else:
-			self._updateUI("ERROR", "Camera not ready")
-
-
-		# rotate object, compute offset
+	def _alignPart(self, partnr):
+		orientation_offset = 0
 
 		# find destination at the object
 		destination = self.smdparts.getPartDestination(partnr)
+
+		# take picture
+		bedPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "bed", "path"])
+		if self._grabImages():
+			#update UI
+			self._updateUI("BEDIMAGE", bedPath)
+
+			# get rotation offset
+			orientation_offset = self.imgproc.get_orientation(bedPath)
+			# update UI
+			self._updateUI("BEDIMAGE", self.imgproc.get_last_saved_image_path())
+		else:
+			self._updateUI("ERROR", "Camera not ready")
+
 		#rotate object
-		if destination[3] != 0:
-			# switch to vacuum extruder
-			self._printer.command("T" + self._settings.get(["vacnozzle", "extruder_nr"]))
-			self._printer.command("G92 E0")
-			self._printer.command("G1 E" + str(destination[3]) + " F" + str(self.FEEDRATE))
+		# switch to vacuum extruder
+		self._printer.command("T" + str(self._settings.get(["vacnozzle", "extruder_nr"])))
+		self._printer.command("G92 E0")
+		self._printer.command("G1 E" + str(destination[3]-orientation_offset) + " F" + str(self.FEEDRATE))
+
+	def _placePart(self, partnr):
+		displacement = [0, 0]
+
+		# take picture to find part offset
+		bedPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "bed", "path"])
+		if self._grabImages():
+
+			displacement = self.imgproc.get_centerOfMass(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM"])))
+			#update UI
+			self._updateUI("BEDIMAGE", self.imgproc.get_last_saved_image_path())
+		else:
+			self._updateUI("ERROR", "Camera not ready")
+
+		print "displacement - x: " + str(displacement[0]) + " y: " + str(displacement[1])
+
+		# find destination at the object
+		destination = self.smdparts.getPartDestination(partnr)
 
 		# move to destination
-		cmd = "G1 X" + str(destination[0]-float(self._settings.get(["vacnozzle", "x"]))) \
-			  + " Y" + str(destination[1]-float(self._settings.get(["vacnozzle", "y"]))) \
+		cmd = "G1 X" + str(destination[0]-float(self._settings.get(["vacnozzle", "x"]))+displacement[0]) \
+			  + " Y" + str(destination[1]-float(self._settings.get(["vacnozzle", "y"]))+displacement[1]) \
 			  + " Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)+5) + " F" + str(self.FEEDRATE)
 		self._logger.info("object destination: " + cmd)
 		self._printer.command(cmd)
-		self._printer.command("G1 Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)))
+		self._printer.command("G1 Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)-self._settings.get(["vacnozzle", "z_pressure"])))
 
 		#release part
 		self._releaseVacuum()
@@ -329,9 +366,11 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				type = parameter,
 			)
 			if self._currentPart: data["part"] = self._currentPart
-		elif event is "IMAGE":
+		elif event is "HEADIMAGE" or event is "BEDIMAGE":
+			# open image and convert to base64
+			f = open(parameter,"r")
 			data = dict(
-				src = parameter
+				src = "data:image/" + os.path.splitext(parameter)[1] + ";base64,"+base64.b64encode(bytes(f.read()))
 			)
 
 		message = dict(
