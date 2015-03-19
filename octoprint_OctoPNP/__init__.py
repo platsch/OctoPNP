@@ -88,6 +88,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			"vacnozzle": {
 				"x": 0,
 				"y": 0,
+				"z_pressure": 0,
 				"extruder_nr": 2
 			},
 			"camera": {
@@ -304,7 +305,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			  + " Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)+5) + " F" + str(self.FEEDRATE)
 		self._logger.info("object destination: " + cmd)
 		self._printer.command(cmd)
-		self._printer.command("G1 Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)))
+		self._printer.command("G1 Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)-self._settings.get(["vacnozzle", "z_pressure"])))
 
 		#release part
 		self._releaseVacuum()
