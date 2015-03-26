@@ -170,9 +170,14 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				command = re.search("P\d*", cmd).group() #strip the M361
 				self._currentPart = int(command[1:])
 				self._updateUI("OPERATION", "pick")
+
 				self._moveCameraToPart(self._currentPart)
 				self._printer.command("M400")
-				self._printer.command("G4 S1")
+				self._printer.command("G4 S0")
+				self._printer.command("M400")
+				self._printer.command("G4 P0")
+				self._printer.command("M400")
+				self._printer.command("G4 P0")
 				self._printer.command("G4 P0")
 				self._printer.command("M361")
 				return "G4 P0" # return dummy command
@@ -181,12 +186,22 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				self._pickPart(self._currentPart)
 				self._printer.command("M400")
 				self._printer.command("G4 P0")
+				self._printer.command("M400")
+				self._printer.command("G4 P0")
+				self._printer.command("G4 P0")
+				self._printer.command("M400")
+				self._printer.command("G4 P0")
 				self._printer.command("G4 P0")
 				self._printer.command("M361")
 				return "G4 P0" # return dummy command
 			if self._state == self.STATE_ALIGN:
 				self._state = self.STATE_PLACE
 				self._alignPart(self._currentPart)
+				self._printer.command("M400")
+				self._printer.command("G4 P0")
+				self._printer.command("M400")
+				self._printer.command("G4 P0")
+				self._printer.command("G4 P0")
 				self._printer.command("M400")
 				self._printer.command("G4 P0")
 				self._printer.command("G4 P0")
@@ -213,6 +228,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		time.sleep(1)
 
 		part_offset = [0, 0]
+
+		self._logger.info("Taking picture NOW")
 
 		# take picture
 		if self._grabImages():
@@ -263,6 +280,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		destination = self.smdparts.getPartDestination(partnr)
 
 		# take picture
+		self._logger.info("Taking picture NOW")
 		bedPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "bed", "path"])
 		if self._grabImages():
 			#update UI
@@ -285,6 +303,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		displacement = [0, 0]
 
 		# take picture to find part offset
+		self._logger.info("Taking picture NOW")
 		bedPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "bed", "path"])
 		if self._grabImages():
 
@@ -305,7 +324,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			  + " Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)+5) + " F" + str(self.FEEDRATE)
 		self._logger.info("object destination: " + cmd)
 		self._printer.command(cmd)
-		self._printer.command("G1 Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)-self._settings.get(["vacnozzle", "z_pressure"])))
+		self._printer.command("G1 Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)-float(self._settings.get(["vacnozzle", "z_pressure"]))))
 
 		#release part
 		self._releaseVacuum()
