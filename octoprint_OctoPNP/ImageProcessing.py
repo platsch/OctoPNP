@@ -35,7 +35,7 @@ class ImageProcessing:
 		#DETECT BOUNDARY AND CROP
 		#crop_image=self._boundaryDetect(img)
 		crop_image=self._new_boundary_detect(img)
-		if crop_image:
+		if not crop_image is None:
 			#GET CENTER OF MASS
 			gray_img=cv2.cvtColor(crop_image,cv2.COLOR_BGR2GRAY)
 			cmx,cmy = self._centerofMass(gray_img)[0:2]
@@ -64,22 +64,18 @@ class ImageProcessing:
 		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
 
 		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-		len_diagonal=self._get_lendiagonal(gray_img)
-
-		#Detect Lines
-		edges = cv2.Canny(gray_img,50,150,apertureSize = 3)
-		lines = cv2.HoughLines(edges,1,np.pi/180,int(len_diagonal/4))
+		lines = self._extract_lines(gray_img)
 		arr_theta=[]
 
 		#drawing the lines and calculating orientation and offset
-		if len(lines[0])==0:
+		if len(lines)==0:
 			print "..........NO LINE DETECTED......."
 			avg_deviation=0
 			displacement_x=0
 			displacement_y=0
 		else:
 
-			for rho,theta in lines[0]:
+			for rho,theta in lines:
 				theta_degree=(180/math.pi)*theta
 				if theta_degree>90:
 					arr_theta.append(90+(180-theta_degree))
@@ -113,31 +109,105 @@ class ImageProcessing:
 			print "Theta:",arr_theta
 			print "Deviation:",arr_deviation
 
-			#GET OFFSET/RECALCULATING CENTER OF MASS
-			cm_x,cm_y=self._get_offset(lines[0])
-			#CALCULATING DISPLACEMENT
-			n_rows=img.shape[0]
-			n_cols=img.shape[1]
-			displacement_x=(cm_x-n_rows/2)*self.box_size/n_rows
-			displacement_y=((n_cols-cm_y)-n_cols/2)*self.box_size/n_cols
 
-		return avg_deviation,displacement_x,displacement_y
+		return avg_deviation
+
+
 
 #==============================================================================
 # get_centerOfMass
 #==============================================================================
 	def get_centerOfMass(self,img_path, pxPerMM):
+
 		self._img_path = img_path
+
 		# open image file
 		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
 
-		cx, cy=self._centerofMass(img)[0:2]
+		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+		lines = self._extract_lines(gray_img)
 
-		np.shape(img)
+		cm_x = 0
+		cm_y = 0
+
+		if len(lines) == 0:
+			print "No lines detected!"
+		else:
+			list_theta=[]
+			list_rho=[]
+
+			for rho,theta in lines:
+			#For test drawing negative r lines
+				if rho <0:
+					list_theta.append(np.pi+theta)
+					list_rho.append(-rho)
+
+				else:
+					list_theta.append(theta)
+					list_rho.append(rho)
+
+			arr_theta=np.asanyarray(list_theta)
+			arr_rho=np.asanyarray(list_rho)
+
+			coordinate_x=[]
+			coordinate_y=[]
+
+			#Intersection of lines having angle diff in the range (85-95) or (265-275)
+			for i in range(0,len(arr_rho),1):
+				for j in range(0,len(arr_rho),1):
+					angle_diff=np.rad2deg(abs(arr_theta[i]-arr_theta[j]))
+
+					if i<>j and (angle_diff>=85 and angle_diff<=95) or (angle_diff>=265 and angle_diff<=275):
+						line1=np.array([arr_theta[i],arr_rho[i]])
+						line2=np.array([arr_theta[j],arr_rho[j]])
+						x,y=self._polar_intersect(line1,line2)
+						coordinate_x.append(int(x))
+						coordinate_y.append(int(y))
+
+			arr_x=np.sort(np.asanyarray(coordinate_x))
+			arr_y=np.sort(np.asanyarray(coordinate_y))
+
+			#Finding out corners of the bounding box formed by intersection points
+			x_avg=np.average(arr_x)
+			y_avg=np.average(arr_y)
+
+			arr_x1=arr_x[arr_x<=x_avg]
+			arr_x2=arr_x[arr_x>x_avg]
+			arr_y1=arr_y[arr_y<=y_avg]
+			arr_y2=arr_y[arr_y>y_avg]
+
+			#Center of mass
+			cm_x=int((np.min(arr_x1)+np.max(arr_x2))/2)
+			cm_y=int((np.min(arr_y1)+np.max(arr_y2))/2)
+
+
+		#CALCULATING DISPLACEMENT
 		n_rows=img.shape[0]
 		n_cols=img.shape[1]
-		displacement_x=(cx-n_rows/2)/pxPerMM
-		displacement_y=(n_cols/2-cy)/pxPerMM
+		displacement_x=(cm_x-n_rows/2)/pxPerMM
+		displacement_y=((n_cols-cm_y)-n_cols/2)/pxPerMM
+
+		# write image for UI
+		cv2.circle(img,(cm_x,cm_y),5,(0,255,0),-1)
+		filename="/final_"+os.path.basename(self._img_path)
+		final_img_path=os.path.dirname(self._img_path)+filename
+		cv2.imwrite(final_img_path,img)
+		self._last_saved_image_path = final_img_path
+
+
+		#
+		#
+		# self._img_path = img_path
+		# # open image file
+		# img=cv2.imread(img_path,cv2.IMREAD_COLOR)
+		#
+		# cx, cy=self._centerofMass(img)[0:2]
+		#
+		# np.shape(img)
+		# n_rows=img.shape[0]
+		# n_cols=img.shape[1]
+		# displacement_x=(cx-n_rows/2)/pxPerMM
+		# displacement_y=(n_cols/2-cy)/pxPerMM
 
 		return [displacement_x, -displacement_y]
 
@@ -231,10 +301,10 @@ class ImageProcessing:
 				width=np.min(rho_ver_part2)-ver_left_x
 				height=np.min(rho_hor_part2)-hor_up_y
 			else:
-				result = False
+				result = None
 				self._last_error = "No box-boundary detectable"
 		else:
-			result = False
+			result = None
 			self._last_error = "No lines detected"
 
 
@@ -436,6 +506,18 @@ class ImageProcessing:
 		return cx,cy,x1,y1,x2,y2
 
 #==============================================================================
+# _extract_lines
+#==============================================================================
+	def _extract_lines(self,gray_img):
+		len_diagonal=self._get_lendiagonal(gray_img)
+
+		#Detect Lines
+		edges = cv2.Canny(gray_img,50,150,apertureSize = 3)
+		lines = cv2.HoughLines(edges,1,np.pi/180,int(len_diagonal/4))
+		return lines[0]
+
+
+#==============================================================================
 # _get_lendiagonal
 #==============================================================================
 	def _get_lendiagonal(self,img):
@@ -461,56 +543,3 @@ class ImageProcessing:
 		arr=np.dot(r,a_inv)
 
 		return arr
-#==============================================================================
-# _get_offset
-#==============================================================================
-	def _get_offset(self,lines):
-		print "Inside _get_offset"
-		list_theta=[]
-		list_rho=[]
-
-		for rho,theta in lines:
-		#For test drawing negative r lines
-			if rho <0:
-				list_theta.append(np.pi+theta)
-				list_rho.append(-rho)
-
-			else:
-				list_theta.append(theta)
-				list_rho.append(rho)
-
-		arr_theta=np.asanyarray(list_theta)
-		arr_rho=np.asanyarray(list_rho)
-
-		coordinate_x=[]
-		coordinate_y=[]
-
-	#Intersection of lines having angle diff in the range (85-95) or (265-275)
-		for i in range(0,len(arr_rho),1):
-			for j in range(0,len(arr_rho),1):
-				angle_diff=np.rad2deg(abs(arr_theta[i]-arr_theta[j]))
-
-				if i<>j and (angle_diff>=85 and angle_diff<=95) or (angle_diff>=265 and angle_diff<=275):
-					line1=np.array([arr_theta[i],arr_rho[i]])
-					line2=np.array([arr_theta[j],arr_rho[j]])
-					x,y=self._polar_intersect(line1,line2)
-					coordinate_x.append(int(x))
-					coordinate_y.append(int(y))
-
-		arr_x=np.sort(np.asanyarray(coordinate_x))
-		arr_y=np.sort(np.asanyarray(coordinate_y))
-
-	#Finding out corners of the bounding box formed by intersection points
-		x_avg=np.average(arr_x)
-		y_avg=np.average(arr_y)
-
-		arr_x1=arr_x[arr_x<=x_avg]
-		arr_x2=arr_x[arr_x>x_avg]
-		arr_y1=arr_y[arr_y<=y_avg]
-		arr_y2=arr_y[arr_y>y_avg]
-
-	#Center of mass
-		cm_x=int((np.min(arr_x1)+np.max(arr_x2))/2)
-		cm_y=int((np.min(arr_y1)+np.max(arr_y2))/2)
-
-		return cm_x,cm_y
