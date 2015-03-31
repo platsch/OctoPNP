@@ -138,6 +138,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				#parse xml data
 				sane, msg = self.smdparts.load(xml)
 				if sane:
+					#TODO: validate part informations against tray
 					self._logger.info("Extracted information on %d parts from gcode file %s", self.smdparts.getPartCount(), payload.get("file"))
 					self._updateUI("FILE", "")
 				else:
@@ -225,11 +226,11 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 	def _pickPart(self, partnr):
 		# wait n seconds to make sure cameras are ready
-		time.sleep(1)
+		time.sleep(1) # is that necessary?
 
 		part_offset = [0, 0]
 
-		self._logger.info("Taking picture NOW")
+		self._logger.info("Taking picture NOW") # Debug output
 
 		# take picture
 		if self._grabImages():
@@ -240,6 +241,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 			#extract position information
 			part_offset = self.imgproc.get_displacement(headPath)
+			if not part_offset:
+				self._updateUI("ERROR", self.imgproc.get_last_error_message())
+				part_offset = [0, 0]
 
 			# update UI
 			self._updateUI("HEADIMAGE", self.imgproc.get_last_saved_image_path())

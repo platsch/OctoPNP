@@ -19,11 +19,13 @@ class ImageProcessing:
 		self.box_size=box_size
 		self._img_path = ""
 		self._last_saved_image_path = None
+		self._last_error = ""
 
 #==============================================================================
 # get_displacement
 #==============================================================================
 	def get_displacement(self,img_path):
+		result = False
 
 		self._img_path = img_path
 		# open image file
@@ -33,17 +35,23 @@ class ImageProcessing:
 		#DETECT BOUNDARY AND CROP
 		#crop_image=self._boundaryDetect(img)
 		crop_image=self._new_boundary_detect(img)
-		#GET CENTER OF MASS
-		gray_img=cv2.cvtColor(crop_image,cv2.COLOR_BGR2GRAY)
-		cmx,cmy = self._centerofMass(gray_img)[0:2]
+		if crop_image:
+			#GET CENTER OF MASS
+			gray_img=cv2.cvtColor(crop_image,cv2.COLOR_BGR2GRAY)
+			cmx,cmy = self._centerofMass(gray_img)[0:2]
 
-		#RETURN DISPLACEMENT
-		n_rows=crop_image.shape[0]
-		n_cols=crop_image.shape[1]
-		displacement_x=(cmx-n_rows/2)*self.box_size/n_rows
-		displacement_y=((n_cols-cmy)-n_cols/2)*self.box_size/n_cols
+			#TODO: check result from center of mass!
 
-		return displacement_x,displacement_y
+			#RETURN DISPLACEMENT
+			n_rows=crop_image.shape[0]
+			n_cols=crop_image.shape[1]
+			displacement_x=(cmx-n_rows/2)*self.box_size/n_rows
+			displacement_y=((n_cols-cmy)-n_cols/2)*self.box_size/n_cols
+			result = displacement_x,displacement_y
+		else:
+			result = False
+
+		return result
 
 #==============================================================================
 # get_orientation
@@ -134,10 +142,18 @@ class ImageProcessing:
 		else:
 			return False
 
+
+#==============================================================================
+# get_last_error_message
+#==============================================================================
+	def get_last_error_message(self):
+		return self._last_error
+
 #==============================================================================
 # _new_boundary_detect
 #==============================================================================
 	def _new_boundary_detect(self,img):
+		result = True
 
 		#Converting image to gray scale"
 		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
@@ -149,14 +165,16 @@ class ImageProcessing:
 
 		#Canny edge for line detection
 		edges = cv2.Canny(gray_img,50,150,apertureSize = 3)
-		cv2.imshow("Canny Image",edges)
+		#cv2.imshow("Canny Image",edges)
 
 		#Hough Transform for line detection having minimum of max(row,col)/4
 		lines = cv2.HoughLines(edges,1,np.pi/180,int(max(row,col)/4))
 
+		ver_left_x=0
+		hor_up_y=0
+		width=row
+		height=col
 
-		list_theta_ver=[]
-		list_theta_hor=[]
 		list_rho_ver=[]
 		list_rho_hor=[]
 
@@ -164,18 +182,16 @@ class ImageProcessing:
 		if len(lines[0])>0:
 			for rho,theta in lines[0]:
 				theta_degree=(180/math.pi)*theta
+				epsilon=2
 
 				#Considering only the horizontal and vertical lines
-				if int(theta_degree)==90:
-					list_theta_hor.append(theta_degree)  #remove later
+				if 90-epsilon < int(theta_degree) < 90+epsilon:
 					list_rho_hor.append(rho)
-				elif int(theta_degree)==0:
-					list_theta_ver.append(theta_degree)  #remove later
+				elif 0-epsilon < int(theta_degree) < 0+epsilon:
 					list_rho_ver.append(rho)
 
 				#Drawing horizontal/vertical lines
-				epsilon=2
-				if (int(theta_degree)>=90-epsilon or int(theta_degree)<=90+epsilon) or (int(theta_degree)>=0-epsilon or int(theta_degree)<=0+epsilon):
+				if (90-epsilon < int(theta_degree) < 90+epsilon) or (0-epsilon < int(theta_degree) < 0+epsilon):
 					a = np.cos(theta)
 					b = np.sin(theta)
 					x0 = a*rho
@@ -197,37 +213,40 @@ class ImageProcessing:
 			rho_hor_part1=arr_rho_hor[arr_rho_hor<=int(row/2)]
 			rho_hor_part2=arr_rho_hor[arr_rho_hor>int(row/2)]
 
-			#Finding the boundary box
-			ver_left_x=np.max(rho_ver_part1)
-			hor_up_y=np.max(rho_hor_part1)
-			width=np.min(rho_ver_part2)-ver_left_x
-			height=np.min(rho_hor_part2)-hor_up_y
+			#found boundaries?
+			if len(rho_ver_part1) > 0 and len(rho_ver_part2) > 0 and len(rho_hor_part1) > 0 and len(rho_hor_part2) > 0:
+				#Finding the boundary box
+				ver_left_x=np.max(rho_ver_part1)
+				hor_up_y=np.max(rho_hor_part1)
+				width=np.min(rho_ver_part2)-ver_left_x
+				height=np.min(rho_hor_part2)-hor_up_y
+			else:
+				result = False
+				self._last_error = "No box-boundary detectable"
 		else:
-			print "ERROR: no lines detected............"
-			ver_left_x=0
-			hor_up_y=0
-			width=row
-			height=col
+			result = False
+			self._last_error = "No lines detected"
 
 
+		if result:
+			cv2.circle(img,(ver_left_x,hor_up_y), 5, (0,255,0), -1)
+			cv2.rectangle(img,(ver_left_x,hor_up_y),(ver_left_x+width,hor_up_y+height),(255,0,0),2)
 
+			print "Bounding box details:"
+			print "x0,y0: " + str(ver_left_x) + str(hor_up_y)
+			print "width: " + str(width)
+			print "height: " + str(height)
 
-		cv2.circle(img,(ver_left_x,hor_up_y), 5, (0,255,0), -1)
-		cv2.rectangle(img,(ver_left_x,hor_up_y),(ver_left_x+width,hor_up_y+height),(255,0,0),2)
-
-		print "Bounding box details:"
-		print "x0,y0: " + str(ver_left_x) + str(hor_up_y)
-		print "width: " + str(width)
-		print "height: " + str(height)
 
 		#Crop image and write
 		img_crop=img[hor_up_y:hor_up_y+height, ver_left_x:ver_left_x+width]
 		filename="/cropped_"+os.path.basename(self._img_path)
 		cropped_boundary_path=os.path.dirname(self._img_path)+filename
-		print cropped_boundary_path
 		cv2.imwrite(cropped_boundary_path,img_crop)
 		self._last_saved_image_path = cropped_boundary_path
-		return img_crop
+		if result:
+			result = img_crop
+		return result
 
 #==============================================================================
 # _boundaryDetect
