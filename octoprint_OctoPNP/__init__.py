@@ -240,13 +240,13 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			self._updateUI("HEADIMAGE", headPath)
 
 			#extract position information
-			part_offset = self.imgproc.get_displacement(headPath)
+			part_offset = self.imgproc.locatePartInBox(headPath)
 			if not part_offset:
-				self._updateUI("ERROR", self.imgproc.get_last_error_message())
+				self._updateUI("ERROR", self.imgproc.getLastErrorMessage())
 				part_offset = [0, 0]
 
 			# update UI
-			self._updateUI("HEADIMAGE", self.imgproc.get_last_saved_image_path())
+			self._updateUI("HEADIMAGE", self.imgproc.getLastSavedImagePath())
 		else:
 			cm_x=cm_y=0
 			self._updateUI("ERROR", "Camera not ready")
@@ -291,9 +291,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			self._updateUI("BEDIMAGE", bedPath)
 
 			# get rotation offset
-			orientation_offset = self.imgproc.get_orientation(bedPath)
+			orientation_offset = self.imgproc.getPartOrientation(bedPath)
 			# update UI
-			self._updateUI("BEDIMAGE", self.imgproc.get_last_saved_image_path())
+			self._updateUI("BEDIMAGE", self.imgproc.getLastSavedImagePath())
 		else:
 			self._updateUI("ERROR", "Camera not ready")
 
@@ -311,9 +311,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		bedPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "bed", "path"])
 		if self._grabImages():
 
-			displacement = self.imgproc.get_centerOfMass(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM"])))
+			displacement = self.imgproc.getPartPosition(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM"])))
 			#update UI
-			self._updateUI("BEDIMAGE", self.imgproc.get_last_saved_image_path())
+			self._updateUI("BEDIMAGE", self.imgproc.getLastSavedImagePath())
 		else:
 			self._updateUI("ERROR", "Camera not ready")
 
@@ -332,6 +332,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 		#release part
 		self._releaseVacuum()
+		self._printer.command("G4 S2") #some extra time to make sure the part has released and the remaining vacuum is gone
 
 
 	# get the position of the box (center of the box) containing part x relative to the [0,0] corner of the tray
