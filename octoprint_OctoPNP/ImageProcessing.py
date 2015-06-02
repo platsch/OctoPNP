@@ -21,6 +21,7 @@ class ImageProcessing:
 		self._last_saved_image_path = None
 		self._last_error = ""
 		self._interactive=False
+		self._debug = True
 
 
 # Locates a part in a box. Box size must be given to constructor. Image must contain only
@@ -73,42 +74,34 @@ class ImageProcessing:
 
 			arr_theta=[]
 
-			print "len_diagonal: " + str(len_diagonal)
-
 			#drawing the lines and calculating orientation and offset
-			if len(lines)==0:
-				print "..........NO LINE DETECTED......."
-				avg_deviation=0
-			else:
 
-				for rho,theta in lines:
-					theta_degree=(180/math.pi)*theta
-					if theta_degree>90:
-						arr_theta.append(90+(180-theta_degree))
-					elif theta_degree<=90:
-						arr_theta.append(90-theta_degree)
+			for rho,theta in lines:
+				theta_degree=(180/math.pi)*theta
+				if theta_degree>90:
+					arr_theta.append(90+(180-theta_degree))
+				elif theta_degree<=90:
+					arr_theta.append(90-theta_degree)
 
-					#draw lines
-					self._drawLine(img, rho, theta, (0, 255, 0))
+				#draw lines
+				self._drawLine(img, rho, theta, (0, 255, 0))
 
 
-				##calculating deviation
-				dev=[]
-				for theta in arr_theta:
-					if theta>=0 and theta <=45:
-						dev.append(theta)
-					elif theta>=135 and theta<=180:
-						dev.append(theta-180)
-					else:
-						dev.append(theta-90)
+			##calculating deviation
+			dev=[]
+			for theta in arr_theta:
+				if theta>=0 and theta <=45:
+					dev.append(theta)
+				elif theta>=135 and theta<=180:
+					dev.append(theta-180)
+				else:
+					dev.append(theta-90)
 
-				arr_deviation=np.asanyarray(dev)
-				avg_deviation=np.average(arr_deviation)
+			arr_deviation=np.asanyarray(dev)
+			avg_deviation=np.average(arr_deviation)
 
-				#print "Theta:",arr_theta
-				#print "Deviation:",arr_deviation
-				print "avg deviation: " + str(avg_deviation)
-				break
+			if self._debug: print "avg deviation: " + str(avg_deviation)
+			break
 
 		if self._interactive: cv2.imshow("Lines orientation",img)
 		if self._interactive: cv2.waitKey(0)
@@ -123,11 +116,60 @@ class ImageProcessing:
 		return avg_deviation
 
 
-
 # Find the position of a (already rotated) part. Returns the offset between the
 # center of the image and the parts center of mass, 0,0 if no part is detected.
 #==============================================================================
-	def getPartPosition(self,img_path, pxPerMM):
+	def getPartPosition(self, img_path, pxPerMM):
+		self._img_path = img_path
+
+		# open image file
+		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
+
+		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+
+		cm_x = 0
+		cm_y = 0
+
+		ret,th1 = cv2.threshold(gray_img,200,255,cv2.THRESH_BINARY_INV)
+
+		res_x = th1.shape[1]
+		res_y = th1.shape[0]
+		object_pixels = sum(th1[(th1>0)])/255
+		sum_x = []
+
+
+		#TODO: Use built-in histograms or similar to speed this up!!
+		for i in range(res_x):
+			cm_x += sum(th1[:, i])/(255.0*object_pixels)*i
+
+		for i in range(res_y):
+			cm_y += sum(th1[i, :])/(255.0*object_pixels)*i
+
+		cm_x = int(round(cm_x))
+		cm_y = int(round(cm_y))
+
+		displacement_x=(cm_x-res_x/2)/pxPerMM
+		displacement_y=((res_y-cm_y)-res_y/2)/pxPerMM
+
+		# write image for UI
+		cv2.circle(img,(cm_x,cm_y),5,(0,255,0),-1)
+		filename="/final_"+os.path.basename(self._img_path)
+		final_img_path=os.path.dirname(self._img_path)+filename
+		cv2.imwrite(final_img_path,img)
+		self._last_saved_image_path = final_img_path
+
+		if self._interactive: cv2.imshow("Center of Mass",img)
+		if self._interactive: cv2.waitKey(0)
+
+		return [displacement_x, -displacement_y]
+
+
+
+# Find the position of a (already rotated) part. Returns the offset between the
+# center of the image and the parts center of mass, 0,0 if no part is detected.
+# This method is deprecated but might give better results in some setups
+#==============================================================================
+	def getPartPositionFromLineDetection(self,img_path, pxPerMM):
 
 		self._img_path = img_path
 
@@ -433,7 +475,6 @@ class ImageProcessing:
 		row_hist=[]
 		col_hist=[]
 
-		print np.shape(crop_img)
 		n_rows=crop_img.shape[0]
 		n_cols=crop_img.shape[1]
 
