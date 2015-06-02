@@ -138,6 +138,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				#parse xml data
 				sane, msg = self.smdparts.load(xml)
 				if sane:
+					#TODO: validate part informations against tray
 					self._logger.info("Extracted information on %d parts from gcode file %s", self.smdparts.getPartCount(), payload.get("file"))
 					self._updateUI("FILE", "")
 				else:
@@ -170,9 +171,14 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				command = re.search("P\d*", cmd).group() #strip the M361
 				self._currentPart = int(command[1:])
 				self._updateUI("OPERATION", "pick")
+
 				self._moveCameraToPart(self._currentPart)
 				self._printer.command("M400")
-				self._printer.command("G4 S1")
+				self._printer.command("G4 S0")
+				self._printer.command("M400")
+				self._printer.command("G4 P0")
+				self._printer.command("M400")
+				self._printer.command("G4 P0")
 				self._printer.command("G4 P0")
 				self._printer.command("M361")
 				return "G4 P0" # return dummy command
@@ -181,12 +187,22 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				self._pickPart(self._currentPart)
 				self._printer.command("M400")
 				self._printer.command("G4 P0")
+				self._printer.command("M400")
+				self._printer.command("G4 P0")
+				self._printer.command("G4 P0")
+				self._printer.command("M400")
+				self._printer.command("G4 P0")
 				self._printer.command("G4 P0")
 				self._printer.command("M361")
 				return "G4 P0" # return dummy command
 			if self._state == self.STATE_ALIGN:
 				self._state = self.STATE_PLACE
 				self._alignPart(self._currentPart)
+				self._printer.command("M400")
+				self._printer.command("G4 P0")
+				self._printer.command("M400")
+				self._printer.command("G4 P0")
+				self._printer.command("G4 P0")
 				self._printer.command("M400")
 				self._printer.command("G4 P0")
 				self._printer.command("G4 P0")
@@ -210,9 +226,11 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 	def _pickPart(self, partnr):
 		# wait n seconds to make sure cameras are ready
-		time.sleep(1)
+		time.sleep(1) # is that necessary?
 
 		part_offset = [0, 0]
+
+		self._logger.info("Taking picture NOW") # Debug output
 
 		# take picture
 		if self._grabImages():
@@ -222,10 +240,13 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			self._updateUI("HEADIMAGE", headPath)
 
 			#extract position information
-			part_offset = self.imgproc.get_displacement(headPath)
+			part_offset = self.imgproc.locatePartInBox(headPath)
+			if not part_offset:
+				self._updateUI("ERROR", self.imgproc.getLastErrorMessage())
+				part_offset = [0, 0]
 
 			# update UI
-			self._updateUI("HEADIMAGE", self.imgproc.get_last_saved_image_path())
+			self._updateUI("HEADIMAGE", self.imgproc.getLastSavedImagePath())
 		else:
 			cm_x=cm_y=0
 			self._updateUI("ERROR", "Camera not ready")
@@ -263,15 +284,16 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		destination = self.smdparts.getPartDestination(partnr)
 
 		# take picture
+		self._logger.info("Taking picture NOW")
 		bedPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "bed", "path"])
 		if self._grabImages():
 			#update UI
 			self._updateUI("BEDIMAGE", bedPath)
 
 			# get rotation offset
-			orientation_offset = self.imgproc.get_orientation(bedPath)
+			orientation_offset = self.imgproc.getPartOrientation(bedPath)
 			# update UI
-			self._updateUI("BEDIMAGE", self.imgproc.get_last_saved_image_path())
+			self._updateUI("BEDIMAGE", self.imgproc.getLastSavedImagePath())
 		else:
 			self._updateUI("ERROR", "Camera not ready")
 
@@ -285,12 +307,13 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		displacement = [0, 0]
 
 		# take picture to find part offset
+		self._logger.info("Taking picture NOW")
 		bedPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "bed", "path"])
 		if self._grabImages():
 
-			displacement = self.imgproc.get_centerOfMass(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM"])))
+			displacement = self.imgproc.getPartPosition(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM"])))
 			#update UI
-			self._updateUI("BEDIMAGE", self.imgproc.get_last_saved_image_path())
+			self._updateUI("BEDIMAGE", self.imgproc.getLastSavedImagePath())
 		else:
 			self._updateUI("ERROR", "Camera not ready")
 
@@ -305,10 +328,11 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			  + " Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)+5) + " F" + str(self.FEEDRATE)
 		self._logger.info("object destination: " + cmd)
 		self._printer.command(cmd)
-		self._printer.command("G1 Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)-self._settings.get(["vacnozzle", "z_pressure"])))
+		self._printer.command("G1 Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)-float(self._settings.get(["vacnozzle", "z_pressure"]))))
 
 		#release part
 		self._releaseVacuum()
+		self._printer.command("G4 S2") #some extra time to make sure the part has released and the remaining vacuum is gone
 
 
 	# get the position of the box (center of the box) containing part x relative to the [0,0] corner of the tray

@@ -3,6 +3,10 @@
 .idea
 *.iml
 *.tiff
+*.png
+*.gcode
+*.bak
+*.orig
 *.o
 *.*~
 build
