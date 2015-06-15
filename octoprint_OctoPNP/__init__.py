@@ -35,15 +35,15 @@ from .ImageProcessing import ImageProcessing
 __plugin_name__ = "OctoPNP"
 
 #instantiate plugin object and register hook for gcode injection
-def __plugin_init__():
+def __plugin_load__():
 
 	octopnp = OctoPNP()
 
-	global __plugin_implementations__
-	__plugin_implementations__ = [octopnp]
+	global __plugin_implementation__
+	__plugin_implementation__ = OctoPNP()
 
 	global __plugin_hooks__
-	__plugin_hooks__ = {'octoprint.comm.protocol.gcode': octopnp.hook_gcode}
+	__plugin_hooks__ = {'octoprint.comm.protocol.gcode.queuing': octopnp.hook_gcode}
 
 
 class OctoPNP(octoprint.plugin.StartupPlugin,
