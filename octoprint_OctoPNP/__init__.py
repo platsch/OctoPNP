@@ -40,7 +40,7 @@ def __plugin_load__():
 	octopnp = OctoPNP()
 
 	global __plugin_implementation__
-	__plugin_implementation__ = OctoPNP()
+	__plugin_implementation__ = octopnp
 
 	global __plugin_hooks__
 	__plugin_hooks__ = {'octoprint.comm.protocol.gcode.queuing': octopnp.hook_gcode}
@@ -71,6 +71,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])))
 		#used for communication to UI
 		self._pluginManager = octoprint.plugin.plugin_manager()
+
 
 	def get_settings_defaults(self):
 		return {
@@ -160,12 +161,12 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 	next acknowledging ok not until the positioning is finished. Since the next command is a M361,
 	octoprint will call the gcode hook again and we are back in the game, iterating to the next state.
 	"""
-	def hook_gcode(self, comm_obj, cmd):
+	def hook_gcode(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
 		if "M361" in cmd:
 			if self._state == self.STATE_NONE:
 				self._state = self.STATE_PICK
-				if self._printer.getCurrentData()["currentZ"]:
-					self._currentZ = float(self._printer.getCurrentData()["currentZ"])
+				if self._printer.get_current_data()["currentZ"]:
+					self._currentZ = float(self._printer.get_current_data()["currentZ"])
 				else:
 					self._currentZ = 0.0
 				command = re.search("P\d*", cmd).group() #strip the M361
@@ -173,40 +174,40 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				self._updateUI("OPERATION", "pick")
 
 				self._moveCameraToPart(self._currentPart)
-				self._printer.command("M400")
-				self._printer.command("G4 S0")
-				self._printer.command("M400")
-				self._printer.command("G4 P0")
-				self._printer.command("M400")
-				self._printer.command("G4 P0")
-				self._printer.command("G4 P0")
-				self._printer.command("M361")
+				self._printer.commands("M400")
+				self._printer.commands("G4 S0")
+				self._printer.commands("M400")
+				self._printer.commands("G4 P0")
+				self._printer.commands("M400")
+				self._printer.commands("G4 P0")
+				self._printer.commands("G4 P0")
+				self._printer.commands("M361")
 				return "G4 P0" # return dummy command
 			if self._state == self.STATE_PICK:
 				self._state = self.STATE_ALIGN
 				self._pickPart(self._currentPart)
-				self._printer.command("M400")
-				self._printer.command("G4 P0")
-				self._printer.command("M400")
-				self._printer.command("G4 P0")
-				self._printer.command("G4 P0")
-				self._printer.command("M400")
-				self._printer.command("G4 P0")
-				self._printer.command("G4 P0")
-				self._printer.command("M361")
+				self._printer.commands("M400")
+				self._printer.commands("G4 P0")
+				self._printer.commands("M400")
+				self._printer.commands("G4 P0")
+				self._printer.commands("G4 P0")
+				self._printer.commands("M400")
+				self._printer.commands("G4 P0")
+				self._printer.commands("G4 P0")
+				self._printer.commands("M361")
 				return "G4 P0" # return dummy command
 			if self._state == self.STATE_ALIGN:
 				self._state = self.STATE_PLACE
 				self._alignPart(self._currentPart)
-				self._printer.command("M400")
-				self._printer.command("G4 P0")
-				self._printer.command("M400")
-				self._printer.command("G4 P0")
-				self._printer.command("G4 P0")
-				self._printer.command("M400")
-				self._printer.command("G4 P0")
-				self._printer.command("G4 P0")
-				self._printer.command("M361")
+				self._printer.commands("M400")
+				self._printer.commands("G4 P0")
+				self._printer.commands("M400")
+				self._printer.commands("G4 P0")
+				self._printer.commands("G4 P0")
+				self._printer.commands("M400")
+				self._printer.commands("G4 P0")
+				self._printer.commands("G4 P0")
+				self._printer.commands("M361")
 				return "G4 P0" # return dummy command
 			if self._state == self.STATE_PLACE:
 				self._placePart(self._currentPart)
@@ -220,8 +221,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		camera_offset = [tray_offset[0]-float(self._settings.get(["camera", "head", "x"])), tray_offset[1]-float(self._settings.get(["camera", "head", "y"])), float(self._settings.get(["camera", "head", "z"])) + tray_offset[2]]
 		cmd = "G1 X" + str(camera_offset[0]) + " Y" + str(camera_offset[1]) + " Z" + str(camera_offset[2]) + " F" + str(self.FEEDRATE)
 		self._logger.info("Move camera to: " + cmd)
-		self._printer.command("G1 Z" + str(self._currentZ+5) + " F" + str(self.FEEDRATE)) # lift printhead
-		self._printer.command(cmd)
+		self._printer.commands("G1 Z" + str(self._currentZ+5) + " F" + str(self.FEEDRATE)) # lift printhead
+		self._printer.commands(cmd)
 
 
 	def _pickPart(self, partnr):
@@ -260,13 +261,13 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 		# move vac nozzle to part and pick
 		cmd = "G1 X" + str(vacuum_dest[0]) + " Y" + str(vacuum_dest[1]) + " F" + str(self.FEEDRATE)
-		self._printer.command(cmd)
-		self._printer.command("G1 Z" + str(vacuum_dest[2]+5))
+		self._printer.commands(cmd)
+		self._printer.commands("G1 Z" + str(vacuum_dest[2]+5))
 		self._releaseVacuum()
-		self._printer.command("G1 Z" + str(vacuum_dest[2]) + "F1000")
+		self._printer.commands("G1 Z" + str(vacuum_dest[2]) + "F1000")
 		self._gripVacuum()
-		self._printer.command("G4 S1")
-		self._printer.command("G1 Z" + str(vacuum_dest[2]+5) + "F1000")
+		self._printer.commands("G4 S1")
+		self._printer.commands("G1 Z" + str(vacuum_dest[2]+5) + "F1000")
 
 		# move to bed camera
 		vacuum_dest = [float(self._settings.get(["camera", "bed", "x"]))-float(self._settings.get(["vacnozzle", "x"])),\
@@ -274,7 +275,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 					   float(self._settings.get(["camera", "bed", "z"]))+self.smdparts.getPartHeight(partnr)]
 
 		cmd = "G1 X" + str(vacuum_dest[0]) + " Y" + str(vacuum_dest[1]) + " Z" + str(vacuum_dest[2]) + " F"  + str(self.FEEDRATE)
-		self._printer.command(cmd)
+		self._printer.commands(cmd)
 		self._logger.info("Moving to bed camera: %s", cmd)
 
 	def _alignPart(self, partnr):
@@ -299,9 +300,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 		#rotate object
 		# switch to vacuum extruder
-		self._printer.command("T" + str(self._settings.get(["vacnozzle", "extruder_nr"])))
-		self._printer.command("G92 E0")
-		self._printer.command("G1 E" + str(destination[3]-orientation_offset) + " F" + str(self.FEEDRATE))
+		self._printer.commands("T" + str(self._settings.get(["vacnozzle", "extruder_nr"])))
+		self._printer.commands("G92 E0")
+		self._printer.commands("G1 E" + str(destination[3]-orientation_offset) + " F" + str(self.FEEDRATE))
 
 	def _placePart(self, partnr):
 		displacement = [0, 0]
@@ -327,12 +328,12 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			  + " Y" + str(destination[1]-float(self._settings.get(["vacnozzle", "y"]))+displacement[1]) \
 			  + " Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)+5) + " F" + str(self.FEEDRATE)
 		self._logger.info("object destination: " + cmd)
-		self._printer.command(cmd)
-		self._printer.command("G1 Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)-float(self._settings.get(["vacnozzle", "z_pressure"]))))
+		self._printer.commands(cmd)
+		self._printer.commands("G1 Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)-float(self._settings.get(["vacnozzle", "z_pressure"]))))
 
 		#release part
 		self._releaseVacuum()
-		self._printer.command("G4 S2") #some extra time to make sure the part has released and the remaining vacuum is gone
+		self._printer.commands("G4 S2") #some extra time to make sure the part has released and the remaining vacuum is gone
 
 
 	# get the position of the box (center of the box) containing part x relative to the [0,0] corner of the tray
@@ -349,18 +350,18 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		return [x, y, float(self._settings.get(["tray", "z"]))]
 
 	def _gripVacuum(self):
-		self._printer.command("M400")
-		self._printer.command("M400")
-		self._printer.command("G4 S1")
-		self._printer.command("M340 P0 S1500")
-		self._printer.command("G4 S1")
+		self._printer.commands("M400")
+		self._printer.commands("M400")
+		self._printer.commands("G4 S1")
+		self._printer.commands("M340 P0 S1500")
+		self._printer.commands("G4 S1")
 
 	def _releaseVacuum(self):
-		self._printer.command("M400")
-		self._printer.command("M400")
-		self._printer.command("G4 S1")
-		self._printer.command("M340 P0 S1200")
-		self._printer.command("G4 S1")
+		self._printer.commands("M400")
+		self._printer.commands("M400")
+		self._printer.commands("G4 S1")
+		self._printer.commands("M340 P0 S1200")
+		self._printer.commands("G4 S1")
 
 	def _grabImages(self):
 		result = True
