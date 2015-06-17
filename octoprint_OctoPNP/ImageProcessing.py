@@ -33,7 +33,7 @@ class ImageProcessing:
 
 		self._img_path = img_path
 		# open image file
-		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
+		img=cv2.imread(img_path,cv2.CV_LOAD_IMAGE_COLOR)
 
 		#DETECT BOUNDARY AND CROP
 		crop_image=self._boundaryDetect(img)
@@ -62,7 +62,7 @@ class ImageProcessing:
 		self._img_path = img_path
 
 		# open image file
-		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
+		img=cv2.imread(img_path,cv2.CV_LOAD_IMAGE_COLOR)
 		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
 		canny_min_threshold = 250
@@ -123,7 +123,7 @@ class ImageProcessing:
 		self._img_path = img_path
 
 		# open image file
-		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
+		img=cv2.imread(img_path,cv2.CV_LOAD_IMAGE_COLOR)
 
 		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
@@ -174,7 +174,7 @@ class ImageProcessing:
 		self._img_path = img_path
 
 		# open image file
-		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
+		img=cv2.imread(img_path,cv2.CV_LOAD_IMAGE_COLOR)
 
 		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
@@ -286,7 +286,7 @@ class ImageProcessing:
 		#
 		# self._img_path = img_path
 		# # open image file
-		# img=cv2.imread(img_path,cv2.IMREAD_COLOR)
+		# img=cv2.imread(img_path,cv2.CV_LOAD_IMAGE_COLOR)
 		#
 		# cx, cy=self._centerofMass(img)[0:2]
 		#
