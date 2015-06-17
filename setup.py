@@ -68,7 +68,7 @@ def params():
 	packages = [plugin_package]
 
 	# we might have additional data files in sub folders that need to be installed too
-	package_data = {plugin_package: package_data_dirs(plugin_package, ['static', 'templates', 'translations'] + plugin_additional_data)}
+	package_data = {plugin_package: package_data_dirs(plugin_package, ['static', 'templates', 'translations', 'cameras'] + plugin_additional_data)}
 	include_package_data = True
 
 	# If you have any package data that needs to be accessible on the file system, such as templates or static assets
