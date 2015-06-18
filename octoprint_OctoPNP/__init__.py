@@ -68,7 +68,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
 	def on_after_startup(self):
-		self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), 200, 150)
+		self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), 150, 125)
 		#used for communication to UI
 		self._pluginManager = octoprint.plugin.plugin_manager()
 
@@ -306,6 +306,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 	def _placePart(self, partnr):
 		displacement = [0, 0]
+
+		#sometimes the hook returns to early, very strange... workaround: wait a few ms
+		time.sleep(0.5)
 
 		# take picture to find part offset
 		self._logger.info("Taking picture NOW")

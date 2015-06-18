@@ -340,10 +340,11 @@ class ImageProcessing:
 		object_pixels = sum(binary_img[(binary_img>0)])/255
 		len_diagonal = math.sqrt(object_pixels)
 
+		#ratio to reduce line length for hough transformation if the part is large
+		object_img_ratio = float(math.sqrt(object_pixels))/math.sqrt((binary_img.shape[0]*binary_img.shape[1]))
+
 		if self._interactive: cv2.imshow("Binary img",binary_img)
 		if self._interactive: cv2.waitKey(0)
-
-
 
 		#Detect Lines
 		#edges = cv2.Canny(gray_img,50,150,apertureSize = 3)
@@ -353,7 +354,7 @@ class ImageProcessing:
 
 
 		#lines = cv2.HoughLines(edges,2,np.pi/180,int(len_diagonal/4))
-		lines = cv2.HoughLines(edges,1,np.pi/180,int(len_diagonal/2))
+		lines = cv2.HoughLines(edges,1,np.pi/180,int(len_diagonal/(2+2*object_img_ratio)))
 		if lines is None:
 			lines = [[]]
 		return lines[0], len_diagonal
