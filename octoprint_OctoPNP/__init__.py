@@ -68,7 +68,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
 	def on_after_startup(self):
-		self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])))
+		self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), 200, 150)
 		#used for communication to UI
 		self._pluginManager = octoprint.plugin.plugin_manager()
 

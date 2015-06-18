@@ -10,13 +10,13 @@ import numpy as np
 import math
 import os
 import shutil
-#import scipy.signal as sig
-from matplotlib import pyplot as plt
 
 class ImageProcessing:
 
-	def __init__(self, box_size):
+	def __init__(self, box_size, bed_cam_binary_thresh, head_cam_binary_thresh):
 		self.box_size=box_size
+		self.bed_binary_thresh = bed_cam_binary_thresh
+		self.head_binary_thresh = head_cam_binary_thresh
 		self._img_path = ""
 		self._last_saved_image_path = None
 		self._last_error = ""
@@ -33,14 +33,18 @@ class ImageProcessing:
 
 		self._img_path = img_path
 		# open image file
-		img=cv2.imread(img_path,cv2.CV_LOAD_IMAGE_COLOR)
+		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
 
 		#DETECT BOUNDARY AND CROP
 		crop_image=self._boundaryDetect(img)
+
+		gray_img=cv2.cvtColor(crop_image,cv2.COLOR_BGR2GRAY)
+		ret,th_img = cv2.threshold(gray_img,self.head_binary_thresh,255,cv2.THRESH_BINARY_INV)
+ 		binary_img = self._removeBoxShadows(th_img)
+
 		if not crop_image is None:
 			#GET CENTER OF MASS
-			gray_img=cv2.cvtColor(crop_image,cv2.COLOR_BGR2GRAY)
-			cmx,cmy = self._centerofMass(gray_img)[0:2]
+			cmx, cmy = self._centerOfMass(binary_img)
 
 			#TODO: check result from center of mass!
 
@@ -50,6 +54,18 @@ class ImageProcessing:
 			displacement_x=(cmx-n_rows/2)*self.box_size/n_rows
 			displacement_y=((n_cols-cmy)-n_cols/2)*self.box_size/n_cols
 			result = displacement_x,displacement_y
+
+
+			# Generate result image and return
+			cv2.circle(crop_image,(int(cmx),int(cmy)), 5, (0,255,0), -1)
+			filename="/finalcm_"+os.path.basename(self._img_path)
+			finalcm_path=os.path.dirname(self._img_path)+filename
+			cv2.imwrite(finalcm_path,crop_image)
+			self._last_saved_image_path = finalcm_path
+
+			if self._interactive: cv2.imshow("Part in box: ",crop_image)
+			if self._interactive: cv2.waitKey(0)
+
 		else:
 			result = False
 
@@ -62,7 +78,7 @@ class ImageProcessing:
 		self._img_path = img_path
 
 		# open image file
-		img=cv2.imread(img_path,cv2.CV_LOAD_IMAGE_COLOR)
+		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
 		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
 		canny_min_threshold = 250
@@ -123,30 +139,22 @@ class ImageProcessing:
 		self._img_path = img_path
 
 		# open image file
-		img=cv2.imread(img_path,cv2.CV_LOAD_IMAGE_COLOR)
+		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
 
 		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
 		cm_x = 0
 		cm_y = 0
 
-		ret,th1 = cv2.threshold(gray_img,200,255,cv2.THRESH_BINARY_INV)
+		ret,th1 = cv2.threshold(gray_img,self.bed_binary_thresh,255,cv2.THRESH_BINARY_INV)
+
+		if self._interactive: cv2.imshow("Binarized image",th1)
+		if self._interactive: cv2.waitKey(0)
+
+		cm_x, cm_y = self._centerOfMass(th1)
 
 		res_x = th1.shape[1]
 		res_y = th1.shape[0]
-		object_pixels = sum(th1[(th1>0)])/255
-		sum_x = []
-
-
-		#TODO: Use built-in histograms or similar to speed this up!!
-		for i in range(res_x):
-			cm_x += sum(th1[:, i])/(255.0*object_pixels)*i
-
-		for i in range(res_y):
-			cm_y += sum(th1[i, :])/(255.0*object_pixels)*i
-
-		cm_x = int(round(cm_x))
-		cm_y = int(round(cm_y))
 
 		displacement_x=(cm_x-res_x/2)/pxPerMM
 		displacement_y=((res_y-cm_y)-res_y/2)/pxPerMM
@@ -162,142 +170,6 @@ class ImageProcessing:
 		if self._interactive: cv2.waitKey(0)
 
 		return [displacement_x, -displacement_y]
-
-
-
-# Find the position of a (already rotated) part. Returns the offset between the
-# center of the image and the parts center of mass, 0,0 if no part is detected.
-# This method is deprecated but might give better results in some setups
-#==============================================================================
-	def getPartPositionFromLineDetection(self,img_path, pxPerMM):
-
-		self._img_path = img_path
-
-		# open image file
-		img=cv2.imread(img_path,cv2.CV_LOAD_IMAGE_COLOR)
-
-		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-
-		cm_x = 0
-		cm_y = 0
-
-		canny_min_threshold = 200
-		while canny_min_threshold > 20:
-			lines, len_diagonal = self._extractLines(gray_img, canny_min_threshold)
-			canny_min_threshold = (canny_min_threshold/4)*3
-			print "Canny min threshold: " + str(canny_min_threshold)
-
-			if len(lines) < 4: #not enough lines for a square...
-				print "CenterOfMass: not enough lines, decreasing Canny threshold"
-				continue
-
-			list_theta=[]
-			list_rho=[]
-
-			for rho,theta in lines:
-				if rho <0:
-					list_theta.append(np.pi+theta)
-					list_rho.append(-rho)
-
-				else:
-					list_theta.append(theta)
-					list_rho.append(rho)
-
-			arr_theta=np.asanyarray(list_theta)
-			arr_rho=np.asanyarray(list_rho)
-
-			coordinate_x=[]
-			coordinate_y=[]
-			points = []
-			epsilon = 5
-
-			#Intersection of lines having angle diff in the range (85-95) or (265-275)
-			for i in range(0,len(arr_rho),1):
-				for j in range(0,len(arr_rho),1):
-					angle_diff=np.rad2deg(abs(arr_theta[i]-arr_theta[j]))
-
-					if i!=j and (angle_diff>=90-epsilon and angle_diff<=90+epsilon) or (angle_diff>=270-epsilon and angle_diff<=270+epsilon):
-						line1=np.array([arr_theta[i],arr_rho[i]])
-						line2=np.array([arr_theta[j],arr_rho[j]])
-						x,y=self._polarIntersect(line1,line2)
-						coordinate_x.append(int(x))
-						coordinate_y.append(int(y))
-						points.append([int(round(x)), int(round(y))])
-
-						#visualisation
-						self._drawLine(img, arr_rho[i], arr_theta[i], (0, 255, 0))
-						#visualisation
-			if len(coordinate_x) < 2 or len(coordinate_y) < 2:
-				print "CenterOfMass: not enough intersections, decreasing Canny threshold"
-				continue
-
-			pointArray = np.asanyarray(points)
-			hull = cv2.convexHull(pointArray)
-
-			#visualisation
-			for p in range(0,len(hull), 1):
-				q = (p+1)%len(hull)
-				cv2.line(img,(hull[p][0][0],hull[p][0][1]),(hull[q][0][0], hull[q][0][1]),(0,0,int(canny_min_threshold)),2)
-
-			area = math.sqrt(cv2.contourArea(hull))
-
-			min_x = np.min(coordinate_x)
-			max_x = np.max(coordinate_x)
-			min_y = np.min(coordinate_y)
-			max_y = np.max(coordinate_y)
-
-			#Center of mass
-			cm_x=int((min_x+max_x)/2)
-			cm_y=int((min_y+max_y)/2)
-
-			print "area: " + str(area) + " len_diagonal/2: " + str(len_diagonal/2)
-			if self._interactive: cv2.imshow("Canny Image",img)
-			if self._interactive: cv2.waitKey(0)
-			if area > len_diagonal/2:
-				break
-
-			print "CenterOfMass: bounding box to small, decreasing Canny threshold"
-
-
-		#CALCULATING DISPLACEMENT
-		n_rows=img.shape[0]
-		n_cols=img.shape[1]
-		if canny_min_threshold < 20:
-			print "CenterOfMass: no part found, use 0:0 as default CoM"
-			cm_x = n_rows/2
-			cm_y = n_cols/2
-			print "cm_x: " + str(cm_x)
-
-		displacement_x=(cm_x-n_rows/2)/pxPerMM
-		displacement_y=((n_cols-cm_y)-n_cols/2)/pxPerMM
-
-		# write image for UI
-		cv2.circle(img,(cm_x,cm_y),5,(0,255,0),-1)
-		filename="/final_"+os.path.basename(self._img_path)
-		final_img_path=os.path.dirname(self._img_path)+filename
-		cv2.imwrite(final_img_path,img)
-		self._last_saved_image_path = final_img_path
-
-		if self._interactive: cv2.imshow("Canny Image",img)
-		if self._interactive: cv2.waitKey(0)
-
-
-		#
-		#
-		# self._img_path = img_path
-		# # open image file
-		# img=cv2.imread(img_path,cv2.CV_LOAD_IMAGE_COLOR)
-		#
-		# cx, cy=self._centerofMass(img)[0:2]
-		#
-		# np.shape(img)
-		# n_rows=img.shape[0]
-		# n_cols=img.shape[1]
-		# displacement_x=(cx-n_rows/2)/pxPerMM
-		# displacement_y=(n_cols/2-cy)/pxPerMM
-
-		return [displacement_x, -displacement_y]
-
 
 
 
@@ -350,7 +222,7 @@ class ImageProcessing:
 					theta_degree=(180/math.pi)*theta
 					epsilon=2
 
-					#Considering only the horizontal and vertical lines
+					#Considering only the horizontal and ve150rtical lines
 					if 90-epsilon < int(theta_degree) < 90+epsilon:
 						list_rho_hor.append(rho)
 					elif 0-epsilon < int(theta_degree) < 0+epsilon:
@@ -389,7 +261,6 @@ class ImageProcessing:
 
 
 		if result:
-			cv2.circle(img,(ver_left_x,hor_up_y), 5, (0,255,0), -1)
 			cv2.rectangle(img,(ver_left_x,hor_up_y),(ver_left_x+width,hor_up_y+height),(255,0,0),2)
 
 			print "Bounding box details:"
@@ -413,123 +284,66 @@ class ImageProcessing:
 		return result
 
 
-#==============================================================================
-	def _locatePartInHistogram(self,hist,arr_len):
-		hist1=np.asarray(hist)
+#=============================================================================
+	def _removeBoxShadows(self, binary_img):
+
+		res_y = binary_img.shape[0]
+		res_x = binary_img.shape[1]
+
+		for i in range(res_y):
+			k = 0
+			while (binary_img[i,k] > 1 and k < res_x-1):
+				binary_img[i,k] = 0
+				k += 1
+
+			k = res_x-1
+			while (binary_img[i,k] > 1 and k > 0):
+				binary_img[i,k] = 0
+				k -= 1
+
+		if self._interactive: cv2.imshow("Binarized image",binary_img)
+		if self._interactive: cv2.waitKey(0)
+
+		return binary_img
 
 
-		#Discarding boundary region
-		#Lower Boundary - Starting from beginning, if hist does not increase for 20 consecutive steps
-		boundary_limit=0
-		delta=0
-		for i in range(0,arr_len-1,1):
-			delta=hist1[i+1]-hist1[i]
-			if boundary_limit<=20:
-				if delta<=0:
-					boundary_limit=boundary_limit+1
-			else:
-				lower=i
-				break
+#=========================================================================
+	def _centerOfMass(self, binary_img):
+		cm_x = 0
+		cm_y = 0
 
-		#Upper Boundary - Starting from end, if hist does not increase for 20 consecutive steps
-		boundary_limit=0
-		delta=0
-
-		for i in range(arr_len-1,1,-1):
-			delta=hist1[i]-hist1[i-1]
-			if boundary_limit<=20:
-				if delta>=0:
-					boundary_limit=boundary_limit+1
-			else:
-				upper=i
-				break
+		res_x = binary_img.shape[1]
+		res_y = binary_img.shape[0]
+		object_pixels = sum(binary_img[(binary_img>0)])/255
+		sum_x = []
 
 
-		#Replacing boundary with high intensity
-		hist1[0:lower]=hist1[lower]
-		hist1[upper:arr_len]=hist1[upper]
+		#TODO: Use built-in histograms or similar to speed this up!!
+		for i in range(res_x):
+			cm_x += sum(binary_img[:, i])/(255.0*object_pixels)*i
 
-		# HIST STATISTICS
-		index_min=np.argmin(hist1)
-		hist_min=np.min(hist1)
-		hist_max=np.max(hist1)
+		for i in range(res_y):
+			cm_y += sum(binary_img[i, :])/(255.0*object_pixels)*i
 
-		# DIVIDING HIST IN TWO PARTS - (0 to min) and (min+1, end)
-		hist1_part1=hist1[0:index_min+1]
-		hist1_part1=hist1_part1[::-1]
-		hist1_part2=hist1[index_min+2:arr_len]
+		cm_x = int(round(cm_x))
+		cm_y = int(round(cm_y))
 
-		# INTERSECTION OF (Max + Min)/2, HIST PART1 AND HIST PART2
-		check_value=(hist_max+hist_min)/2
-		mean_intersection1=index_min-(np.abs(hist1_part1 - check_value)).argmin()
-		mean_intersection2=index_min+(np.abs(hist1_part2 - check_value)).argmin()
-		center=math.ceil((mean_intersection1+mean_intersection2)/2)
-
-		return center,mean_intersection1,mean_intersection2
-
-#==============================================================================
-# _centerofMass
-#==============================================================================
-
-	def _centerofMass(self,crop_img):
-		row_hist=[]
-		col_hist=[]
-
-		n_rows=crop_img.shape[0]
-		n_cols=crop_img.shape[1]
-
-		#Finding Row wise Intensity average
-		for y in range(0,n_rows,1):
-			row_avg=np.mean(crop_img[y,:])
-			row_hist.append(row_avg)
-
-		#Finding Column wise Intensity average
-		for x in range(0,n_cols,1):
-			col_avg=np.mean(crop_img[:,x])
-			col_hist.append(col_avg)
-
-		# Visualization of histogram in the picture
-		"""s0 = crop_img.shape[0]
-		s1 = crop_img.shape[1]
-		#crop_img = cv2.resize(crop_img, (s1+int(255/2), s0+int(255/2)))
-		#crop_img[crop_img.shape[0]-int(255/2):crop_img.shape[0], crop_img.shape[1]-int(255/2):crop_img.shape[1]] = 0
-		x=0
-		for col in col_hist:
-			crop_img[crop_img.shape[0]-int(col/2):crop_img.shape[0], x] = 0
-			#crop_img[crop_img.shape[0]-int(255/2), x] = 0
-			x+=1
-
-		x=0
-		for row in row_hist:
-			crop_img[x, crop_img.shape[1]-int(row/2):crop_img.shape[1]] = 0
-			#crop_img[x, crop_img.shape[1]-int(255/2)] = 0
-			x+=1
-		#cv2.imshow("Histogram",crop_img)
-		#cv2.waitKey(0)
-
-		crop_img = cv2.resize(crop_img, (s1, s0))
-"""
-
-		# Find part in histogram
-		cy,y1,y2=self._locatePartInHistogram(row_hist,n_rows)
-		cx,x1,x2=self._locatePartInHistogram(col_hist,n_cols)
-
-		# Generate result image and return
-		cv2.circle(crop_img,(int(cx),int(cy)), 5, (0,255,0), -1)
-		filename="/finalcm_"+os.path.basename(self._img_path)
-		finalcm_path=os.path.dirname(self._img_path)+filename
-		cv2.imwrite(finalcm_path,crop_img)
-		self._last_saved_image_path = finalcm_path
-
-		return cx,cy,x1,y1,x2,y2
+		return cm_x, cm_y
 
 
 # Finds lines in the given image by applying a Canny operator and a Hough transformation.
 # Returns an array of lines and the estimated diameter of the object.
 #==============================================================================
 	def _extractLines(self, gray_img, low_threshold):
-		cx,cy,x1,y1,x2,y2=self._centerofMass(gray_img)
-		len_diagonal=math.sqrt(((x1-x2)**2)+((y1-y2)**2))
+
+		ret,binary_img = cv2.threshold(gray_img,self.bed_binary_thresh,255,cv2.THRESH_BINARY_INV)
+		object_pixels = sum(binary_img[(binary_img>0)])/255
+		len_diagonal = math.sqrt(object_pixels)
+
+		if self._interactive: cv2.imshow("Binary img",binary_img)
+		if self._interactive: cv2.waitKey(0)
+
+
 
 		#Detect Lines
 		#edges = cv2.Canny(gray_img,50,150,apertureSize = 3)
@@ -539,7 +353,7 @@ class ImageProcessing:
 
 
 		#lines = cv2.HoughLines(edges,2,np.pi/180,int(len_diagonal/4))
-		lines = cv2.HoughLines(edges,1,np.pi/180,int(len_diagonal/4))
+		lines = cv2.HoughLines(edges,1,np.pi/180,int(len_diagonal/2))
 		if lines is None:
 			lines = [[]]
 		return lines[0], len_diagonal
