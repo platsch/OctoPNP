@@ -378,8 +378,27 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		)
 		if event == "FILE":
 			if self.smdparts.isFileLoaded():
+
+				# compile part information
+				partIds = self.smdparts.getPartIds()
+				partArray = []
+				for partId in partIds:
+					partArray.append(
+						dict(
+							id = partId,
+							name = self.smdparts.getPartName(partId),
+							partPosition = self.smdparts.getPartPosition(partId),
+							shape = self.smdparts.getPartShape(partId)
+						)
+					)
+
 				data = dict(
-					parts=self.smdparts.getPartCount()
+					partCount = self.smdparts.getPartCount(),
+					tray = dict(
+						rows = self._settings.get(["tray", "rows"]),
+						cols = self._settings.get(["tray", "columns"])
+					),
+					parts = partArray
 				)
 		elif event == "OPERATION":
 			data = dict(

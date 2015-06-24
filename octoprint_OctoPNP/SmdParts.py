@@ -35,12 +35,30 @@ class SmdParts():
 			count += 1
 		return count
 
+
+	# returns a list of all available parts
+	def getPartIds(self):
+		result = []
+		for elem in self._et.findall("./part"):
+			result.append(int(elem.get("id")))
+		return result
+
 	#return the nr of the box this part is supposed to be in
 	def getPartPosition(self, partnr):
 		return int(self._et.find("./part[@id='" + str(partnr) + "']/position").get("box"))
 
+	def getPartName(self, partnr):
+		return self._et.find("./part[@id='" + str(partnr) + "']").get("name")
+
 	def getPartHeight(self, partnr):
 		return float(self._et.find("./part[@id='" + str(partnr) + "']/size").get("height"))
+
+	def getPartShape(self, partnr):
+		result = []
+		for elem in self._et.find("./part[@id='" + str(partnr) + "']/shape"):
+			result.append([elem.get("x"), elem.get("y")])
+		return result
+
 
 	def getPartDestination(self, partnr):
 		x = float(self._et.find("./part[@id='" + str(partnr) + "']/destination").get("x"))
