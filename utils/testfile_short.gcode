@@ -11,9 +11,10 @@ M361 P1
 ;  <position box="4"/>
 ;  <size height="1.05"/>
 ;  <shape>
-;    <point x="-1" y="1"/>
-;    <point x="1" y="1"/>
-;    <point x="1" y="-1"/>
+;    <point x="-1.1" y="1"/>
+;    <point x="1.1" y="1"/>
+;    <point x="1.1" y="-1"/>
+;    <point x="-1.1" y="-1"/>
 ;  </shape>
 ;  <pads>
 ;    <pad x1="-0.4" y1="-0.8" x2="0.1" y2="0.3"/>
@@ -27,9 +28,10 @@ M361 P1
 ;  <position box="5"/>
 ;  <size height="0.5"/>
 ;  <shape>
-;    <point x="-1" y="1"/>
-;    <point x="1" y="1"/>
-;    <point x="1" y="-1"/>
+;    <point x="-1.1" y="1"/>
+;    <point x="1.1" y="1"/>
+;    <point x="1.1" y="-1"/>
+;    <point x="-1.1" y="-1"/>
 ;  </shape>
 ;  <pads>
 ;    <pad x1="-0.4" y1="-0.8" x2="0.1" y2="0.3"/>
@@ -42,9 +44,10 @@ M361 P1
 ;  <position box="2"/>
 ;  <size height="1.05"/>
 ;  <shape>
-;    <point x="-1" y="1"/>
-;    <point x="1" y="1"/>
-;    <point x="1" y="-1"/>
+;    <point x="-1.1" y="1"/>
+;    <point x="1.1" y="1"/>
+;    <point x="1.1" y="-1"/>
+;    <point x="-1.1" y="-1"/>
 ;  </shape>
 ;  <pads>
 ;    <pad x1="-0.4" y1="-0.8" x2="0.1" y2="0.3"/>

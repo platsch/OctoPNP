@@ -388,7 +388,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 							id = partId,
 							name = self.smdparts.getPartName(partId),
 							partPosition = self.smdparts.getPartPosition(partId),
-							shape = self.smdparts.getPartShape(partId)
+							shape = self.smdparts.getPartShape(partId),
+							pads = self.smdparts.getPartPads(partId)
 						)
 					)
 

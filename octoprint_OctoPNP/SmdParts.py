@@ -56,7 +56,13 @@ class SmdParts():
 	def getPartShape(self, partnr):
 		result = []
 		for elem in self._et.find("./part[@id='" + str(partnr) + "']/shape"):
-			result.append([elem.get("x"), elem.get("y")])
+			result.append([float(elem.get("x")), float(elem.get("y"))])
+		return result
+
+	def getPartPads(self, partnr):
+		result = []
+		for elem in self._et.find("./part[@id='" + str(partnr) + "']/pads"):
+			result.append([float(elem.get("x1")), float(elem.get("y1")), float(elem.get("x2")), float(elem.get("y2"))])
 		return result
 
 

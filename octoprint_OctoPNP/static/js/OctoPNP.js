@@ -97,24 +97,46 @@ $(function() {
 
 			if (self.trayCanvas && self.trayCanvas.getContext) {
 	            var ctx = self.trayCanvas.getContext("2d");
+	            var scale = boxSize/self.tray.boxsize();
 	            if (ctx) {
+	                var col_offset = col*boxSize-boxSize+4;
+	                var row_offset = row*boxSize-boxSize+4;
+
 	                //print part names
 					ctx.font = "10px Verdana";
 					ctx.fillStyle = "#000000";
 					ctx.textBaseline = "top";
-					ctx.fillText(part.name, col*boxSize-boxSize+4, row*boxSize-boxSize+4);
+					ctx.fillText(part.name, col_offset, row_offset);
 
 					//draw part shapes
-					//if( part.hasOwnProperty("shape") ) {
-					//	var points = parts.shape;
-					//	ctx.beginPath();
-					//	for(var i=0; i < points.length; i++) {
-							//ctx.moveTo(20, 180); // Feder zum Startpunkt
-					//		ctx.lineTo(points[i][0], points[i][1]);
-					//	}
-					//	self.debugvar(part.shape);
-					//	ctx.stroke();
-					//}
+					if( part.hasOwnProperty("shape") ) {
+						var points = part.shape;
+
+						ctx.beginPath();
+						ctx.strokeStyle = "#000000";
+						ctx.fillStyle = "#000000";
+						ctx.moveTo(points[0][0]*scale+col_offset+boxSize/2, points[0][1]*scale+row_offset+boxSize/2);
+						for(var i=0; i < points.length; i++) {
+							ctx.lineTo(points[i][0]*scale+col_offset+boxSize/2, points[i][1]*scale+row_offset+boxSize/2);
+						}
+						//close loop
+						ctx.lineTo(points[0][0]*scale+col_offset+boxSize/2, points[0][1]*scale+row_offset+boxSize/2);
+						ctx.lineTo(points[1][0]*scale+col_offset+boxSize/2, points[1][1]*scale+row_offset+boxSize/2);
+						ctx.stroke();
+						ctx.fill();
+					}
+
+					//draw part pads
+					if( part.hasOwnProperty("pads") ) {
+						var pads = part.pads;
+
+						ctx.beginPath();
+						ctx.fillStyle = "#999999";
+						console.log(pads);
+						for(var i=0; i < pads.length; i++) {
+							ctx.fillRect(pads[i][0]*scale+col_offset+boxSize/2, pads[i][1]*scale+row_offset+boxSize/2, (pads[i][2]-pads[i][0])*scale, (pads[i][3]-pads[i][1])*scale);
+						}
+					}
 	            }
 	        }
         }
