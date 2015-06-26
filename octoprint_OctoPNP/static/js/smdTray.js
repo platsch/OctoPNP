@@ -62,6 +62,7 @@ function smdTray(cols, rows, boxSize, canvas) {
 
 					ctx.beginPath();
 					ctx.strokeStyle = "#000000";
+					ctx.lineWidth = 1;
 					ctx.fillStyle = "#000000";
 					if(points.length > 0) {
 						ctx.moveTo(points[0][0]*scale+col_offset+canvasBoxSize/2, points[0][1]*scale+row_offset+canvasBoxSize/2);
@@ -71,7 +72,6 @@ function smdTray(cols, rows, boxSize, canvas) {
 						//close loop
 						ctx.lineTo(points[0][0]*scale+col_offset+canvasBoxSize/2, points[0][1]*scale+row_offset+canvasBoxSize/2);
 						ctx.lineTo(points[1][0]*scale+col_offset+canvasBoxSize/2, points[1][1]*scale+row_offset+canvasBoxSize/2);
-						ctx.stroke();
 						ctx.fill();
 					}
 				}
