@@ -35,6 +35,7 @@ function smdTray(cols, rows, boxSize, canvas) {
 	
 	//draw a part into a tray box
     self.drawPart = function(part) {
+        console.log(part.name);
         var row = parseInt(((part.partPosition-1) / self.cols)) + 1;
 		var col = (part.partPosition-1) % self.cols+1;
 
@@ -62,15 +63,17 @@ function smdTray(cols, rows, boxSize, canvas) {
 					ctx.beginPath();
 					ctx.strokeStyle = "#000000";
 					ctx.fillStyle = "#000000";
-					ctx.moveTo(points[0][0]*scale+col_offset+canvasBoxSize/2, points[0][1]*scale+row_offset+canvasBoxSize/2);
-					for(var i=0; i < points.length; i++) {
-						ctx.lineTo(points[i][0]*scale+col_offset+canvasBoxSize/2, points[i][1]*scale+row_offset+canvasBoxSize/2);
+					if(points.length > 0) {
+						ctx.moveTo(points[0][0]*scale+col_offset+canvasBoxSize/2, points[0][1]*scale+row_offset+canvasBoxSize/2);
+						for(var i=0; i < points.length; i++) {
+							ctx.lineTo(points[i][0]*scale+col_offset+canvasBoxSize/2, points[i][1]*scale+row_offset+canvasBoxSize/2);
+						}
+						//close loop
+						ctx.lineTo(points[0][0]*scale+col_offset+canvasBoxSize/2, points[0][1]*scale+row_offset+canvasBoxSize/2);
+						ctx.lineTo(points[1][0]*scale+col_offset+canvasBoxSize/2, points[1][1]*scale+row_offset+canvasBoxSize/2);
+						ctx.stroke();
+						ctx.fill();
 					}
-					//close loop
-					ctx.lineTo(points[0][0]*scale+col_offset+canvasBoxSize/2, points[0][1]*scale+row_offset+canvasBoxSize/2);
-					ctx.lineTo(points[1][0]*scale+col_offset+canvasBoxSize/2, points[1][1]*scale+row_offset+canvasBoxSize/2);
-					ctx.stroke();
-					ctx.fill();
 				}
 
 				//draw part pads
