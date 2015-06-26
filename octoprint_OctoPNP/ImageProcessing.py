@@ -274,7 +274,7 @@ class ImageProcessing:
 		if self._interactive: cv2.waitKey(0)
 
 		#Crop image and write
-		img_crop=img[hor_up_y:hor_up_y+height, ver_left_x:ver_left_x+width]
+		img_crop=img[int(hor_up_y):int(hor_up_y+height), int(ver_left_x):int(ver_left_x+width)]
 		filename="/cropped_"+os.path.basename(self._img_path)
 		cropped_boundary_path=os.path.dirname(self._img_path)+filename
 		cv2.imwrite(cropped_boundary_path,img_crop)

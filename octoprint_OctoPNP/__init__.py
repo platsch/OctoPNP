@@ -308,7 +308,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		displacement = [0, 0]
 
 		#sometimes the hook returns to early, very strange... workaround: wait a few ms
-		time.sleep(0.5)
+		time.sleep(1)
 
 		# take picture to find part offset
 		self._logger.info("Taking picture NOW")
