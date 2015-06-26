@@ -55,14 +55,16 @@ class SmdParts():
 
 	def getPartShape(self, partnr):
 		result = []
-		for elem in self._et.find("./part[@id='" + str(partnr) + "']/shape"):
-			result.append([float(elem.get("x")), float(elem.get("y"))])
+		if(self._et.find("./part[@id='" + str(partnr) + "']/shape") is not None):
+			for elem in self._et.find("./part[@id='" + str(partnr) + "']/shape"):
+				result.append([float(elem.get("x")), float(elem.get("y"))])
 		return result
 
 	def getPartPads(self, partnr):
 		result = []
-		for elem in self._et.find("./part[@id='" + str(partnr) + "']/pads"):
-			result.append([float(elem.get("x1")), float(elem.get("y1")), float(elem.get("x2")), float(elem.get("y2"))])
+		if( self._et.find("./part[@id='" + str(partnr) + "']/pads") is not None):
+			for elem in self._et.find("./part[@id='" + str(partnr) + "']/pads"):
+				result.append([float(elem.get("x1")), float(elem.get("y1")), float(elem.get("x2")), float(elem.get("y2"))])
 		return result
 
 
@@ -104,27 +106,51 @@ class SmdParts():
 
 				# box position
 				if result:
-					result, msg = self._sanitizePart(part, "position", ["box"], int)
+					result, msg = self._sanitizeTag(part, "position", ["box"], int)
 				# height
 				if result:
-					result, msg = self._sanitizePart(part, "size", ["height"], float)
+					result, msg = self._sanitizeTag(part, "size", ["height"], float)
+				# shape
+				if result:
+					if(part.find("shape") is not None):
+						for elem in part.find("shape"):
+							result, msg = self._sanitizeAttribute(part, elem, ["x", "y"], float)
+				# pads
+				if result:
+					if(part.find("pads") is not None):
+						for elem in part.find("pads"):
+							result, msg = self._sanitizeAttribute(part, elem, ["x1", "y1", "x2", "y2"], float)
 				# destination
 				if result:
-					result, msg = self._sanitizePart(part, "destination", ["x", "y", "z", "orientation"], float)
+					result, msg = self._sanitizeTag(part, "destination", ["x", "y", "z", "orientation"], float)
 
 		return result, msg
 
 
-	def _sanitizePart(self, part, tag, attributes, validate):
+	def _sanitizeTag(self, part, tag, attributes, validate):
+		result = True
+		msg = ""
+
+		elem = part.find(tag)
+		if(elem is not None):
+			result, msg = self._sanitizeAttribute(part, elem, attributes, validate)
+		else:
+			result = False
+			msg = "No tag " + tag + " in part " + part.get("id") + " - " + part.get("name")
+
+		return result, msg
+
+
+	def _sanitizeAttribute(self, part, elem, attributes, validate):
 		result = True
 		msg = ""
 
 		for attribute in attributes:
 			if result:
 				try:
-					validate(part.find(tag).get(attribute))
+					validate(elem.get(attribute))
 				except:
 					result = False
-					msg = "Invalid or no " + attribute + " " + tag + " in part " + part.get("id") + " - " + part.get("name")
+					msg = "Invalid or no attribute " + attribute + " in part " + part.get("id") + " - " + part.get("name")
 
 		return result, msg

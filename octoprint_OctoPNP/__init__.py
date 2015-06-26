@@ -117,7 +117,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 	def get_assets(self):
 		return dict(
-			js=["js/OctoPNP.js"]
+			js=["js/OctoPNP.js",
+				"js/smdTray.js"]
 		)
 
 	# Use the on_event hook to extract XML data every time a new file has been loaded by the user
@@ -395,10 +396,6 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 				data = dict(
 					partCount = self.smdparts.getPartCount(),
-					tray = dict(
-						rows = self._settings.get(["tray", "rows"]),
-						cols = self._settings.get(["tray", "columns"])
-					),
 					parts = partArray
 				)
 		elif event == "OPERATION":
