@@ -68,7 +68,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
 	def on_after_startup(self):
-		self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), 150, 125)
+		self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), 160, 125)
 		#used for communication to UI
 		self._pluginManager = octoprint.plugin.plugin_manager()
 
@@ -175,38 +175,30 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 				self._moveCameraToPart(self._currentPart)
 				self._printer.commands("M400")
-				self._printer.commands("G4 S0")
+				self._printer.commands("G4 P1")
 				self._printer.commands("M400")
-				self._printer.commands("G4 P0")
-				self._printer.commands("M400")
-				self._printer.commands("G4 P0")
-				self._printer.commands("G4 P0")
+				for i in range(20):
+					self._printer.commands("G4 P1")
 				self._printer.commands("M361")
 				return "G4 P0" # return dummy command
 			if self._state == self.STATE_PICK:
 				self._state = self.STATE_ALIGN
 				self._pickPart(self._currentPart)
 				self._printer.commands("M400")
-				self._printer.commands("G4 P0")
+				self._printer.commands("G4 P1")
 				self._printer.commands("M400")
-				self._printer.commands("G4 P0")
-				self._printer.commands("G4 P0")
-				self._printer.commands("M400")
-				self._printer.commands("G4 P0")
-				self._printer.commands("G4 P0")
+				for i in range(20):
+					self._printer.commands("G4 P1")
 				self._printer.commands("M361")
 				return "G4 P0" # return dummy command
 			if self._state == self.STATE_ALIGN:
 				self._state = self.STATE_PLACE
 				self._alignPart(self._currentPart)
 				self._printer.commands("M400")
-				self._printer.commands("G4 P0")
+				self._printer.commands("G4 P1")
 				self._printer.commands("M400")
-				self._printer.commands("G4 P0")
-				self._printer.commands("G4 P0")
-				self._printer.commands("M400")
-				self._printer.commands("G4 P0")
-				self._printer.commands("G4 P0")
+				for i in range(20):
+					self._printer.commands("G4 P1")
 				self._printer.commands("M361")
 				return "G4 P0" # return dummy command
 			if self._state == self.STATE_PLACE:
