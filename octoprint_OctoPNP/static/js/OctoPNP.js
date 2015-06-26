@@ -4,31 +4,46 @@ $(function() {
 
         self.settings = parameters[0];
 
-        self.tray = {}
-        self.camera = {}
-        self.vacnozzle = {}
+        self.tray = {};
+        self.camera = {};
+        self.vacnozzle = {};
+        self.smdTray = {};
 
         self.stateString = ko.observable("No file loaded");
         self.currentOperation = ko.observable("");
-        self.cameraImage = ko.observable("testfile");
-        self.debugvar = ko.observable("a");
+        self.debugvar = ko.observable("");
+        //white placeholder images
         document.getElementById('headCameraImage').setAttribute( 'src', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3wMRCQAfAmB4CgAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAAMSURBVAjXY/j//z8ABf4C/tzMWecAAAAASUVORK5CYII=');
         document.getElementById('bedCameraImage').setAttribute( 'src', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3wMRCQAfAmB4CgAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAAMSURBVAjXY/j//z8ABf4C/tzMWecAAAAASUVORK5CYII=');
 
-        // This will get called before the HelloWorldViewModel gets bound to the DOM, but after its depedencies have
+
+        // This will get called before the ViewModel gets bound to the DOM, but after its depedencies have
         // already been initialized. It is especially guaranteed that this method gets called _after_ the settings
         // have been retrieved from the OctoPrint backend and thus the SettingsViewModel been properly populated.
         self.onBeforeBinding = function() {
-            self.tray = self.settings.settings.plugins.OctoPNP.tray;
+            self.traySettings = self.settings.settings.plugins.OctoPNP.tray;
             self.camera = self.settings.settings.plugins.OctoPNP.camera;
             self.vacnozzle = self.settings.settings.plugins.OctoPNP.vacnozzle;
+            self.smdTray = new smdTray(self.traySettings.columns(), self.traySettings.rows(), self.traySettings.boxsize(), document.getElementById('trayCanvas'));
         }
+
+
 
          self.onDataUpdaterPluginMessage = function(plugin, data) {
             if(plugin == "OctoPNP") {
                 if(data.event == "FILE") {
-                    if(data.data.hasOwnProperty("parts")) {
-                        self.stateString("Loaded file with " + data.data.parts + " SMD parts");
+                    if(data.data.hasOwnProperty("partCount")) {
+                        self.stateString("Loaded file with " + data.data.partCount + " SMD parts");
+                        //initialize the tray
+                        self.smdTray.drawTray();
+
+						//extract part information
+                        if( data.data.hasOwnProperty("parts") ) {
+							var parts = data.data.parts;
+							for(var i=0; i < parts.length; i++) {
+								self.smdTray.drawPart(parts[i]);
+							}
+						}
                     }else{
                         self.stateString("No SMD part in this file!");
                     }
