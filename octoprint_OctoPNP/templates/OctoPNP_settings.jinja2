@@ -75,11 +75,11 @@
             <div id="camera-settings" class="accordion-body collapse">
                 <div class="accordion-inner">
                     <div class="row-fluid">
-                        <div class="span1">{{ _('Name') }}</div>
-                        <div class="span3">{{ _('X') }}</div>
-                        <div class="span3">{{ _('Y') }}</div>
-                        <div class="span3">{{ _('Focus Distance') }}</div>
-                        <div class="span2">{{ _('px/mm') }}</div>
+                        <div class="span1"><strong>{{ _('Name') }}</strong></div>
+                        <div class="span3"><strong>{{ _('X') }}</strong></div>
+                        <div class="span3"><strong>{{ _('Y') }}</strong></div>
+                        <div class="span3"><strong>{{ _('Focus Distance') }}</strong></div>
+                        <div class="span2"><strong>{{ _('px/mm') }}</strong></div>
                     </div>
                     <div class="row-fluid">
                         <div class="span12">
@@ -160,6 +160,18 @@
                                 <div class="span8">
                                     <div class="input-append">
                                         <input type="text" class="input-xlarge" data-bind="value: camera.bed.path">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row-fluid">
+                        <div class="span12">
+                            <div class="row-fluid">
+                                <div class="span4"><strong>Grab-script Path:</strong></div>
+                                <div class="span8">
+                                    <div class="input-append">
+                                        <input type="text" class="input-xlarge" data-bind="value: camera.grabScripPath">
                                     </div>
                                 </div>
                             </div>

@@ -93,6 +93,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				"extruder_nr": 2
 			},
 			"camera": {
+				"grabScriptPath": "",
 				"head": {
 					"x": 0,
 					"y": 0,
@@ -232,7 +233,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 		# take picture
 		if self._grabImages():
-			headPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "head", "path"])
+			headPath = self._settings.get(["camera", "head", "path"])
 
 			#update UI
 			self._updateUI("HEADIMAGE", headPath)
@@ -283,7 +284,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 		# take picture
 		self._logger.info("Taking picture NOW")
-		bedPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "bed", "path"])
+		bedPath = self._settings.get(["camera", "bed", "path"])
 		if self._grabImages():
 			#update UI
 			self._updateUI("BEDIMAGE", bedPath)
@@ -309,7 +310,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 		# take picture to find part offset
 		self._logger.info("Taking picture NOW")
-		bedPath = os.path.dirname(os.path.realpath(__file__)) + self._settings.get(["camera", "bed", "path"])
+		bedPath = self._settings.get(["camera", "bed", "path"])
 		if self._grabImages():
 
 			displacement = self.imgproc.getPartPosition(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM"])))
@@ -365,7 +366,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 	def _grabImages(self):
 		result = True
-		grabScript = os.path.dirname(os.path.realpath(__file__)) + "/cameras/grab.sh"
+		grabScript = self._settings.get(["camera", "grabScriptPath"])
+		#os.path.dirname(os.path.realpath(__file__)) + "/cameras/grab.sh"
 		if call([grabScript]) != 0:
 			self._logger.info("ERROR: camera not ready!")
 			result = False
