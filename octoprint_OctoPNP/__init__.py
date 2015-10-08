@@ -175,6 +175,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				self._updateUI("OPERATION", "pick")
 
 				self._moveCameraToPart(self._currentPart)
+				print "move camera to part"
 				self._printer.commands("M400")
 				self._printer.commands("G4 P1")
 				self._printer.commands("M400")
@@ -183,6 +184,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				self._printer.commands("M361")
 				return "G4 P0" # return dummy command
 			if self._state == self.STATE_PICK:
+				print "pick part"
 				self._state = self.STATE_ALIGN
 				self._pickPart(self._currentPart)
 				self._printer.commands("M400")
@@ -193,6 +195,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				self._printer.commands("M361")
 				return "G4 P0" # return dummy command
 			if self._state == self.STATE_ALIGN:
+				print "align part"
 				self._state = self.STATE_PLACE
 				self._alignPart(self._currentPart)
 				self._printer.commands("M400")
@@ -203,6 +206,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				self._printer.commands("M361")
 				return "G4 P0" # return dummy command
 			if self._state == self.STATE_PLACE:
+				print "place part"
 				self._placePart(self._currentPart)
 				self._state = self.STATE_NONE
 				return "G4 P0" # return dummy command
