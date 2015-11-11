@@ -84,7 +84,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				"rows" : 5,
 				"columns": 5,
 				"boxsize": 10,
-				"rimsize": 1.0,
+				"rimsize": 1.0
 			},
 			"vacnozzle": {
 				"x": 0,
@@ -113,7 +113,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 	def get_template_configs(self):
 		return [
 			dict(type="tab", custom_bindings=True),
-			dict(type="settings", custom_bindings=True)
+			dict(type="settings", custom_bindings=False)
 		]
 
 	def get_assets(self):
