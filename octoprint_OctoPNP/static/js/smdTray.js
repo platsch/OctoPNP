@@ -48,7 +48,7 @@ function smdTray(cols, rows, boxSize, canvas) {
             var scale = canvasBoxSize/self.trayBoxSize;
             if (ctx) {
                 var col_offset = col*canvasBoxSize-canvasBoxSize+4;
-                var row_offset = row*canvasBoxSize-canvasBoxSize+4;
+                var row_offset = self.rows*canvasBoxSize-row*canvasBoxSize+4;
 
                 //print part names
 				ctx.font = "10px Verdana";
@@ -98,8 +98,8 @@ function smdTray(cols, rows, boxSize, canvas) {
                 ctx.lineWidth = 4;
                 ctx.strokeStyle = "green";
                 ctx.fillStyle = "white";
-                ctx.strokeRect (col*size+ctx.lineWidth/2,row*size+ctx.lineWidth/2,size-ctx.lineWidth/2,size-ctx.lineWidth/2);
-                ctx.fillRect (col*size+ctx.lineWidth,row*size+ctx.lineWidth,size-ctx.lineWidth,size-ctx.lineWidth);
+                ctx.strokeRect (col*size+ctx.lineWidth/2,(self.rows-1)*size-row*size+ctx.lineWidth/2,size-ctx.lineWidth/2,size-ctx.lineWidth/2);
+                ctx.fillRect (col*size+ctx.lineWidth,(self.rows-1)*size-row*size+ctx.lineWidth,size-ctx.lineWidth,size-ctx.lineWidth);
             }
         }
     }
