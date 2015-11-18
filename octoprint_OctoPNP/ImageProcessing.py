@@ -27,8 +27,9 @@ class ImageProcessing:
 # Locates a part in a box. Box size must be given to constructor. Image must contain only
 # one box with white background.
 # Returns displacement with respect to the center of the box if a part is detected, False otherwise.
+# boolean relative_to_camera sets wether the offset should be relative to the box or to the camera.
 #===================================================================================================
-	def locatePartInBox(self,img_path):
+	def locatePartInBox(self,img_path, relative_to_camera):
 		result = False
 
 		self._img_path = img_path
@@ -36,13 +37,17 @@ class ImageProcessing:
 		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
 
 		#DETECT BOUNDARY AND CROP
-		crop_image=self._boundaryDetect(img)
+		crop_result = self._boundaryDetect(img)
 
-		gray_img=cv2.cvtColor(crop_image,cv2.COLOR_BGR2GRAY)
-		ret,th_img = cv2.threshold(gray_img,self.head_binary_thresh,255,cv2.THRESH_BINARY_INV)
- 		binary_img = self._removeBoxShadows(th_img)
+		if not crop_result is None:
+			crop_image = crop_result[0]
+			crop_offset_x = crop_result[1]
+			crop_offset_y = crop_result[2]
 
-		if not crop_image is None:
+			gray_img=cv2.cvtColor(crop_image,cv2.COLOR_BGR2GRAY)
+			ret,th_img = cv2.threshold(gray_img,self.head_binary_thresh,255,cv2.THRESH_BINARY_INV)
+ 			binary_img = self._removeBoxShadows(th_img)
+
 			#GET CENTER OF MASS
 			cmx, cmy = self._centerOfMass(binary_img)
 
@@ -53,6 +58,10 @@ class ImageProcessing:
 			n_cols=crop_image.shape[1]
 			displacement_x=(cmx-n_rows/2)*self.box_size/n_rows
 			displacement_y=((n_cols-cmy)-n_cols/2)*self.box_size/n_cols
+			if relative_to_camera:
+				#incorporate the position of the tray box in relation to the image
+				displacement_x += (crop_result[1] - (img.shape[0]-(crop_offset_x+n_rows)))/2 * self.box_size/n_rows
+				displacement_y -= (crop_result[2] - (img.shape[1]-(crop_offset_y+n_cols)))/2 * self.box_size/n_cols
 			result = displacement_x,displacement_y
 
 
@@ -280,7 +289,7 @@ class ImageProcessing:
 		cv2.imwrite(cropped_boundary_path,img_crop)
 		self._last_saved_image_path = cropped_boundary_path
 		if result:
-			result = img_crop
+			result = [img_crop, ver_left_x,hor_up_y]
 		return result
 
 

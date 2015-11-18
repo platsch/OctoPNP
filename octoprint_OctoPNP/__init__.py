@@ -239,7 +239,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			self._updateUI("HEADIMAGE", headPath)
 
 			#extract position information
-			part_offset = self.imgproc.locatePartInBox(headPath)
+			part_offset = self.imgproc.locatePartInBox(headPath, True)
 			if not part_offset:
 				self._updateUI("ERROR", self.imgproc.getLastErrorMessage())
 				part_offset = [0, 0]
