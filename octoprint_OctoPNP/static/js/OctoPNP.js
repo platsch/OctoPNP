@@ -3,11 +3,11 @@ $(function() {
         var self = this;
 
         self.settings = parameters[0];
+        self.control = parameters[1];
+        self.connection = parameters[2];
 
-        self.tray = {};
-        self.camera = {};
-        self.vacnozzle = {};
-        self.smdTray = {};
+        var _smdTray = {};
+        var _smdTrayCanvas = document.getElementById('trayCanvas');
 
         self.stateString = ko.observable("No file loaded");
         self.currentOperation = ko.observable("");
@@ -22,9 +22,30 @@ $(function() {
         // have been retrieved from the OctoPrint backend and thus the SettingsViewModel been properly populated.
         self.onBeforeBinding = function() {
             self.traySettings = self.settings.settings.plugins.OctoPNP.tray;
-            self.camera = self.settings.settings.plugins.OctoPNP.camera;
-            self.vacnozzle = self.settings.settings.plugins.OctoPNP.vacnozzle;
-            self.smdTray = new smdTray(self.traySettings.columns(), self.traySettings.rows(), self.traySettings.boxsize(), document.getElementById('trayCanvas'));
+            _smdTray = new smdTray(self.traySettings.columns(), self.traySettings.rows(), self.traySettings.boxsize(), _smdTrayCanvas);
+            _smdTrayCanvas.addEventListener("click", self.onSmdTrayClick, false); //"click, dblclick"
+            _smdTrayCanvas.addEventListener("dblclick", self.onSmdTrayDblclick, false); //"click, dblclick"
+        }
+
+        // catch mouseclicks at the tray for interactive part handling
+        self.onSmdTrayClick = function(event) {
+            var rect = _smdTrayCanvas.getBoundingClientRect();
+            var x = Math.floor(event.clientX - rect.left);
+            var y = Math.floor(event.clientY - rect.top);
+            return _smdTray.selectPart(x, y);
+        }
+
+        self.onSmdTrayDblclick = function(event) {
+            // highlight part on tray and find partId
+            var partId = self.onSmdTrayClick(event);
+
+            // execute pick&place operation
+            if(partId) {
+                // printer connected and not printing?
+                if(self.connection.isOperational() || self.connection.isReady()) {
+                    self.control.sendCustomCommand({ command: "M361 P" + partId});
+                }
+            }
         }
 
 
@@ -35,13 +56,13 @@ $(function() {
                     if(data.data.hasOwnProperty("partCount")) {
                         self.stateString("Loaded file with " + data.data.partCount + " SMD parts");
                         //initialize the tray
-                        self.smdTray.drawTray();
+                        _smdTray.erase();
 
 						//extract part information
                         if( data.data.hasOwnProperty("parts") ) {
 							var parts = data.data.parts;
 							for(var i=0; i < parts.length; i++) {
-								self.smdTray.drawPart(parts[i]);
+								_smdTray.addPart(parts[i]);
 							}
 						}
                     }else{
@@ -77,7 +98,7 @@ $(function() {
         // This is a list of dependencies to inject into the plugin, the order which you request here is the order
         // in which the dependencies will be injected into your view model upon instantiation via the parameters
         // argument
-        ["settingsViewModel"],
+        ["settingsViewModel", "controlViewModel", "connectionViewModel"],
 
         // Finally, this is the list of all elements we want this view model to be bound to.
         [document.getElementById("tab_plugin_OctoPNP"), document.getElementById("settings_plugin_OctoPNP")]
