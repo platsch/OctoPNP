@@ -68,7 +68,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
 	def on_after_startup(self):
-		self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), 160, 125)
+		self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), self._settings.get(["camera", "bed", "binary_thresh"]), self._settings.get(["camera", "head", "binary_thresh"]))
 		#used for communication to UI
 		self._pluginManager = octoprint.plugin.plugin_manager()
 
@@ -98,14 +98,16 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 					"x": 0,
 					"y": 0,
 					"z": 0,
-					"path": ""
+					"path": "",
+					"binary_thresh": 150
 				},
 				"bed": {
 					"x": 0,
 					"y": 0,
 					"z": 0,
 					"pxPerMM": 50.0,
-					"path": ""
+					"path": "",
+					"binary_thresh": 150
 				}
 			}
 		}
