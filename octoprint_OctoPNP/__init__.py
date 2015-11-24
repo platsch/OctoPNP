@@ -43,7 +43,7 @@ def __plugin_load__():
 	__plugin_implementation__ = octopnp
 
 	global __plugin_hooks__
-	__plugin_hooks__ = {'octoprint.comm.protocol.gcode.queuing': octopnp.hook_gcode}
+	__plugin_hooks__ = {'octoprint.comm.protocol.gcode.sending': octopnp.hook_gcode}
 
 
 class OctoPNP(octoprint.plugin.StartupPlugin,
