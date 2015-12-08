@@ -1,4 +1,5 @@
 <form class="form-horizontal">
+    test:<strong data-bind="text: settings.plugins.OctoPNP.tray.x"></strong><br>
     <div class="accordion" id="accordion">
 
         <!-- Tray settings -->
@@ -257,5 +258,21 @@
                 </div>
             </div>
         </div>
+
+
+        <!-- Calibration -->
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#calibration"><h4>{{ _('Calibration') }}</h4></a>
+            </div>
+            <div id="calibration" class="accordion-body collapse">
+                <div class="accordion-inner">
+                    <div class="row-fluid">
+                        <button data-bind="click: requestImage">{{ _('Test') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </form>

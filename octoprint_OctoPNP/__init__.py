@@ -22,6 +22,7 @@ from __future__ import absolute_import
 
 
 import octoprint.plugin
+import flask
 import re
 from subprocess import call
 import os
@@ -50,7 +51,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			octoprint.plugin.TemplatePlugin,
 			octoprint.plugin.EventHandlerPlugin,
 			octoprint.plugin.SettingsPlugin,
-			octoprint.plugin.AssetPlugin):
+			octoprint.plugin.AssetPlugin,
+			octoprint.plugin.SimpleApiPlugin):
 
 	STATE_NONE = 0
 	STATE_PICK = 1
@@ -114,15 +116,39 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 	def get_template_configs(self):
 		return [
-			dict(type="tab", custom_bindings=True),
-			dict(type="settings", custom_bindings=False)
+			dict(type="tab", template="OctoPNP_tab.jinja2", custom_bindings=True),
+			dict(type="settings", template="OctoPNP_settings.jinja2", custom_bindings=True)
+			#dict(type="settings", custom_bindings=True)
 		]
 
 	def get_assets(self):
 		return dict(
 			js=["js/OctoPNP.js",
-				"js/smdTray.js"]
+				"js/smdTray.js",
+				"js/settings.js"]
 		)
+
+	# Define possible requests from GUI
+	def get_api_commands(self):
+		return dict(
+			getCameraImage=["imagetype"]
+		)
+
+	def on_api_command(self, command, data):
+		import flask
+		if command == "getCameraImage":
+			if data.get("imagetype") == "HEAD":
+				# Retrieve image from camera
+				if self._grabImages():
+					headPath = self._settings.get(["camera", "head", "path"])
+
+					#update UI
+				self._updateUI("HEADIMAGE", headPath)
+				self._logger.info("getCameraImage, type: " + data.get("imagetype"))
+
+	def on_api_get(self, request):
+		print request
+		return flask.jsonify(foo="bar")
 
 	# Use the on_event hook to extract XML data every time a new file has been loaded by the user
 	def on_event(self, event, payload):

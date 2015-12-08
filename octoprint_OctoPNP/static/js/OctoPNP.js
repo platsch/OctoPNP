@@ -101,6 +101,6 @@ $(function() {
         ["settingsViewModel", "controlViewModel", "connectionViewModel"],
 
         // Finally, this is the list of all elements we want this view model to be bound to.
-        [document.getElementById("tab_plugin_OctoPNP"), document.getElementById("settings_plugin_OctoPNP")]
+        "#tab_plugin_OctoPNP"
     ]);
 });
