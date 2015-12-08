@@ -216,6 +216,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
 	def _moveCameraToPart(self, partnr):
+		# switch to vacuum extruder
+		self._printer.commands("T" + str(self._settings.get(["vacnozzle", "extruder_nr"])))
 		# move camera to part position
 		tray_offset = self._getTrayPosFromPartNr(partnr) # get box position on tray
 		camera_offset = [tray_offset[0]-float(self._settings.get(["camera", "head", "x"])), tray_offset[1]-float(self._settings.get(["camera", "head", "y"])), float(self._settings.get(["camera", "head", "z"])) + tray_offset[2]]
@@ -299,8 +301,6 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			self._updateUI("ERROR", "Camera not ready")
 
 		#rotate object
-		# switch to vacuum extruder
-		self._printer.commands("T" + str(self._settings.get(["vacnozzle", "extruder_nr"])))
 		self._printer.commands("G92 E0")
 		self._printer.commands("G1 E" + str(destination[3]-orientation_offset) + " F" + str(self.FEEDRATE))
 
