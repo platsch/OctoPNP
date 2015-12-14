@@ -52,7 +52,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			octoprint.plugin.EventHandlerPlugin,
 			octoprint.plugin.SettingsPlugin,
 			octoprint.plugin.AssetPlugin,
-			octoprint.plugin.SimpleApiPlugin):
+			octoprint.plugin.SimpleApiPlugin,
+			octoprint.plugin.BlueprintPlugin):
 
 	STATE_NONE = 0
 	STATE_PICK = 1
@@ -147,8 +148,26 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				self._logger.info("getCameraImage, type: " + data.get("imagetype"))
 
 	def on_api_get(self, request):
-		print request
+		#if "force" in flask.request.values and flask.request.values["force"]
+		print request.values
+		#flask.request.values
 		return flask.jsonify(foo="bar")
+
+	@octoprint.plugin.BlueprintPlugin.route("/camera_image", methods=["GET"])
+	def getCameraImage(self):
+		result = ""
+		if "imagetype" in flask.request.values:
+			if flask.request.values["imagetype"] == "HEAD":
+				if self._grabImages():
+					headPath = self._settings.get(["camera", "head", "path"])
+					try:
+						f = open(headPath,"r")
+						result = flask.jsonify(src="data:image/" + os.path.splitext(headPath)[1] + ";base64,"+base64.b64encode(bytes(f.read())))
+					except IOError:
+						result = flask.jsonify(error="Unable to open Image after fetching. Image path: " + headPath)
+				else:
+					result = flask.jsonify(error="Unable to fetch image. Check octoprint log for details.")
+		return flask.make_response(result, 200)
 
 	# Use the on_event hook to extract XML data every time a new file has been loaded by the user
 	def on_event(self, event, payload):
@@ -396,8 +415,13 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		result = True
 		grabScript = self._settings.get(["camera", "grabScriptPath"])
 		#os.path.dirname(os.path.realpath(__file__)) + "/cameras/grab.sh"
-		if call([grabScript]) != 0:
-			self._logger.info("ERROR: camera not ready!")
+		try:
+			if call([grabScript]) != 0:
+				self._logger.info("ERROR: camera not ready!")
+				result = False
+		except:
+			self._logger.info("ERROR: Unable to execute camera grab script!")
+			self._logger.info("Script path: " + grabScript)
 			result = False
 		return result
 
