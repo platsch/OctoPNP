@@ -115,13 +115,13 @@ $(function() {
                     break;
                 case "TR": 
                     var rows = self.settings.plugins.OctoPNP.tray.rows();
-                    var cols = self.settings.plugins.OctoPNP.tray.cols();
+                    var cols = self.settings.plugins.OctoPNP.tray.columns();
                     cornerOffsetY = rows*self.settings.plugins.OctoPNP.tray.boxsize() + (rows+1)*self.settings.plugins.OctoPNP.tray.rimsize();
                     cornerOffsetX = cols*self.settings.plugins.OctoPNP.tray.boxsize() + (cols+1)*self.settings.plugins.OctoPNP.tray.rimsize();
                     self.statusTrayPosition(false);
                     break;
                 case "BR": 
-                    var cols = self.settings.plugins.OctoPNP.tray.cols();
+                    var cols = self.settings.plugins.OctoPNP.tray.columns();
                     cornerOffsetX = cols*self.settings.plugins.OctoPNP.tray.boxsize() + (cols+1)*self.settings.plugins.OctoPNP.tray.rimsize();
                     self.statusTrayPosition(false);
                     break;
@@ -134,7 +134,10 @@ $(function() {
             //move camera to tray
             var x = self.settings.plugins.OctoPNP.tray.x() + cornerOffsetX - self.settings.plugins.OctoPNP.camera.head.x();
             var y = self.settings.plugins.OctoPNP.tray.y() + cornerOffsetY - self.settings.plugins.OctoPNP.camera.head.y();
-            var z = self.settings.plugins.OctoPNP.tray.z() + self.settings.plugins.OctoPNP.camera.head.z();
+            var z = parseFloat(self.settings.plugins.OctoPNP.tray.z()) + parseFloat(self.settings.plugins.OctoPNP.camera.head.z());
+            console.log(self.settings.plugins.OctoPNP.tray.z());
+            console.log(self.settings.plugins.OctoPNP.camera.head.z());
+            console.log(z);
             self.control.sendCustomCommand({command: "G1 X" + x + " Y" + y + " Z" + z + " F3000"});
 
             //reset offset correction values
@@ -310,7 +313,7 @@ $(function() {
                     return false;
             }
             if(refreshImage) {
-                setTimeout(function() {self._getImage('HEAD');}, 200);
+                setTimeout(function() {self._getImage('HEAD');}, 300);
             }
         };
     }
