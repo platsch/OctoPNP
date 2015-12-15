@@ -22,6 +22,7 @@ $(function() {
         self.statusCameraOffset = ko.observable(false);
         self.statusTrayPosition = ko.observable(false);
         self.statusExtruderOffset = ko.observable(false);
+        self.statusBedCamera = ko.observable(false);
 
         self.keycontrolPossible = ko.observable(false);
         self.keycontrolActive = ko.observable(false);
@@ -41,6 +42,7 @@ $(function() {
             //deactivate other processes
             self.statusTrayPosition(false);
             self.statusExtruderOffset(false);
+            self.statusBedCamera(false);
             self.statusCameraOffset(true);
 
             // Switch to primary extruder
@@ -99,6 +101,7 @@ $(function() {
             //deactivate other processes
             self.statusCameraOffset(false);
             self.statusExtruderOffset(false);
+            self.statusBedCamera(false);
             self.statusTrayPosition(true);
 
             // Switch to primary extruder
@@ -167,6 +170,7 @@ $(function() {
             self.statusTrayPosition(false);
             self.statusExtruderOffset(false);
             self.statusCameraOffset(false);
+            self.statusBedCamera(true);
 
             // Switch to VacNozzle extruder
             self.control.sendCustomCommand({command: self.settings.plugins.OctoPNP.vacnozzle.extruder_nr().toString()});
@@ -184,7 +188,7 @@ $(function() {
             self.keycontrolPossible(true);
 
             //trigger immage fetching
-            setTimeout(function() {self._getImage('HEAD');}, 5000);
+            setTimeout(function() {self._getImage('BED');}, 5000);
         };
 
         self._getImage = function(imagetype, callback) {
@@ -196,7 +200,7 @@ $(function() {
                 //data: JSON.stringify(data),
                 success: function(response) {
                     if(response.hasOwnProperty("src")) {
-                        self._drawHeadImage(response.src);
+                        self._drawImage(response.src);
                     }
                     if(response.hasOwnProperty("error")) {
                         alert(response.error);
@@ -206,7 +210,7 @@ $(function() {
             });
         };
 
-        self._drawHeadImage = function(img) {
+        self._drawImage = function(img) {
             var ctx=self._headCanvas.getContext("2d");  
             var localimg = new Image();
             localimg.src = img;
@@ -313,7 +317,11 @@ $(function() {
                     return false;
             }
             if(refreshImage) {
-                setTimeout(function() {self._getImage('HEAD');}, 300);
+                if(self.statusBedCamera()) {
+                    setTimeout(function() {self._getImage('BED');}, 300);
+                }else{
+                    setTimeout(function() {self._getImage('HEAD');}, 300);
+                }
             }
         };
     }
