@@ -67,7 +67,7 @@ $(function() {
         self.saveCameraOffset = function() {
             //save values...
             self.settings.plugins.OctoPNP.camera.head.x(parseFloat(self.settings.plugins.OctoPNP.camera.head.x())-self.offsetCorrectionX());
-            self.settings.plugins.OctoPNP.camera.head.y(parseFloat(self.settings.plugins.OctoPNP.camera.head.x())-self.offsetCorrectionY());
+            self.settings.plugins.OctoPNP.camera.head.y(parseFloat(self.settings.plugins.OctoPNP.camera.head.y())-self.offsetCorrectionY());
 
             //deactivate Keycontrol
             self.keycontrolPossible(false);
