@@ -303,11 +303,21 @@
                             <button data-bind="click: saveCameraOffset, enable: statusCameraOffset">{{ _('Save offset') }}</button>
                             <br><br>
 
+                            <h4>E0 <-> Ex</h4>
+                            <button data-bind="click: extruderOffset, enable: isConnected">{{ _('Camera to object') }}</button>
+                            <button data-bind="click: saveExtruderOffset, enable: false">{{ _('Save offset') }}</button>
+                            <br><br>
+
                             <h4>Tray position</h4>
-                            <button data-bind="click: requestImage">{{ _('TL') }}</button>
-                            <button data-bind="click: requestImage">{{ _('TR') }}</button><br>
-                            <button data-bind="click: requestImage">{{ _('BL') }}</button>
-                            <button data-bind="click: requestImage">{{ _('BR') }}</button>
+                            <button data-bind="click: function() { $root.trayPosition('TL') }, enable: isConnected">{{ _('TL') }}</button>
+                            <button data-bind="click: function() { $root.trayPosition('TR') }, enable: isConnected">{{ _('TR') }}</button><br>
+                            <button data-bind="click: trayPosition, enable: isConnected">{{ _('BL') }}</button>
+                            <button data-bind="click: function() { $root.trayPosition('BR') }, enable: isConnected">{{ _('BR') }}</button>
+                            <button data-bind="click: saveTrayPosition, enable: statusTrayPosition">{{ _('Save offset') }}</button>
+                            <br><br>
+
+                            <h4>VacNozzle <-> BedCamera</h4>
+                            <button data-bind="click: bedCameraPosition, enable: isConnected">{{ _('Nozzle to Camera') }}</button>
 
                             <br><br>
                             <h4>Object pos. on printbed</h4>

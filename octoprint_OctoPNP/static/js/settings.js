@@ -20,6 +20,8 @@ $(function() {
         });
 
         self.statusCameraOffset = ko.observable(false);
+        self.statusTrayPosition = ko.observable(false);
+        self.statusExtruderOffset = ko.observable(false);
 
         self.keycontrolPossible = ko.observable(false);
         self.keycontrolActive = ko.observable(false);
@@ -36,6 +38,9 @@ $(function() {
 
         // Calibrate offset between primary extruder and head-camera
         self.cameraOffset = function() {
+            //deactivate other processes
+            self.statusTrayPosition(false);
+            self.statusExtruderOffset(false);
             self.statusCameraOffset(true);
 
             // Switch to primary extruder
@@ -59,14 +64,124 @@ $(function() {
 
         self.saveCameraOffset = function() {
             //save values...
+            self.settings.plugins.OctoPNP.camera.head.x(self.settings.plugins.OctoPNP.camera.head.x()-self.offsetCorrectionX());
+            self.settings.plugins.OctoPNP.camera.head.y(self.settings.plugins.OctoPNP.camera.head.x()-self.offsetCorrectionY());
 
             //deactivate Keycontrol
             self.keycontrolPossible(false);
             self.statusCameraOffset(false);
-        }
+        };
 
-        self.requestImage = function() {
-            self._getImage("HEAD");
+        // Calibrate offset between primary and other extruder
+        self.extruderOffset = function() {
+            // initialize process...
+            self.cameraOffset();
+            // and correct status variables
+            self.statusCameraOffset(false);
+            self.statusExtruderOffset(true);
+
+        };
+
+        self.saveExtruderOffset = function() {
+            // Steps to save values:
+            // get current offset for extruder x from eeprom
+            // get steps per mm for x and y axis
+            // compute offset steps from offsetCorrection values
+            // save to eeprom
+
+            // deactivate Keycontrol
+            self.keycontrolPossible(false);
+            self.statusExtruderOffset(false);
+        };
+
+        // calibrate tray position relative to primary extruder
+        self.trayPosition = function(corner) {
+            //deactivate other processes
+            self.statusCameraOffset(false);
+            self.statusExtruderOffset(false);
+            self.statusTrayPosition(true);
+
+            // Switch to primary extruder
+            self.control.sendCustomCommand({command: "T0"});
+
+            //computer corner position
+            var cornerOffsetX = 0.0;
+            var cornerOffsetY = 0.0;
+            switch (corner) {
+                case "TL": 
+                    var rows = self.settings.plugins.OctoPNP.tray.rows();
+                    cornerOffsetY = rows*self.settings.plugins.OctoPNP.tray.boxsize() + (rows+1)*self.settings.plugins.OctoPNP.tray.rimsize();
+                    self.statusTrayPosition(false);
+                    break;
+                case "TR": 
+                    var rows = self.settings.plugins.OctoPNP.tray.rows();
+                    var cols = self.settings.plugins.OctoPNP.tray.cols();
+                    cornerOffsetY = rows*self.settings.plugins.OctoPNP.tray.boxsize() + (rows+1)*self.settings.plugins.OctoPNP.tray.rimsize();
+                    cornerOffsetX = cols*self.settings.plugins.OctoPNP.tray.boxsize() + (cols+1)*self.settings.plugins.OctoPNP.tray.rimsize();
+                    self.statusTrayPosition(false);
+                    break;
+                case "BR": 
+                    var cols = self.settings.plugins.OctoPNP.tray.cols();
+                    cornerOffsetX = cols*self.settings.plugins.OctoPNP.tray.boxsize() + (cols+1)*self.settings.plugins.OctoPNP.tray.rimsize();
+                    self.statusTrayPosition(false);
+                    break;
+                default:
+                    // BL is default case, the tray position is allways computed for this point. Saving the calibration
+                    // is only possible for this case.
+                    break;
+            }
+
+            //move camera to tray
+            var x = self.settings.plugins.OctoPNP.tray.x() + cornerOffsetX - self.settings.plugins.OctoPNP.camera.head.x();
+            var y = self.settings.plugins.OctoPNP.tray.y() + cornerOffsetY - self.settings.plugins.OctoPNP.camera.head.y();
+            var z = self.settings.plugins.OctoPNP.tray.z() + self.settings.plugins.OctoPNP.camera.head.z();
+            self.control.sendCustomCommand({command: "G1 X" + x + " Y" + y + " Z" + z + " F3000"});
+
+            //reset offset correction values
+            self.offsetCorrectionX(0.0);
+            self.offsetCorrectionY(0.0);
+
+            //activate Keycontrol
+            self.keycontrolPossible(true);
+
+            //trigger immage fetching
+            setTimeout(function() {self._getImage('HEAD');}, 5000);
+        };
+
+        self.saveTrayPosition = function() {
+            //save values
+            self.settings.plugins.OctoPNP.tray.x(self.settings.plugins.OctoPNP.tray.x()+self.offsetCorrectionX());
+            self.settings.plugins.OctoPNP.tray.y(self.settings.plugins.OctoPNP.tray.y()+self.offsetCorrectionY());
+
+            //deactivate Keycontrol
+            self.keycontrolPossible(false);
+            self.statusTrayPosition(false);
+        };
+
+        // Move Vacuum Nozzle to bed camera. It is currently not possible to save any offset here.
+        self.bedCameraPosition = function() {
+            //deactivate other processes
+            self.statusTrayPosition(false);
+            self.statusExtruderOffset(false);
+            self.statusCameraOffset(false);
+
+            // Switch to VacNozzle extruder
+            self.control.sendCustomCommand({command: self.settings.plugins.OctoPNP.vacnozzle.extruder_nr().toString()});
+
+            //move camera to object
+            var x = self.settings.plugins.OctoPNP.camera.bed.x() - self.settings.plugins.OctoPNP.vacnozzle.x();
+            var y = self.settings.plugins.OctoPNP.camera.bed.y() - self.settings.plugins.OctoPNP.vacnozzle.y();
+            self.control.sendCustomCommand({command: "G1 X" + x + " Y" + y + " Z" + self.settings.plugins.OctoPNP.camera.bed.z() + " F3000"});
+
+            //reset offset correction values
+            self.offsetCorrectionX(0.0);
+            self.offsetCorrectionY(0.0);
+
+            //activate Keycontrol
+            self.keycontrolPossible(true);
+
+            //trigger immage fetching
+            setTimeout(function() {self._getImage('HEAD');}, 5000);
         };
 
         self._getImage = function(imagetype, callback) {
