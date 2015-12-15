@@ -47,8 +47,8 @@ $(function() {
             self.control.sendCustomCommand({command: "T0"});
 
             //move camera to object
-            var x = self.objectPositionX() - self.settings.plugins.OctoPNP.camera.head.x();
-            var y = self.objectPositionY() - self.settings.plugins.OctoPNP.camera.head.y();
+            var x = self.objectPositionX() - parseFloat(self.settings.plugins.OctoPNP.camera.head.x());
+            var y = self.objectPositionY() - parseFloat(self.settings.plugins.OctoPNP.camera.head.y());
             self.control.sendCustomCommand({command: "G1 X" + x + " Y" + y + " Z" + self.settings.plugins.OctoPNP.camera.head.z() + " F3000"});
 
             //reset offset correction values
@@ -64,8 +64,8 @@ $(function() {
 
         self.saveCameraOffset = function() {
             //save values...
-            self.settings.plugins.OctoPNP.camera.head.x(self.settings.plugins.OctoPNP.camera.head.x()-self.offsetCorrectionX());
-            self.settings.plugins.OctoPNP.camera.head.y(self.settings.plugins.OctoPNP.camera.head.x()-self.offsetCorrectionY());
+            self.settings.plugins.OctoPNP.camera.head.x(parseFloat(self.settings.plugins.OctoPNP.camera.head.x())-self.offsetCorrectionX());
+            self.settings.plugins.OctoPNP.camera.head.y(parseFloat(self.settings.plugins.OctoPNP.camera.head.x())-self.offsetCorrectionY());
 
             //deactivate Keycontrol
             self.keycontrolPossible(false);
@@ -109,20 +109,20 @@ $(function() {
             var cornerOffsetY = 0.0;
             switch (corner) {
                 case "TL": 
-                    var rows = self.settings.plugins.OctoPNP.tray.rows();
-                    cornerOffsetY = rows*self.settings.plugins.OctoPNP.tray.boxsize() + (rows+1)*self.settings.plugins.OctoPNP.tray.rimsize();
+                    var rows = parseFloat(self.settings.plugins.OctoPNP.tray.rows());
+                    cornerOffsetY = rows*parseFloat(self.settings.plugins.OctoPNP.tray.boxsize()) + (rows+1)*parseFloat(self.settings.plugins.OctoPNP.tray.rimsize());
                     self.statusTrayPosition(false);
                     break;
                 case "TR": 
-                    var rows = self.settings.plugins.OctoPNP.tray.rows();
-                    var cols = self.settings.plugins.OctoPNP.tray.columns();
-                    cornerOffsetY = rows*self.settings.plugins.OctoPNP.tray.boxsize() + (rows+1)*self.settings.plugins.OctoPNP.tray.rimsize();
-                    cornerOffsetX = cols*self.settings.plugins.OctoPNP.tray.boxsize() + (cols+1)*self.settings.plugins.OctoPNP.tray.rimsize();
+                    var rows = parseFloat(self.settings.plugins.OctoPNP.tray.rows());
+                    var cols = parseFloat(self.settings.plugins.OctoPNP.tray.columns());
+                    cornerOffsetY = rows*parseFloat(self.settings.plugins.OctoPNP.tray.boxsize()) + (rows+1)*parseFloat(self.settings.plugins.OctoPNP.tray.rimsize());
+                    cornerOffsetX = cols*parseFloat(self.settings.plugins.OctoPNP.tray.boxsize()) + (cols+1)*parseFloat(self.settings.plugins.OctoPNP.tray.rimsize());
                     self.statusTrayPosition(false);
                     break;
                 case "BR": 
-                    var cols = self.settings.plugins.OctoPNP.tray.columns();
-                    cornerOffsetX = cols*self.settings.plugins.OctoPNP.tray.boxsize() + (cols+1)*self.settings.plugins.OctoPNP.tray.rimsize();
+                    var cols = parseFloat(self.settings.plugins.OctoPNP.tray.columns());
+                    cornerOffsetX = cols*parseFloat(self.settings.plugins.OctoPNP.tray.boxsize()) + (cols+1)*parseFloat(self.settings.plugins.OctoPNP.tray.rimsize());
                     self.statusTrayPosition(false);
                     break;
                 default:
@@ -132,8 +132,8 @@ $(function() {
             }
 
             //move camera to tray
-            var x = self.settings.plugins.OctoPNP.tray.x() + cornerOffsetX - self.settings.plugins.OctoPNP.camera.head.x();
-            var y = self.settings.plugins.OctoPNP.tray.y() + cornerOffsetY - self.settings.plugins.OctoPNP.camera.head.y();
+            var x = parseFloat(self.settings.plugins.OctoPNP.tray.x()) + cornerOffsetX - parseFloat(self.settings.plugins.OctoPNP.camera.head.x());
+            var y = parseFloat(self.settings.plugins.OctoPNP.tray.y()) + cornerOffsetY - parseFloat(self.settings.plugins.OctoPNP.camera.head.y());
             var z = parseFloat(self.settings.plugins.OctoPNP.tray.z()) + parseFloat(self.settings.plugins.OctoPNP.camera.head.z());
             console.log(self.settings.plugins.OctoPNP.tray.z());
             console.log(self.settings.plugins.OctoPNP.camera.head.z());
@@ -153,8 +153,8 @@ $(function() {
 
         self.saveTrayPosition = function() {
             //save values
-            self.settings.plugins.OctoPNP.tray.x(self.settings.plugins.OctoPNP.tray.x()+self.offsetCorrectionX());
-            self.settings.plugins.OctoPNP.tray.y(self.settings.plugins.OctoPNP.tray.y()+self.offsetCorrectionY());
+            self.settings.plugins.OctoPNP.tray.x(parseFloat(self.settings.plugins.OctoPNP.tray.x())+self.offsetCorrectionX());
+            self.settings.plugins.OctoPNP.tray.y(parseFloat(self.settings.plugins.OctoPNP.tray.y())+self.offsetCorrectionY());
 
             //deactivate Keycontrol
             self.keycontrolPossible(false);
@@ -172,8 +172,8 @@ $(function() {
             self.control.sendCustomCommand({command: self.settings.plugins.OctoPNP.vacnozzle.extruder_nr().toString()});
 
             //move camera to object
-            var x = self.settings.plugins.OctoPNP.camera.bed.x() - self.settings.plugins.OctoPNP.vacnozzle.x();
-            var y = self.settings.plugins.OctoPNP.camera.bed.y() - self.settings.plugins.OctoPNP.vacnozzle.y();
+            var x = parseFloat(self.settings.plugins.OctoPNP.camera.bed.x()) - parseFloat(self.settings.plugins.OctoPNP.vacnozzle.x());
+            var y = parseFloat(self.settings.plugins.OctoPNP.camera.bed.y()) - parseFloat(self.settings.plugins.OctoPNP.vacnozzle.y());
             self.control.sendCustomCommand({command: "G1 X" + x + " Y" + y + " Z" + self.settings.plugins.OctoPNP.camera.bed.z() + " F3000"});
 
             //reset offset correction values
