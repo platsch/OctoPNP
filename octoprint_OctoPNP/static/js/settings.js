@@ -15,6 +15,8 @@ $(function() {
         self.offsetCorrectionY = ko.observable(0.0);
         self.jogDistance = ko.observable(1.0);
 
+        self.selectedExtruder = ko.observable(1);
+
         self.isConnected = ko.computed(function() {
             return self.connection.isOperational() || self.connection.isReady() || self.connection.isPaused();
         });
@@ -28,6 +30,13 @@ $(function() {
         self.keycontrolActive = ko.observable(false);
         self.showKeycontrols = ko.observable(true);
         self.keycontrolHelpActive = ko.observable(true);
+
+        // helpers for eeprom access
+        self.firmwareRegEx = /FIRMWARE_NAME:([^\s]+)/i;
+        self.repetierRegEx = /Repetier_([^\s]*)/i;
+        self.eepromDataRegEx = /EPR:(\d+) (\d+) ([^\s]+) (.+)/;
+        self.isRepetierFirmware = ko.observable(false);
+        self.eepromData = ko.observableArray([]);
 
 
         // This will get called before the ViewModel gets bound to the DOM, but after its depedencies have
@@ -76,6 +85,9 @@ $(function() {
 
         // Calibrate offset between primary and other extruder
         self.extruderOffset = function() {
+            // fetch eeprom values
+            self.loadEeprom();
+
             // initialize process...
             self.cameraOffset();
             // and correct status variables
@@ -87,9 +99,21 @@ $(function() {
         self.saveExtruderOffset = function() {
             // Steps to save values:
             // get current offset for extruder x from eeprom
+            var oldOffsetX = parseFloat(self._getEepromValue("Extr." + self.selectedExtruder() + " X-offset"));
+            var oldOffsetY = parseFloat(self._getEepromValue("Extr." + self.selectedExtruder() + " Y-offset"));
             // get steps per mm for x and y axis
+            var stepsPerMMX = parseFloat(self._getEepromValue("X-axis steps per mm"));
+            var stepsPerMMY = parseFloat(self._getEepromValue("Y-axis steps per mm"));
             // compute offset steps from offsetCorrection values
+            var offsetX = oldOffsetX + self.offsetCorrectionX() * stepsPerMMX;
+            var offsetY = oldOffsetY + self.offsetCorrectionY() * stepsPerMMY;
             // save to eeprom
+
+            //self._setEepromValue("Extr." + self.selectedExtruder() + " X-offset", offsetX);
+            //self._setEepromValue("Extr." + self.selectedExtruder() + " Y-offset", offsetY);
+            console.log(offsetX);
+            console.log(offsetY);
+            //self.saveEeprom();
 
             // deactivate Keycontrol
             self.keycontrolPossible(false);
@@ -324,6 +348,115 @@ $(function() {
                 }
             }
         };
+
+
+        // The following functions provide "infrastructure" to access and modify eeprom values
+        //self.onStartup = function() {
+            /*$('#settings_plugin_autocalibration_link a').on('show', function(e) {
+                if (self.isConnected() && !self.isRepetierFirmware())
+                    self._requestFirmwareInfo();
+            });*/
+        //}
+
+        self.fromHistoryData = function(data) {
+            _.each(data.logs, function(line) {
+                var match = self.firmwareRegEx.exec(line);
+                if (match != null) {
+                    if (self.repetierRegEx.exec(match[0]))
+                        self.isRepetierFirmware(true);
+                }
+            });
+        };
+
+        self.fromCurrentData = function(data) {
+            if (!self.isRepetierFirmware()) {
+                _.each(data.logs, function (line) {
+                    var match = self.firmwareRegEx.exec(line);
+                    if (match) {
+                        if (self.repetierRegEx.exec(match[0]))
+                            self.isRepetierFirmware(true);
+                    }
+                });
+            }
+            else
+            {
+                _.each(data.logs, function (line) {
+                    var match = self.eepromDataRegEx.exec(line);
+                    if (match) {
+                        self.eepromData.push({
+                            dataType: match[1],
+                            position: match[2],
+                            origValue: match[3],
+                            value: match[3],
+                            description: match[4]
+                        });
+                    }
+                });
+            }
+        };
+
+        self.onEventConnected = function() {
+            self._requestFirmwareInfo();
+        }
+
+        self.onEventDisconnected = function() {
+            self.isRepetierFirmware(false);
+        };
+
+        self.loadEeprom = function() {
+            self.eepromData([]);
+            self._requestEepromData();
+        };
+
+        self.saveEeprom = function()  {
+            var eepromData = self.eepromData();
+            _.each(eepromData, function(data) {
+                if (data.origValue != data.value) {
+                    self._requestSaveDataToEeprom(data.dataType, data.position, data.value);
+                    data.origValue = data.value;
+                }
+            });
+        };
+
+        self._getEepromValue = function(description) {
+            var eepromData = self.eepromData();
+            var result = false;
+            _.each(eepromData, function(data) {
+                if ((new RegExp(description)).test(data.description)) {
+                    result = data.value;
+                }
+            });
+            return result;
+        }
+
+        self._setEepromValue = function(description, value) {
+            var eepromData = self.eepromData();
+            var result = false;
+            _.each(eepromData, function(data) {
+                if ((new RegExp(description)).test(data.description)) {
+                    data.value = value;
+                }
+            });
+        }
+
+        self._requestFirmwareInfo = function() {
+            self.control.sendCustomCommand({ command: "M115" });
+        };
+
+        self._requestEepromData = function() {
+            self.control.sendCustomCommand({ command: "M205" });
+        }
+        self._requestSaveDataToEeprom = function(data_type, position, value) {
+            var cmd = "M206 T" + data_type + " P" + position;
+            if (data_type == 3) {
+                cmd += " X" + value;
+                self.control.sendCustomCommand({ command: cmd });
+            }
+            else {
+                cmd += " S" + value;
+                self.control.sendCustomCommand({ command: cmd });
+            }
+        }
     }
 
 
