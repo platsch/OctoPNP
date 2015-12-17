@@ -304,7 +304,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		tray_offset = self._getTrayPosFromPartNr(partnr)
 		vacuum_dest = [tray_offset[0]+part_offset[0]-float(self._settings.get(["vacnozzle", "x"])),\
 						 tray_offset[1]+part_offset[1]-float(self._settings.get(["vacnozzle", "y"])),\
-						 tray_offset[2]+self.smdparts.getPartHeight(partnr)]
+						 tray_offset[2]+self.smdparts.getPartHeight(partnr)-float(self._settings.get(["vacnozzle", "z_pressure"]))]
 
 		# move vac nozzle to part and pick
 		cmd = "G1 X" + str(vacuum_dest[0]) + " Y" + str(vacuum_dest[1]) + " F" + str(self.FEEDRATE)
