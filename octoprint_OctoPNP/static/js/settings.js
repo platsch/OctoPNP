@@ -15,7 +15,7 @@ $(function() {
         self.offsetCorrectionY = ko.observable(0.0);
         self.jogDistance = ko.observable(1.0);
 
-        self.selectedExtruder = ko.observable(1);
+        self.selectedExtruder = ko.observable(2);
 
         self.isConnected = ko.computed(function() {
             return self.connection.isOperational() || self.connection.isReady() || self.connection.isPaused();

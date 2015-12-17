@@ -313,7 +313,7 @@
                             <h4>E0 <-> Ex</h4>
                             <button data-bind="click: extruderOffset, enable: isConnected">{{ _('Camera to object') }}</button><br>
                             E: <input type="number" step="1" class="input-mini text-right" data-bind="value: selectedExtruder">
-                            <button data-bind="click: saveExtruderOffset, enable: statusExtruderOffset && isRepetierFirmware">{{ _('Save offset') }}</button>
+                            <button data-bind="click: saveExtruderOffset, enable: (statusExtruderOffset() && isRepetierFirmware())">{{ _('Save offset') }}</button>
                             <span style="color: red" data-bind="visible: !isRepetierFirmware()">Repetier firmware required.</span>
                             <br><br>
 
