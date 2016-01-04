@@ -9,7 +9,7 @@ It currently requires the following hardware extensions:
 * A (second) bed camera to precisely align the parts during the placing operation
 * A vaccum nozzle to grip parts
 
-![octopnp_main_small](https://cloud.githubusercontent.com/assets/4190756/12094912/bf0e18b0-b30b-11e5-8111-a7cd94914f30.png)
+![octopnp_main_small](https://cloud.githubusercontent.com/assets/4190756/12095798/74eb13ae-b311-11e5-8120-1a8c525942ca.png)
 
 # Installation
 ## Prerequirements
@@ -74,3 +74,15 @@ M361 P2
 ;</part>
 ;</object>
 ```
+# Configuration
+Good configuration and calibration of the printer is absolutely crucial to successfully use multiple extruders and cameras.
+## Tray
+The tray-position is set in relation to the primary extruder (usually the plastic extruder). To find the position, move the primary extruder to the bottom left corner of the tray and note the position. A negative Z-offset can be used if the tray is lower than the printbed.
+## Extruders / Nozzles
+The minimal setup requires 3 nozzles:
+* The plastic extruder to print the object (primary extruder)
+* An Extruder for liquids to print the conductive wires
+* A vacuum nozzle to grip SMD-parts
+The offset is always relative to the primary extruder. Offsets can be handled by the slicer, by OctoPNP or by the printer firmware.
+## Cameras
+## Calibration wizard
