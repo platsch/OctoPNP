@@ -129,30 +129,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				"js/settings.js"]
 		)
 
-	# Define possible requests from GUI
-	def get_api_commands(self):
-		return dict(
-			getCameraImage=["imagetype"]
-		)
-
-	def on_api_command(self, command, data):
-		import flask
-		if command == "getCameraImage":
-			if data.get("imagetype") == "HEAD":
-				# Retrieve image from camera
-				if self._grabImages():
-					headPath = self._settings.get(["camera", "head", "path"])
-
-					#update UI
-				self._updateUI("HEADIMAGE", headPath)
-				self._logger.info("getCameraImage, type: " + data.get("imagetype"))
-
-	def on_api_get(self, request):
-		#if "force" in flask.request.values and flask.request.values["force"]
-		print request.values
-		#flask.request.values
-		return flask.jsonify(foo="bar")
-
+	# Flask endpoint for the GUI to request camera images. Possible request parameters are "BED" and "HEAD".
 	@octoprint.plugin.BlueprintPlugin.route("/camera_image", methods=["GET"])
 	def getCameraImage(self):
 		result = ""
