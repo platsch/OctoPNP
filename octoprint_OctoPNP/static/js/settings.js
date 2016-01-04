@@ -28,7 +28,7 @@ $(function() {
 
         self.keycontrolPossible = ko.observable(false);
         self.keycontrolActive = ko.observable(false);
-        self.showKeycontrols = ko.observable(true);
+        self.showKeycontrols = ko.observable(false);
         self.keycontrolHelpActive = ko.observable(true);
 
         // helpers for eeprom access
@@ -214,6 +214,16 @@ $(function() {
             //trigger immage fetching
             setTimeout(function() {self._getImage('BED');}, 5000);
         };
+
+        self.saveBedCameraPosition = function() {
+            //save values
+            self.settings.plugins.OctoPNP.camera.bed.x(parseFloat(self.settings.plugins.OctoPNP.camera.bed.x())+self.offsetCorrectionX());
+            self.settings.plugins.OctoPNP.camera.bed.y(parseFloat(self.settings.plugins.OctoPNP.camera.bed.y())+self.offsetCorrectionY());
+
+            //deactivate Keycontrol
+            self.keycontrolPossible(false);
+            self.statusBedCamera(false);
+        }
 
         self._getImage = function(imagetype, callback) {
             $.ajax({
