@@ -28,8 +28,8 @@ $(function() {
 
         self.keycontrolPossible = ko.observable(false);
         self.keycontrolActive = ko.observable(false);
-        self.showKeycontrols = ko.observable(false);
-        self.keycontrolHelpActive = ko.observable(true);
+        self.showKeycontrols = ko.observable(true);
+        self.keycontrolHelpActive = ko.observable(false);
 
         // helpers for eeprom access
         self.firmwareRegEx = /FIRMWARE_NAME:([^\s]+)/i;
