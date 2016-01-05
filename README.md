@@ -83,6 +83,11 @@ The minimal setup requires 3 nozzles:
 * The plastic extruder to print the object (primary extruder)
 * An Extruder for liquids to print the conductive wires
 * A vacuum nozzle to grip SMD-parts
-The offset is always relative to the primary extruder. Offsets can be handled by the slicer, by OctoPNP or by the printer firmware.
+The offset is always relative to the primary extruder. Offsets can be handled by the slicer, by OctoPNP or by the printer firmware. 
+The offset for the liquid extruder must be handled by the slicer or by the firmware, OctoPNP is not aware of this extruder. Firmware offset is encouraged to avoid frequent G-code generation, since for most setups the offset has to be re-calibrated at least after every refill of the extruder. OctoPNP provides the calibration tool to quickly correct the firmware offset.
+The offset for the vacuum nozzle must be handled by OctoPNP or by the firmware.
+
 ## Cameras
+### Position
+The camera position is relative to the primary nozzle for the head camera (this camera is mounted somewhere next to the extruder at the X-axis and follows the printheads movements). The 'focus distance' defines the printbead Z-position for the optimal focus point.
 ## Calibration wizard
