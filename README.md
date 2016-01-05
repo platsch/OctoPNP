@@ -78,6 +78,9 @@ M361 P2
 Good configuration and calibration of the printer is absolutely crucial to successfully use multiple extruders and cameras.
 ## Tray
 The tray-position is set in relation to the primary extruder (usually the plastic extruder). To find the position, move the primary extruder to the bottom left corner of the tray and note the position. A negative Z-offset can be used if the tray is lower than the printbed.
+
+![octopnp_settings_tray_small](https://cloud.githubusercontent.com/assets/4190756/12114966/9a0747d2-b3ae-11e5-93e0-79d14a2ee632.png)
+
 ## Extruders / Nozzles
 The minimal setup requires 3 nozzles:
 * The plastic extruder to print the object (primary extruder)
@@ -89,6 +92,16 @@ The offset for the liquid extruder must be handled by the slicer or by the firmw
 The offset for the vacuum nozzle must be handled by OctoPNP or by the firmware.
 ## Cameras
 ### Position
-The camera position is relative to the primary nozzle for the head camera (this camera is mounted somewhere next to the extruder at the X-axis and follows the printheads movements). The `focus distance` defines the printbead Z-position for the optimal focus point. The bed camera is mounted to the printers frame, the camera position is absolute and again relative to the primary extruder.
-The `px/mm` value is used by the image processing to measure offsets and only required for the bed camera, since the head camera utilizes the known box size for on demand calibration.
+The camera position is relative to the primary nozzle for the head camera (this camera is mounted somewhere next to the extruder at the X-axis and follows the printheads movements). The bed camera is mounted to the printers frame, the camera position is absolute and again relative to the primary extruder.
+* `Focus distance` defines the printbead Z-position for the optimal focus point. 
+* The `px/mm` value is used by the image processing to measure offsets and only required for the bed camera, since the head camera utilizes the known box size for on demand calibration.
+* `Image path` and `grab script path` denote the locations of script and preprocessed images as described in the Prerequirements section.
+* The `binarization threshold` is used by the image processing to seperate object and background. The value depends on the camera and illumination, currently there is no good calibration method.
+
 ## Calibration wizard
+The calibration "wizard" is an experimental set of tools to quickly achieve several calibration tasks with high precision.
+* Calibration of extruders is done by printing a defined pattern (e.g. a cross) on the printbed. To calibrate an offset, the head camera moves to the printed pattern (position given by user) and the user uses the arrows keys to correct possible offsets by using the camera image superimposed by cross hairs. Offsets between extruders can be directly saved to the eeprom if a repetier firmware is used.
+* The tray position can be calibrated similar by moving the camera to the corners and correcting possible offsets with manual key control.
+* Calibrating the bed camera is a potential problem, since the printer is probably not able to move the primary extruder to this camera due to physical constraints of the axis. Besides, moving an extruder with sticky, liquid content over the camera optic is a general concern. However, it is possible to calibrate the bed camera against the vacuum nozzle, but this leaves the problem of calibrating the vacuum nozzle relative to the primary nozzle which is not solved currently.
+
+![octopnp_settings_calibration_small](https://cloud.githubusercontent.com/assets/4190756/12115026/fe216f54-b3ae-11e5-9a04-4f83776c2cf6.png)
