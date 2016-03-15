@@ -44,7 +44,7 @@ def __plugin_load__():
 	__plugin_implementation__ = octopnp
 
 	global __plugin_hooks__
-	__plugin_hooks__ = {'octoprint.comm.protocol.gcode.sending': octopnp.hook_gcode}
+	__plugin_hooks__ = {'octoprint.comm.protocol.gcode.queuing': octopnp.hook_gcode}
 
 
 class OctoPNP(octoprint.plugin.StartupPlugin,
@@ -187,6 +187,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 	next acknowledging ok not until the positioning is finished. Since the next command is a M361,
 	octoprint will call the gcode hook again and we are back in the game, iterating to the next state.
 	"""
+
 	def hook_gcode(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
 		if "M361" in cmd:
 			if self._state == self.STATE_NONE:
