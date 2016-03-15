@@ -108,12 +108,11 @@ $(function() {
             var offsetX = oldOffsetX + self.offsetCorrectionX() * stepsPerMMX;
             var offsetY = oldOffsetY + self.offsetCorrectionY() * stepsPerMMY;
             // save to eeprom
-
-            //self._setEepromValue("Extr." + self.selectedExtruder() + " X-offset", offsetX);
-            //self._setEepromValue("Extr." + self.selectedExtruder() + " Y-offset", offsetY);
-            console.log(offsetX);
-            console.log(offsetY);
-            //self.saveEeprom();
+            self._setEepromValue("Extr." + self.selectedExtruder() + " X-offset", offsetX);
+            self._setEepromValue("Extr." + self.selectedExtruder() + " Y-offset", offsetY);
+            //console.log(offsetX);
+            //console.log(offsetY);
+            self.saveEeprom();
 
             // deactivate Keycontrol
             self.keycontrolPossible(false);
