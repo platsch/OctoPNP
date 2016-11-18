@@ -44,7 +44,7 @@ def __plugin_load__():
 	__plugin_implementation__ = octopnp
 
 	global __plugin_hooks__
-	__plugin_hooks__ = {'octoprint.comm.protocol.gcode.queuing': octopnp.hook_gcode}
+	__plugin_hooks__ = {'octoprint.comm.protocol.gcode.sending': octopnp.hook_gcode_sending, 'octoprint.comm.protocol.gcode.queuing': octopnp.hook_gcode_queuing}
 
 
 class OctoPNP(octoprint.plugin.StartupPlugin,
@@ -177,18 +177,11 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				self._updateUI("FILE", "")
 
 
+
 	"""
 	Use the gcode hook to interrupt the printing job on custom M361 commands.
-	This hook is designed as some kind of a "state machine". The reason is,
-	that we have to circumvent the buffered gcode execution in the printer.
-	To take a picture, the buffer must be emptied to ensure that the printer has executed all previous moves
-	and is now at the desired position. To achieve this, a M400 command is injected after the
-	camera positioning command, followed by a M361. This causes the printer to send the
-	next acknowledging ok not until the positioning is finished. Since the next command is a M361,
-	octoprint will call the gcode hook again and we are back in the game, iterating to the next state.
 	"""
-
-	def hook_gcode(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
+	def hook_gcode_queuing(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
 		if "M361" in cmd:
 			if self._state == self.STATE_NONE:
 				self._state = self.STATE_PICK
@@ -198,44 +191,106 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 					self._currentZ = 0.0
 				command = re.search("P\d*", cmd).group() #strip the M361
 				self._currentPart = int(command[1:])
+
+				self._logger.info( "Received M361 command to place part: " + str(self._currentPart))
+
 				self._updateUI("OPERATION", "pick")
 
+
+				self._logger.info( "Move camera to part: " + str(self._currentPart))
 				self._moveCameraToPart(self._currentPart)
-				print "move camera to part"
+				
 				self._printer.commands("M400")
 				self._printer.commands("G4 P1")
 				self._printer.commands("M400")
-				for i in range(20):
+
+				for i in range(5):
 					self._printer.commands("G4 P1")
-				self._printer.commands("M361")
-				return "G4 P0" # return dummy command
+
+				self._printer.commands("M362")
+
+				for i in range(5):
+					self._printer.commands("G4 P1")
+
+				return "G4 P1" # return dummy command
+			else:
+				self._logger.info( "ERROR, received M361 command while placing part: " + str(self._currentPart))
+
+	"""
+	This hook is designed as some kind of a "state machine". The reason is,
+	that we have to circumvent the buffered gcode execution in the printer.
+	To take a picture, the buffer must be emptied to ensure that the printer has executed all previous moves
+	and is now at the desired position. To achieve this, a M400 command is injected after the
+	camera positioning command, followed by a M362. This causes the printer to send the
+	next acknowledging ok not until the positioning is finished. Since the next command is a M362,
+	octoprint will call the gcode hook again and we are back in the game, iterating to the next state.
+	Since both, Octoprint and the printer firmware are using a queue, we inject some "G4 P1" commands
+	as a "clearance buffer". Those commands simply cause the printer to wait for a millisecond.
+	"""
+
+	def hook_gcode_sending(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):		
+		if "M362" in cmd:
 			if self._state == self.STATE_PICK:
-				print "pick part"
 				self._state = self.STATE_ALIGN
+				self._logger.info("Pick part " + str(self._currentPart))
+
+				for i in range(3):
+					self._printer.commands("G4 P50")
+
 				self._pickPart(self._currentPart)
 				self._printer.commands("M400")
 				self._printer.commands("G4 P1")
 				self._printer.commands("M400")
-				for i in range(20):
+
+				for i in range(5):
 					self._printer.commands("G4 P1")
-				self._printer.commands("M361")
-				return "G4 P0" # return dummy command
+
+				self._printer.commands("M362")
+				
+				for i in range(5):
+					self._printer.commands("G4 P1")
+
+				return "G4 P1" # return dummy command
+
 			if self._state == self.STATE_ALIGN:
-				print "align part"
 				self._state = self.STATE_PLACE
+				self._logger.info("Align part " + str(self._currentPart))
+
+				for i in range(3):
+					self._printer.commands("G4 P10")
+
 				self._alignPart(self._currentPart)
 				self._printer.commands("M400")
 				self._printer.commands("G4 P1")
 				self._printer.commands("M400")
-				for i in range(20):
+
+				for i in range(10):
 					self._printer.commands("G4 P1")
-				self._printer.commands("M361")
-				return "G4 P0" # return dummy command
+
+				self._printer.commands("M362")
+
+				for i in range(5):
+					self._printer.commands("G4 P1")
+
+				return "G4 P1" # return dummy command
+
 			if self._state == self.STATE_PLACE:
-				print "place part"
+				self._logger.info("Place part " + str(self._currentPart))
+
+				for i in range(3):
+					self._printer.commands("G4 P10")
+
 				self._placePart(self._currentPart)
+				self._printer.commands("M400")
+				self._printer.commands("G4 P1")
+				self._printer.commands("M400")
+
+				for i in range(10):
+					self._printer.commands("G4 P1")
+
+				self._logger.info("Finished placing part " + str(self._currentPart))
 				self._state = self.STATE_NONE
-				return "G4 P0" # return dummy command
+				return "G4 P1" # return dummy command
 
 
 	def _moveCameraToPart(self, partnr):
@@ -253,11 +308,11 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 	def _pickPart(self, partnr):
 		# wait n seconds to make sure cameras are ready
-		time.sleep(1) # is that necessary?
+		#time.sleep(1) # is that necessary?
 
 		part_offset = [0, 0]
 
-		self._logger.info("Taking picture NOW") # Debug output
+		self._logger.info("Taking head picture NOW") # Debug output
 
 		# take picture
 		if self._grabImages():
@@ -311,7 +366,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		destination = self.smdparts.getPartDestination(partnr)
 
 		# take picture
-		self._logger.info("Taking picture NOW")
+		self._logger.info("Taking bed align picture NOW")
 		bedPath = self._settings.get(["camera", "bed", "path"])
 		if self._grabImages():
 			#update UI
@@ -332,10 +387,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		displacement = [0, 0]
 
 		#sometimes the hook returns to early, very strange... workaround: wait a few ms
-		time.sleep(1)
+		#time.sleep(1)
 
 		# take picture to find part offset
-		self._logger.info("Taking picture NOW")
+		self._logger.info("Taking bed offset picture NOW")
 		bedPath = self._settings.get(["camera", "bed", "path"])
 		if self._grabImages():
 
