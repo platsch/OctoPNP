@@ -418,6 +418,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		self._releaseVacuum()
 		self._printer.commands("G4 S2") #some extra time to make sure the part has released and the remaining vacuum is gone
 
+		self._printer.commands("G1 Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)+5) + " F" + str(self.FEEDRATE)) # lift printhead againi
 
 	# get the position of the box (center of the box) containing part x relative to the [0,0] corner of the tray
 	def _getTrayPosFromPartNr(self, partnr):
