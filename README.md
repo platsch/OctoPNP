@@ -7,7 +7,7 @@ It currently requires the following hardware extensions:
 * A Tray consisting of a grid of boxes to store SMD parts in a defined position
 * A head camera to locate the exact part position on the tray
 * A (second) bed camera to precisely align the parts during the placing operation
-* A vaccum nozzle to grip parts
+* A vacuum nozzle to grip parts
 
 ![octopnp_main_small](https://cloud.githubusercontent.com/assets/4190756/12095798/74eb13ae-b311-11e5-8120-1a8c525942ca.png)
 
@@ -102,6 +102,7 @@ The camera position is relative to the primary nozzle for the head camera (this 
 The calibration "wizard" is an experimental set of tools to quickly achieve several calibration tasks with high precision.
 * Calibration of extruders is done by printing a defined pattern (e.g. a cross) on the printbed. To calibrate an offset, the head camera moves to the printed pattern (position given by user) and the user uses the arrows keys to correct possible offsets by using the camera image superimposed by cross hairs. Offsets between extruders can be directly saved to the eeprom if a repetier firmware is used.
 * The tray position can be calibrated similar by moving the camera to the corners and correcting possible offsets with manual key control.
-* Calibrating the bed camera is a potential problem, since the printer is probably not able to move the primary extruder to this camera due to physical constraints of the axis. Besides, moving an extruder with sticky, liquid content over the camera optic is a general concern. However, it is possible to calibrate the bed camera against the vacuum nozzle, but this leaves the problem of calibrating the vacuum nozzle relative to the primary nozzle which is not solved currently.
+* The bed camera can be calibrated against any calibrated extruder that is able to move over the camera. While some extruders contain sticky, liquid content, it might be a good idea to cover the camera with some glass.
+* With a calibrated bed camera any extruder that is able to move over the camera, including the vacuum nozzle, can be calibrated.
 
 ![octopnp_settings_calibration_small](https://cloud.githubusercontent.com/assets/4190756/12115026/fe216f54-b3ae-11e5-9a04-4f83776c2cf6.png)
