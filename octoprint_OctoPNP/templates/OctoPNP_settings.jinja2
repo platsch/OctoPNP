@@ -298,6 +298,7 @@
                             </div>
                         </div>
                         <div class="span4">
+			    <button data-bind="click: homeXY, enable: isConnected">{{ _('Home X Y') }}</button><br>
                             <h4>Object pos. on printbed</h4>
                             <div class="form-group">
                                 <span>X&nbsp;</span><input id="objectPosX" type="number" step="0.01" class="input-mini text-right" data-bind="value: objectPositionX"></input>
@@ -307,13 +308,13 @@
 
                             <h4>E0 <-> HeadCamera</h4>
                             <button data-bind="click: cameraOffset, enable: isConnected">{{ _('Camera to object') }}</button>
-                            <button data-bind="click: saveCameraOffset, enable: statusCameraOffset">{{ _('Save offset') }}</button>
+                            <button data-bind="click: saveCameraOffset, enable: statusCameraOffset">{{ _('Save camera offset') }}</button>
                             <br><br>
 
                             <h4>E0 <-> Ex</h4>
                             <button data-bind="click: extruderOffset, enable: isConnected">{{ _('Camera to object') }}</button><br>
                             E: <input type="number" step="1" class="input-mini text-right" data-bind="value: selectedExtruder">
-                            <button data-bind="click: saveExtruderOffset, enable: (statusExtruderOffset() && isRepetierFirmware())">{{ _('Save offset') }}</button>
+                            <button data-bind="click: saveExtruderOffset, enable: (statusExtruderOffset() && isRepetierFirmware())">{{ _('Save extruder offset') }}</button>
                             <span style="color: red" data-bind="visible: !isRepetierFirmware()">Repetier firmware required.</span>
                             <br><br>
 
@@ -322,12 +323,20 @@
                             <button data-bind="click: function() { $root.trayPosition('TR') }, enable: isConnected">{{ _('TR') }}</button><br>
                             <button data-bind="click: trayPosition, enable: isConnected">{{ _('BL') }}</button>
                             <button data-bind="click: function() { $root.trayPosition('BR') }, enable: isConnected">{{ _('BR') }}</button>
-                            <button data-bind="click: saveTrayPosition, enable: statusTrayPosition">{{ _('Save offset') }}</button>
+                            <button data-bind="click: saveTrayPosition, enable: statusTrayPosition">{{ _('Save tray offset') }}</button>
+                            <br><br>
+                            
+                            <h4>Ex <-> BedCamera</h4>
+                            <button data-bind="click: bedCameraPosition, enable: isConnected">{{ _('Extruder to Camera') }}</button><br>
+                            E: <input type="number" step="1" class="input-mini text-right" data-bind="value: selectedExtruder">
+                            <button data-bind="click: saveBedCameraPosition, enable: statusBedCameraOffset">{{ _('Save camera offset') }}</button>
+                            <button data-bind="click: saveExtruderBedCameraOffset, enable: (statusBedCameraOffset() && isRepetierFirmware())">{{ _('Save extruder offset') }}</button>
+                            <span style="color: red" data-bind="visible: !isRepetierFirmware()">Repetier firmware required.</span>
                             <br><br>
 
-                            <h4>VacNozzle <-> BedCamera</h4>
-                            <button data-bind="click: bedCameraPosition, enable: isConnected">{{ _('Nozzle to Camera') }}</button>
-                            <button data-bind="click: savebedCameraPosition, enable: statusBedCamera">{{ _('Save offset') }}</button>
+                            <h4>BedCamera <-> PNPNozzle</h4>
+                            <button data-bind="click: pnpNozzleOffset, enable: isConnected">{{ _('PNPNozzle to Camera') }}</button>
+                            <button data-bind="click: savePnpNozzleOffset, enable: statusPnpNozzleOffset">{{ _('Save nozzle offset') }}</button>
                         </div>
                     </div>
                 </div>
