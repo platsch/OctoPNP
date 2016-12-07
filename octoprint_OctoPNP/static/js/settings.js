@@ -15,7 +15,7 @@ $(function() {
         self.offsetCorrectionY = ko.observable(0.0);
         self.jogDistance = ko.observable(1.0);
 
-        self.selectedExtruder = ko.observable(2);
+        self.selectedExtruder = ko.observable(1);
 
         self.isConnected = ko.computed(function() {
             return self.connection.isOperational() || self.connection.isReady() || self.connection.isPaused();
@@ -24,7 +24,8 @@ $(function() {
         self.statusCameraOffset = ko.observable(false);
         self.statusTrayPosition = ko.observable(false);
         self.statusExtruderOffset = ko.observable(false);
-        self.statusBedCamera = ko.observable(false);
+        self.statusBedCameraOffset = ko.observable(false);
+	self.statusPnpNozzleOffset =  ko.observable(false);
 
         self.keycontrolPossible = ko.observable(false);
         self.keycontrolActive = ko.observable(false);
@@ -45,16 +46,23 @@ $(function() {
         self.onBeforeBinding = function() {
             self.settings = self.settings.settings;
         };
-
+	
+	// Home X Y
+	self.homeXY = function() {
+	    self.control.sendCustomCommand({command: "G28 X Y"});
+	}
+	
         // Calibrate offset between primary extruder and head-camera
         self.cameraOffset = function() {
             //deactivate other processes
             self.statusTrayPosition(false);
             self.statusExtruderOffset(false);
-            self.statusBedCamera(false);
+            self.statusBedCameraOffset(false);
             self.statusCameraOffset(true);
+	    self.statusPnpNozzleOffset(false);
 
             // Switch to primary extruder
+	    self.control.sendCustomCommand({command: "G1 X100 Y150 F3000"});
             self.control.sendCustomCommand({command: "T0"});
 
             //move camera to object
@@ -70,7 +78,7 @@ $(function() {
             self.keycontrolPossible(true);
 
             //trigger immage fetching
-            setTimeout(function() {self._getImage('HEAD');}, 5000);
+            setTimeout(function() {self._getImage('HEAD');}, 8000);
         }
 
         self.saveCameraOffset = function() {
@@ -98,9 +106,11 @@ $(function() {
 
         self.saveExtruderOffset = function() {
             // Steps to save values:
+	    // get current Extuder EEPROM starting with E1
+	    var ex = self.selectedExtruder()+1;
             // get current offset for extruder x from eeprom
-            var oldOffsetX = parseFloat(self._getEepromValue("Extr." + self.selectedExtruder() + " X-offset"));
-            var oldOffsetY = parseFloat(self._getEepromValue("Extr." + self.selectedExtruder() + " Y-offset"));
+            var oldOffsetX = parseFloat(self._getEepromValue("Extr." + ex + " X-offset"));
+            var oldOffsetY = parseFloat(self._getEepromValue("Extr." + ex + " Y-offset"));
             // get steps per mm for x and y axis
             var stepsPerMMX = parseFloat(self._getEepromValue("X-axis steps per mm"));
             var stepsPerMMY = parseFloat(self._getEepromValue("Y-axis steps per mm"));
@@ -108,8 +118,8 @@ $(function() {
             var offsetX = oldOffsetX + self.offsetCorrectionX() * stepsPerMMX;
             var offsetY = oldOffsetY + self.offsetCorrectionY() * stepsPerMMY;
             // save to eeprom
-            self._setEepromValue("Extr." + self.selectedExtruder() + " X-offset", offsetX);
-            self._setEepromValue("Extr." + self.selectedExtruder() + " Y-offset", offsetY);
+            self._setEepromValue("Extr." + ex + " X-offset", offsetX);
+            self._setEepromValue("Extr." + ex + " Y-offset", offsetY);
             //console.log(offsetX);
             //console.log(offsetY);
             self.saveEeprom();
@@ -118,16 +128,29 @@ $(function() {
             self.keycontrolPossible(false);
             self.statusExtruderOffset(false);
         };
+	
+	self.saveExtruderBedCameraOffset = function() {
+	    // invert X axis
+	    self.offsetCorrectionY(self.offsetCorrectionY()*-1);
+	    
+	    // save offset
+	    self.saveExtruderOffset();
+	    
+	    // deactivate Button
+	    self.statusBedCameraOffset(false);
+	}
 
         // calibrate tray position relative to primary extruder
         self.trayPosition = function(corner) {
             //deactivate other processes
             self.statusCameraOffset(false);
             self.statusExtruderOffset(false);
-            self.statusBedCamera(false);
+            self.statusBedCameraOffset(false);
             self.statusTrayPosition(true);
+	    self.statusPnpNozzleOffset(false);
 
             // Switch to primary extruder
+	    self.control.sendCustomCommand({command: "G1 X100 Y150 F3000"});
             self.control.sendCustomCommand({command: "T0"});
 
             //computer corner position
@@ -174,7 +197,7 @@ $(function() {
             self.keycontrolPossible(true);
 
             //trigger immage fetching
-            setTimeout(function() {self._getImage('HEAD');}, 5000);
+            setTimeout(function() {self._getImage('HEAD');}, 8000);
         };
 
         self.saveTrayPosition = function() {
@@ -187,19 +210,64 @@ $(function() {
             self.statusTrayPosition(false);
         };
 
-        // Move Vacuum Nozzle to bed camera. It is currently not possible to save any offset here.
+        // Move Ex to bed camera.
         self.bedCameraPosition = function() {
             //deactivate other processes
             self.statusTrayPosition(false);
             self.statusExtruderOffset(false);
             self.statusCameraOffset(false);
-            self.statusBedCamera(true);
+            self.statusBedCameraOffset(true);
+	    self.statusPnpNozzleOffset(false);
 
             // Switch to VacNozzle extruder
-            self.control.sendCustomCommand({command: self.settings.plugins.OctoPNP.vacnozzle.extruder_nr().toString()});
+	    self.control.sendCustomCommand({command: "G1 X100 Y150 F3000"});
+            self.control.sendCustomCommand({command: "T" + self.selectedExtruder().toString()});
 
             //move camera to object
-            var x = parseFloat(self.settings.plugins.OctoPNP.camera.bed.x()) - parseFloat(self.settings.plugins.OctoPNP.vacnozzle.x());
+            var x = parseFloat(self.settings.plugins.OctoPNP.camera.bed.x());
+            var y = parseFloat(self.settings.plugins.OctoPNP.camera.bed.y());
+            self.control.sendCustomCommand({command: "G1 X" + x + " Y" + y + " Z" + self.settings.plugins.OctoPNP.camera.bed.z() + " F3000"});
+
+            //reset offset correction values
+            self.offsetCorrectionX(0.0);
+            self.offsetCorrectionY(0.0);
+
+            //activate Keycontrol
+            self.keycontrolPossible(true);
+
+            //trigger immage fetching
+            setTimeout(function() {self._getImage('BED');}, 8000);
+        };
+
+        self.saveBedCameraPosition = function() {
+            //save values
+            self.settings.plugins.OctoPNP.camera.bed.x(parseFloat(self.settings.plugins.OctoPNP.camera.bed.x())+self.offsetCorrectionX());
+            self.settings.plugins.OctoPNP.camera.bed.y(parseFloat(self.settings.plugins.OctoPNP.camera.bed.y())+self.offsetCorrectionY());
+
+            //deactivate Keycontrol
+	    
+            self.keycontrolPossible(false);
+            self.statusBedCameraOffset(false);
+        }
+        
+        // Move Vacuum bed camera to Nozzle.
+        self.pnpNozzleOffset = function() {
+            //deactivate other processes
+            self.statusTrayPosition(false);
+            self.statusExtruderOffset(false);
+            self.statusCameraOffset(false);
+            self.statusBedCameraOffset(false);
+	    self.statusPnpNozzleOffset(true);
+
+            // Switch to VacNozzle extruder
+	    
+	    // Move before toolchange
+	    //reset axis
+	    self.control.sendCustomCommand({command: "G1 X100 Y150 F3000"});
+            self.control.sendCustomCommand({command: "T" + self.settings.plugins.OctoPNP.vacnozzle.extruder_nr().toString()});
+
+            //move camera to object
+	    var x = parseFloat(self.settings.plugins.OctoPNP.camera.bed.x()) - parseFloat(self.settings.plugins.OctoPNP.vacnozzle.x());
             var y = parseFloat(self.settings.plugins.OctoPNP.camera.bed.y()) - parseFloat(self.settings.plugins.OctoPNP.vacnozzle.y());
             self.control.sendCustomCommand({command: "G1 X" + x + " Y" + y + " Z" + self.settings.plugins.OctoPNP.camera.bed.z() + " F3000"});
 
@@ -211,18 +279,19 @@ $(function() {
             self.keycontrolPossible(true);
 
             //trigger immage fetching
-            setTimeout(function() {self._getImage('BED');}, 5000);
+            setTimeout(function() {self._getImage('BED');}, 8000);
         };
 
-        self.saveBedCameraPosition = function() {
+        self.savePnpNozzleOffset = function() {
             //save values
-            self.settings.plugins.OctoPNP.camera.bed.x(parseFloat(self.settings.plugins.OctoPNP.camera.bed.x())+self.offsetCorrectionX());
-            self.settings.plugins.OctoPNP.camera.bed.y(parseFloat(self.settings.plugins.OctoPNP.camera.bed.y())+self.offsetCorrectionY());
+            self.settings.plugins.OctoPNP.vacnozzle.x(parseFloat(self.settings.plugins.OctoPNP.vacnozzle.x())-self.offsetCorrectionX());
+            self.settings.plugins.OctoPNP.vacnozzle.y(parseFloat(self.settings.plugins.OctoPNP.vacnozzle.y())-self.offsetCorrectionY());
 
             //deactivate Keycontrol
             self.keycontrolPossible(false);
-            self.statusBedCamera(false);
+            self.statusPnpNozzleOffset(false);
         }
+
 
         self._getImage = function(imagetype, callback) {
             $.ajax({
@@ -350,7 +419,7 @@ $(function() {
                     return false;
             }
             if(refreshImage) {
-                if(self.statusBedCamera()) {
+                if(self.statusBedCameraOffset() || self.statusPnpNozzleOffset()) {
                     setTimeout(function() {self._getImage('BED');}, 300);
                 }else{
                     setTimeout(function() {self._getImage('HEAD');}, 300);
