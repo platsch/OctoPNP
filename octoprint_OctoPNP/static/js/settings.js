@@ -246,7 +246,7 @@ $(function() {
 
             // Switch to PNP
             self.control.sendCustomCommand({command: "G1 X100 Y150 F3000"});
-            self.control.sendCustomCommand({command: "T" + self.settings.plugins.OctoPNP.vacnozzle.extruder_nr().toString()});
+            self.control.sendCustomCommand({command: "T0"});
 
             //computer corner position
             var cornerOffsetX = 0.0;
