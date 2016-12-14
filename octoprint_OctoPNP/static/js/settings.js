@@ -50,6 +50,9 @@ $(function() {
         
         // Home X Y
         self.homeXY = function() {
+
+            self.control.sendCustomCommand({command: "G1 X100 Y150 F3000"});
+            self.control.sendCustomCommand({command: "T0"});
             self.control.sendCustomCommand({command: "G28 X Y"});
         };
         
