@@ -372,25 +372,25 @@ $(function() {
                 case 37: // left arrow key
                     // X-
                     self.control.sendJogCommand("x", -1, self.jogDistance());
-                    self.offsetCorrectionX(self.offsetCorrectionX()-self.jogDistance());
+                    self.offsetCorrectionX(parseFloat((self.offsetCorrectionX()-self.jogDistance()).toFixed(2)));
                     refreshImage = true;
                     break;
                 case 38: // up arrow key
                     // Y+
                     self.control.sendJogCommand("y", 1, self.jogDistance());
-                    self.offsetCorrectionY(self.offsetCorrectionY()+self.jogDistance());
+                    self.offsetCorrectionY(parseFloat((self.offsetCorrectionY()+self.jogDistance()).toFixed(2)));
                     refreshImage = true;
                     break;
                 case 39: // right arrow key
                     // X+
                     self.control.sendJogCommand("x", 1, self.jogDistance());
-                    self.offsetCorrectionX(self.offsetCorrectionX()+self.jogDistance());
+                    self.offsetCorrectionX(parseFloat((self.offsetCorrectionX()+self.jogDistance()).toFixed(2)));
                     refreshImage = true;
                     break;
                 case 40: // down arrow key
                     // Y-
                     self.control.sendJogCommand("y", -1, self.jogDistance());
-                    self.offsetCorrectionY(self.offsetCorrectionY()-self.jogDistance());
+                    self.offsetCorrectionY(parseFloat((self.offsetCorrectionY()-self.jogDistance()).toFixed(2)));
                     refreshImage = true;
                     break;
                 case 49: // number 1
