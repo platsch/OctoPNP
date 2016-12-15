@@ -93,7 +93,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				"x": 0,
 				"y": 0,
 				"z_pressure": 0,
-				"extruder_nr": 2
+				"extruder_nr": 2,
+				"grip_vacuum_gcode": "M340 P0 S1200",
+				"release_vacuum_gcode": "M340 P0 S1500"
 			},
 			"camera": {
 				"grabScriptPath": "",
@@ -438,14 +440,16 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		self._printer.commands("M400")
 		self._printer.commands("M400")
 		self._printer.commands("G4 S1")
-		self._printer.commands("M340 P0 S1500")
+		for line in self._settings.get(["vacnozzle", "grip_vacuum_gcode"]).splitlines():
+			self._printer.commands(line)
 		self._printer.commands("G4 S1")
 
 	def _releaseVacuum(self):
 		self._printer.commands("M400")
 		self._printer.commands("M400")
 		self._printer.commands("G4 S1")
-		self._printer.commands("M340 P0 S1200")
+		for line in self._settings.get(["vacnozzle", "release_vacuum_gcode"]).splitlines():
+			self._printer.commands(line)
 		self._printer.commands("G4 S1")
 
 	def _grabImages(self):
