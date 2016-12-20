@@ -98,13 +98,13 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				"release_vacuum_gcode": "M340 P0 S1500"
 			},
 			"camera": {
-				"grabScriptPath": "",
 				"head": {
 					"x": 0,
 					"y": 0,
 					"z": 0,
 					"path": "",
-					"binary_thresh": 150
+					"binary_thresh": 150,
+					"grabScriptPath": ""
 				},
 				"bed": {
 					"x": 0,
@@ -112,7 +112,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 					"z": 0,
 					"pxPerMM": 50.0,
 					"path": "",
-					"binary_thresh": 150
+					"binary_thresh": 150,
+					"grabScriptPath": ""
 				}
 			}
 		}
@@ -136,14 +137,15 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 	def getCameraImage(self):
 		result = ""
 		if "imagetype" in flask.request.values:
-			if (flask.request.values["imagetype"] == "HEAD") or (flask.request.values["imagetype"] == "BED"):
-				if self._grabImages():
-					headPath = self._settings.get(["camera", flask.request.values["imagetype"].lower(), "path"])
+			camera = flask.request.values["imagetype"]
+			if ((camera == "HEAD") or (camera == "BED")):
+				if self._grabImages(camera):
+					imageath = self._settings.get(["camera", camera.lower(), "path"])
 					try:
-						f = open(headPath,"r")
-						result = flask.jsonify(src="data:image/" + os.path.splitext(headPath)[1] + ";base64,"+base64.b64encode(bytes(f.read())))
+						f = open(imagePath,"r")
+						result = flask.jsonify(src="data:image/" + os.path.splitext(imagePath)[1] + ";base64,"+base64.b64encode(bytes(f.read())))
 					except IOError:
-						result = flask.jsonify(error="Unable to open Image after fetching. Image path: " + headPath)
+						result = flask.jsonify(error="Unable to open Image after fetching. Image path: " + imagePath)
 				else:
 					result = flask.jsonify(error="Unable to fetch image. Check octoprint log for details.")
 		return flask.make_response(result, 200)
@@ -317,7 +319,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		self._logger.info("Taking head picture NOW") # Debug output
 
 		# take picture
-		if self._grabImages():
+		if self._grabImages("HEAD"):
 			headPath = self._settings.get(["camera", "head", "path"])
 
 			#update UI
@@ -371,7 +373,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		# take picture
 		self._logger.info("Taking bed align picture NOW")
 		bedPath = self._settings.get(["camera", "bed", "path"])
-		if self._grabImages():
+		if self._grabImages("BED"):
 			#update UI
 			self._updateUI("BEDIMAGE", bedPath)
 
@@ -395,7 +397,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		# take picture to find part offset
 		self._logger.info("Taking bed offset picture NOW")
 		bedPath = self._settings.get(["camera", "bed", "path"])
-		if self._grabImages():
+		if self._grabImages("BED"):
 
 			displacement = self.imgproc.getPartPosition(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM"])))
 			#update UI
@@ -452,16 +454,20 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			self._printer.commands(line)
 		self._printer.commands("G4 S1")
 
-	def _grabImages(self):
+	def _grabImages(self, camera):
 		result = True
-		grabScript = self._settings.get(["camera", "grabScriptPath"])
+		grabScript = "";
+		if(camera == "HEAD"):
+			grabScript = self._settings.get(["camera", "head", "grabScriptPath"])
+		if(camera == "BED"):
+			grabScript = self._settings.get(["camera", "bed", "grabScriptPath"])
 		#os.path.dirname(os.path.realpath(__file__)) + "/cameras/grab.sh"
 		try:
 			if call([grabScript]) != 0:
-				self._logger.info("ERROR: camera not ready!")
+				self._logger.info("ERROR: " + camera + " camera not ready!")
 				result = False
 		except:
-			self._logger.info("ERROR: Unable to execute camera grab script!")
+			self._logger.info("ERROR: Unable to execute " + camera + " camera grab script!")
 			self._logger.info("Script path: " + grabScript)
 			result = False
 		return result
