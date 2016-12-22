@@ -25,7 +25,7 @@
 
 #include <pylon/ConfigurationEventHandler.h>
 
-#define IMG_SIZE 1000
+#define IMG_SIZE 800
 
 namespace Pylon
 {
@@ -75,7 +75,7 @@ public:
 
 			//set a good exposure time
 			const CIntegerPtr exposureTimeRaw = control.GetNode("ExposureTimeRaw");
-			exposureTimeRaw->SetValue(2000);
+			exposureTimeRaw->SetValue(500);
 
 			//tcp packet size
 			const CIntegerPtr packetSize = control.GetNode("GevSCPSPacketSize");

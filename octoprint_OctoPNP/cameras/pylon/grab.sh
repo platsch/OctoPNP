@@ -14,4 +14,4 @@ $ROOT/grab $ROOT
 
 #convert $ROOT/head.tiff -rotate 270 $ROOT/../head.png
 #rm $ROOT/head.tiff
-convert $ROOT/bed.tiff -rotate 90 $ROOT/../bed.png
+convert $ROOT/bed.tiff -rotate 270 $ROOT/../bed.png
