@@ -1,8 +1,21 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Feb 17 02:12:51 2015
+    This file is part of OctoPNP
 
-@author: soubarna
+    OctoPNP is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OctoPNP is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OctoPNP.  If not, see <http://www.gnu.org/licenses/>.
+
+    Main author: Florens Wasserfall <wasserfall@kalanka.de>
 """
 
 import cv2
@@ -80,65 +93,39 @@ class ImageProcessing:
 
 		return result
 
-# Find orientation of a part in the given Image. Returns the angle of main edges relativ to the
-# next main axis (0-45°) or 0 if no part can be detected.
-#==============================================================================
+
+# Get part orientation by computing a rotated bounding box around contours
+# and determining the main orientation of this box
+# Returns the angle of main edges relativ to the
+# next main axis [-45°:45°]
 	def getPartOrientation(self,img_path):
 		self._img_path = img_path
 
 		# open image file
 		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
-		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+		
+		rect = self._rotatedBoundingBox(img)
 
-		canny_min_threshold = 250
-		while canny_min_threshold > 10:
-			lines, len_diagonal = self._extractLines(gray_img, canny_min_threshold)
-			canny_min_threshold = (canny_min_threshold/3)*2
-			if len(lines) < 5:
-				continue
+		# compute rotation offset
+		rotation = rect[2]
+		# normalize to positive PI range
+		if rotation < 0:
+			rotation = (rotation % -180) + 180
 
-			arr_theta=[]
+		rotation = rotation % 90
+		result = -rotation if rotation < 45 else 90-rotation
 
-			#drawing the lines and calculating orientation and offset
-
-			for rho,theta in lines:
-				theta_degree=(180/math.pi)*theta
-				if theta_degree>90:
-					arr_theta.append(90+(180-theta_degree))
-				elif theta_degree<=90:
-					arr_theta.append(90-theta_degree)
-
-				#draw lines
-				self._drawLine(img, rho, theta, (0, 255, 0))
-
-
-			##calculating deviation
-			dev=[]
-			for theta in arr_theta:
-				if theta>=0 and theta <=45:
-					dev.append(theta)
-				elif theta>=135 and theta<=180:
-					dev.append(theta-180)
-				else:
-					dev.append(theta-90)
-
-			arr_deviation=np.asanyarray(dev)
-			avg_deviation=np.average(arr_deviation)
-
-			if self._debug: print "avg deviation: " + str(avg_deviation)
-			break
-
-		if self._interactive: cv2.imshow("Lines orientation",img)
+		if self._debug: print "part deviation measured by bed camera: " + str(result)
+		if self._interactive: cv2.imshow("contours",img)
 		if self._interactive: cv2.waitKey(0)
 
 		#save result as image for GUI
 		filename="/orientation_"+os.path.basename(self._img_path)
 		orientation_img_path=os.path.dirname(self._img_path)+filename
-		cv2.imwrite(orientation_img_path,img)
+		cv2.imwrite(orientation_img_path, img)
 		self._last_saved_image_path = orientation_img_path
 
-
-		return avg_deviation
+		return result
 
 
 # Find the position of a (already rotated) part. Returns the offset between the
@@ -150,26 +137,19 @@ class ImageProcessing:
 		# open image file
 		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
 
-		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+		rect = self._rotatedBoundingBox(img)
 
-		cm_x = 0
-		cm_y = 0
+		cm_x = rect[0][0]
+		cm_y = rect[0][1]
 
-		ret,th1 = cv2.threshold(gray_img,self.bed_binary_thresh,255,cv2.THRESH_BINARY_INV)
-
-		if self._interactive: cv2.imshow("Binarized image",th1)
-		if self._interactive: cv2.waitKey(0)
-
-		cm_x, cm_y = self._centerOfMass(th1)
-
-		res_x = th1.shape[1]
-		res_y = th1.shape[0]
+		res_x = img.shape[1]
+		res_y = img.shape[0]
 
 		displacement_x=(cm_x-res_x/2)/pxPerMM
 		displacement_y=((res_y-cm_y)-res_y/2)/pxPerMM
 
 		# write image for UI
-		cv2.circle(img,(cm_x,cm_y),5,(0,255,0),-1)
+		cv2.circle(img,(int(cm_x),int(cm_y)),5,(0,255,0),-1)
 		filename="/final_"+os.path.basename(self._img_path)
 		final_img_path=os.path.dirname(self._img_path)+filename
 		cv2.imwrite(final_img_path,img)
@@ -179,8 +159,6 @@ class ImageProcessing:
 		if self._interactive: cv2.waitKey(0)
 
 		return [displacement_x, -displacement_y]
-
-
 
 #==============================================================================
 	def getLastSavedImagePath(self):
@@ -231,7 +209,7 @@ class ImageProcessing:
 					theta_degree=(180/math.pi)*theta
 					epsilon=2
 
-					#Considering only the horizontal and ve150rtical lines
+					#Considering only the horizontal and vertical lines
 					if 90-epsilon < int(theta_degree) < 90+epsilon:
 						list_rho_hor.append(rho)
 					elif 0-epsilon < int(theta_degree) < 0+epsilon:
@@ -315,6 +293,44 @@ class ImageProcessing:
 
 		return binary_img
 
+#=========================================================================
+	def _rotatedBoundingBox(self, img):
+		#convert image to grey and blur
+		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+		gray_img=cv2.blur(gray_img, (3,3))
+
+		ret, binary_img = cv2.threshold(gray_img, self.bed_binary_thresh, 255, cv2.THRESH_BINARY)
+		contours, hierarchy = cv2.findContours(binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, (0, 0));
+
+		#cv2.drawContours(img, contours, -1, (0,255,0), 3) # draw basic contours
+
+		minArea = 20; # how to find a better value??? input from part description?
+		maxArea = gray_img.shape[0] * gray_img.shape[1] * 0.8 # Y*X | don't detect full image
+
+		rectPoints = [];
+
+		for contour in contours:
+			rect = cv2.minAreaRect(contour)
+			rectArea = rect[1][0] * rect[1][1]
+			if(rectArea > minArea and rectArea < maxArea):
+				box = cv2.cv.BoxPoints(rect)
+				for point in box:
+					rectPoints.append(np.array(point, dtype=np.int32))
+				#box = np.int0(box)
+				#cv2.drawContours(img,[box],0,(0,0,255),2)
+			#cv2.imshow("contours",img)
+			#cv2.waitKey(0)
+
+		rectArray = np.array(rectPoints)
+		rect = cv2.minAreaRect(rectArray)
+
+		# draw rotated bounding box for visualization
+		box = cv2.cv.BoxPoints(rect)
+		box = np.int0(box)
+		cv2.drawContours(img,[box],0,(0,0,255),2)
+
+		return rect
+
 
 #=========================================================================
 	def _centerOfMass(self, binary_img):
@@ -339,50 +355,6 @@ class ImageProcessing:
 
 		return cm_x, cm_y
 
-
-# Finds lines in the given image by applying a Canny operator and a Hough transformation.
-# Returns an array of lines and the estimated diameter of the object.
-#==============================================================================
-	def _extractLines(self, gray_img, low_threshold):
-
-		ret,binary_img = cv2.threshold(gray_img,self.bed_binary_thresh,255,cv2.THRESH_BINARY_INV)
-		object_pixels = sum(binary_img[(binary_img>0)])/255
-		len_diagonal = math.sqrt(object_pixels)
-
-		#ratio to reduce line length for hough transformation if the part is large
-		object_img_ratio = float(math.sqrt(object_pixels))/math.sqrt((binary_img.shape[0]*binary_img.shape[1]))
-
-		if self._interactive: cv2.imshow("Binary img",binary_img)
-		if self._interactive: cv2.waitKey(0)
-
-		#Detect Lines
-		#edges = cv2.Canny(gray_img,50,150,apertureSize = 3)
-		edges = cv2.Canny(gray_img,low_threshold,low_threshold*3,apertureSize = 3)
-		if self._interactive: cv2.imshow("Lines orientation",edges)
-		if self._interactive: cv2.waitKey(0)
-
-
-		#lines = cv2.HoughLines(edges,2,np.pi/180,int(len_diagonal/4))
-		lines = cv2.HoughLines(edges,1,np.pi/180,int(len_diagonal/(2+2*object_img_ratio)))
-		if lines is None:
-			lines = [[]]
-		return lines[0], len_diagonal
-
-# Computes the intersection point of two lines in polar representation
-#==============================================================================
-	def _polarIntersect(self,line1,line2):
-		theta1=line1[0]
-		r1=line1[1]
-		theta2=line2[0]
-		r2=line2[1]
-
-		a=np.array([[np.cos(theta1),np.cos(theta2)],[np.sin(theta1),np.sin(theta2)]])
-
-		r=np.array([r1,r2])
-		a_inv=np.linalg.inv(a)
-		arr=np.dot(r,a_inv)
-
-		return arr
 
 # Draw a line to the given image. Modifies the image!!!
 #============================================================================
