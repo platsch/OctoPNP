@@ -27,7 +27,9 @@ import re
 from subprocess import call
 import os
 import time
+import datetime
 import base64
+import shutil
 
 from .SmdParts import SmdParts
 from .ImageProcessing import ImageProcessing
@@ -114,7 +116,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 					"path": "",
 					"binary_thresh": 150,
 					"grabScriptPath": ""
-				}
+				},
+				"image_logging": False
 			}
 		}
 
@@ -140,7 +143,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			camera = flask.request.values["imagetype"]
 			if ((camera == "HEAD") or (camera == "BED")):
 				if self._grabImages(camera):
-					imagePath = self._settings.get(["camera", camera.lower(), "path"])
+					imageath = self._settings.get(["camera", camera.lower(), "path"])
 					try:
 						f = open(imagePath,"r")
 						result = flask.jsonify(src="data:image/" + os.path.splitext(imagePath)[1] + ";base64,"+base64.b64encode(bytes(f.read())))
@@ -326,13 +329,16 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			self._updateUI("HEADIMAGE", headPath)
 
 			#extract position information
-			part_offset = self.imgproc.locatePartInBox(headPath, True)
+			#part_offset = self.imgproc.locatePartInBox(headPath, True)
 			if not part_offset:
 				self._updateUI("ERROR", self.imgproc.getLastErrorMessage())
 				part_offset = [0, 0]
 
 			# update UI
 			self._updateUI("HEADIMAGE", self.imgproc.getLastSavedImagePath())
+
+			# Log image for debugging and documentation
+			if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(headPath)
 		else:
 			cm_x=cm_y=0
 			self._updateUI("ERROR", "Camera not ready")
@@ -381,6 +387,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			orientation_offset = self.imgproc.getPartOrientation(bedPath)
 			# update UI
 			self._updateUI("BEDIMAGE", self.imgproc.getLastSavedImagePath())
+
+			# Log image for debugging and documentation
+			if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(bedPath)
 		else:
 			self._updateUI("ERROR", "Camera not ready")
 
@@ -402,6 +411,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			displacement = self.imgproc.getPartPosition(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM"])))
 			#update UI
 			self._updateUI("BEDIMAGE", self.imgproc.getLastSavedImagePath())
+			
+			# Log image for debugging and documentation
+			if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(bedPath)
 		else:
 			self._updateUI("ERROR", "Camera not ready")
 
@@ -471,6 +483,14 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			self._logger.info("Script path: " + grabScript)
 			result = False
 		return result
+
+	def _saveDebugImage(self, path):
+		name, ext = os.path.splitext(os.path.basename(path))
+		timestamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d-%H:%M:%S')
+		filename = "/" + name + "_" + timestamp + ext
+		dest_path = os.path.dirname(path) + filename
+		shutil.copy(path, dest_path)
+		self._logger.info("saved %s image to %s", name, dest_path)
 
 
 	def _updateUI(self, event, parameter):
