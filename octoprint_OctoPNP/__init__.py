@@ -421,11 +421,12 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		self._logger.info("displacement - x: " + str(displacement[0]) + " y: " + str(displacement[1]))
 
 		if(abs(orientation_offset) > 0.5):
-			self._updateUI("ERROR", "Incorrect alignment, correcting offset of " + str(-orientation_offset) + "°")
+			self._updateUI("INFO", "Incorrect alignment, correcting offset of " + str(-orientation_offset) + "°")
+			self._logger.info("Incorrect alignment, correcting offset of " + str(-orientation_offset) + "°")
 			self._printer.commands("G92 E0")
 			self._printer.commands("G1 E" + str(-orientation_offset) + " F" + str(self.FEEDRATE))
 			# wait a second to execute the rotation
-			time.sleep(1)
+			time.sleep(2)
 			# take another image for UI
 			if self._grabImages("BED"):
 
@@ -544,6 +545,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				type = parameter,
 			)
 			if self._currentPart: data["part"] = self._currentPart
+		elif event == "INFO":
+			data = dict(
+				type = parameter,
+			)
 		elif event is "HEADIMAGE" or event is "BEDIMAGE":
 			# open image and convert to base64
 			f = open(parameter,"r")

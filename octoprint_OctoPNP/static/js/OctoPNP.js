@@ -78,6 +78,9 @@ $(function() {
                         self.stateString(self.StateString + "appeared while processing part nr " + data.data.part);
                     }
                 }
+                else if(data.event == "INFO") {
+                    self.stateString("INFO: \"" + data.data.type + "\"");
+                }
                 else if(data.event == "HEADIMAGE") {
                     document.getElementById('headCameraImage').setAttribute( 'src', data.data.src );
                 }
