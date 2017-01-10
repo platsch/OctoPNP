@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
     This file is part of OctoPNP
 
@@ -17,7 +18,6 @@
     Main author: Florens Wasserfall <wasserfall@kalanka.de>
 """
 
-# coding=utf-8
 from __future__ import absolute_import
 
 
