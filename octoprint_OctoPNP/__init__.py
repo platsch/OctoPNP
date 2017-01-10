@@ -143,7 +143,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			camera = flask.request.values["imagetype"]
 			if ((camera == "HEAD") or (camera == "BED")):
 				if self._grabImages(camera):
-					imageath = self._settings.get(["camera", camera.lower(), "path"])
+					imagePath = self._settings.get(["camera", camera.lower(), "path"])
 					try:
 						f = open(imagePath,"r")
 						result = flask.jsonify(src="data:image/" + os.path.splitext(imagePath)[1] + ";base64,"+base64.b64encode(bytes(f.read())))
