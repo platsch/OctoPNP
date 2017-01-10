@@ -384,12 +384,12 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			self._updateUI("BEDIMAGE", bedPath)
 
 			# get rotation offset
-			orientation_offset = self.imgproc.getPartOrientation(bedPath)
+			orientation_offset = self.imgproc.getPartOrientation(bedPath, 0)
 			# update UI
 			self._updateUI("BEDIMAGE", self.imgproc.getLastSavedImagePath())
 
 			# Log image for debugging and documentation
-			if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(bedPath)
+			if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(bedPath) 
 		else:
 			self._updateUI("ERROR", "Camera not ready")
 
@@ -400,14 +400,15 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 	def _placePart(self, partnr):
 		displacement = [0, 0]
 
-		#sometimes the hook returns to early, very strange... workaround: wait a few ms
-		#time.sleep(1)
+		# find destination at the object
+		destination = self.smdparts.getPartDestination(partnr)
 
 		# take picture to find part offset
 		self._logger.info("Taking bed offset picture NOW")
 		bedPath = self._settings.get(["camera", "bed", "path"])
 		if self._grabImages("BED"):
 
+			orientation_offset = self.imgproc.getPartOrientation(bedPath, destination[3])
 			displacement = self.imgproc.getPartPosition(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM"])))
 			#update UI
 			self._updateUI("BEDIMAGE", self.imgproc.getLastSavedImagePath())
@@ -417,10 +418,25 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		else:
 			self._updateUI("ERROR", "Camera not ready")
 
-		print "displacement - x: " + str(displacement[0]) + " y: " + str(displacement[1])
+		self._logger.info("displacement - x: " + str(displacement[0]) + " y: " + str(displacement[1]))
 
-		# find destination at the object
-		destination = self.smdparts.getPartDestination(partnr)
+		if(orientation_offset > 0.5):
+			self._updateUI("ERROR", "Incorrect alignment, correcting offset of " + str(-orientation_offset) + "°")
+			self._printer.commands("G92 E0")
+			self._printer.commands("G1 E" + str(-orientation_offset) + " F" + str(self.FEEDRATE))
+			# wait a second to execute the rotation
+			time.sleep(1)
+			# take another image for UI
+			if self._grabImages("BED"):
+
+				displacement = self.imgproc.getPartPosition(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM"])))
+				#update UI
+				self._updateUI("BEDIMAGE", self.imgproc.getLastSavedImagePath())
+				
+				# Log image for debugging and documentation
+				if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(bedPath)
+			else:
+				self._updateUI("ERROR", "Camera not ready")
 
 		# move to destination
 		cmd = "G1 X" + str(destination[0]-float(self._settings.get(["vacnozzle", "x"]))+displacement[0]) \

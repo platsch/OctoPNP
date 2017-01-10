@@ -98,7 +98,7 @@ class ImageProcessing:
 # and determining the main orientation of this box
 # Returns the angle of main edges relativ to the
 # next main axis [-45°:45°]
-	def getPartOrientation(self,img_path):
+	def getPartOrientation(self,img_path, offset=0):
 		self._img_path = img_path
 
 		# open image file
@@ -107,7 +107,7 @@ class ImageProcessing:
 		rect = self._rotatedBoundingBox(img)
 
 		# compute rotation offset
-		rotation = rect[2]
+		rotation = rect[2] + offset
 		# normalize to positive PI range
 		if rotation < 0:
 			rotation = (rotation % -180) + 180
