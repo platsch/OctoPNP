@@ -420,7 +420,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 		self._logger.info("displacement - x: " + str(displacement[0]) + " y: " + str(displacement[1]))
 
-		if(orientation_offset > 0.5):
+		if(abs(orientation_offset) > 0.5):
 			self._updateUI("ERROR", "Incorrect alignment, correcting offset of " + str(-orientation_offset) + "°")
 			self._printer.commands("G92 E0")
 			self._printer.commands("G1 E" + str(-orientation_offset) + " F" + str(self.FEEDRATE))
