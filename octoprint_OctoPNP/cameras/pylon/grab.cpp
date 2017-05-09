@@ -67,8 +67,12 @@ int main(int argc, char* argv[])
 
 	//use basedir given by parameter
 	String_t basedir = "";
-	if(argc > 1) {
+	String_t camera_name = "";        
+	if(argc > 2) {
 		basedir = argv[1];
+		camera_name = argv[2];
+	}else{
+		cout << "Usage: grab [basedir] [camera_name]" << endl;
 	}
 
     try
@@ -101,28 +105,40 @@ int main(int argc, char* argv[])
         for ( size_t i = 0; i < cameras.GetSize(); ++i)
         {
             cameras[ i ].Attach( tlFactory.CreateDevice( devices[ i ]));
+			String_t user_defined_name = cameras[i].GetDeviceInfo().GetUserDefinedName();
+			if(user_defined_name == camera_name)
+			{
+            	cout << "Using device " << cameras[ i ].GetDeviceInfo().GetModelName() << " device name: " << cameras[i].GetDeviceInfo().GetUserDefinedName() << endl;
 
-			// Register an additional configuration handler to set the image format and adjust the AOI.
-        	// By setting the registration mode to RegistrationMode_Append, the configuration handler is added instead of replacing
-        	// the already registered configuration handler.
-        	cameras[i].RegisterConfiguration( new CCameraConfiguration, RegistrationMode_Append, Cleanup_Delete);
-
-            // Print the model name of the camera.
-            cout << "Using device " << cameras[ i ].GetDeviceInfo().GetModelName() << " device name: " << cameras[i].GetDeviceInfo().GetUserDefinedName() << endl;
+				// Register an additional configuration handler to set the image format and adjust the AOI.
+        		// By setting the registration mode to RegistrationMode_Append, the configuration handler is added instead of replacing
+        		// the already registered configuration handler.
+            	if(user_defined_name == "head") {
+        			cameras[i].RegisterConfiguration( new CCameraConfiguration(880, 1015), RegistrationMode_Append, Cleanup_Delete);
+            	}else if(user_defined_name == "bed") {
+        	   		cameras[i].RegisterConfiguration( new CCameraConfiguration(800, 500), RegistrationMode_Append, Cleanup_Delete);
+            	}else{
+					// apply default configuration
+        	   		cameras[i].RegisterConfiguration( new CCameraConfiguration(1000, 800), RegistrationMode_Append, Cleanup_Delete);
+            	}
+			}
         }
 
 		//grab images and save to disk
 		for ( size_t i = 0; i < cameras.GetSize(); ++i) {
-			if ( cameras[i].GrabOne( 5000, ptrGrabResult))
+			if ( cameras[i].GetDeviceInfo().GetUserDefinedName() == camera_name) 
 			{
-				// use user defined camera name as filename
-				String_t filename = basedir + "/" + cameras[i].GetDeviceInfo().GetUserDefinedName() + ".tiff";
+				if ( cameras[i].GrabOne( 5000, ptrGrabResult))
+				{
+					// use user defined camera name as filename
+					String_t filename = basedir + "/" + cameras[i].GetDeviceInfo().GetUserDefinedName() + ".tiff";
 
-			    // The pylon grab result smart pointer classes provide a cast operator to the IImage
-			    // interface. This makes it possible to pass a grab result directly to the
-			    // function that saves an image to disk.
-				cout << "Save image to " << filename << endl;
-			    CImagePersistence::Save( ImageFileFormat_Tiff, filename, ptrGrabResult);
+					// The pylon grab result smart pointer classes provide a cast operator to the IImage
+					// interface. This makes it possible to pass a grab result directly to the
+					// function that saves an image to disk.
+					cout << "Save image to " << filename << endl;
+					CImagePersistence::Save( ImageFileFormat_Tiff, filename, ptrGrabResult);
+				}
 			}
 		}
     }
