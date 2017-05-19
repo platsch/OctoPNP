@@ -97,6 +97,10 @@ The camera position is relative to the primary nozzle for the head camera (this 
 * The `px/mm` value is used by the image processing to measure offsets and only required for the bed camera, since the head camera utilizes the known box size for on demand calibration.
 * `Image path` and `grab script path` denote the locations of script and preprocessed images as described in the Prerequirements section.
 * The `binarization threshold` is used by the image processing to seperate object and background. The value depends on the camera and illumination, currently there is no good calibration method.
+### Image acquisition
+The `cameras` folder contains simple scripts to fetch single images from
+* any camera which can be accessed with an http get command (http)
+* Baser industrial cameras supporting the pylon framework (pylon, tested with Pilot and Ace models)
 
 ## Calibration wizard
 The calibration "wizard" is an experimental set of tools to quickly achieve several calibration tasks with high precision.
