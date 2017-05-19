@@ -413,7 +413,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		# move to destination
 		cmd = "G1 X" + str(destination[0]-float(self._settings.get(["vacnozzle", "x"]))+displacement[0]) \
 			  + " Y" + str(destination[1]-float(self._settings.get(["vacnozzle", "y"]))+displacement[1]) \
-			  + " Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)+5) + " F" + str(self.FEEDRATE)
+			  + " Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)+10+abs(float(self._settings.get(["vacnozzle", "z_pressure"])))) + " F" + str(self.FEEDRATE)
 		self._logger.info("object destination: " + cmd)
 		self._printer.commands("G1 Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)+5) + " F" + str(self.FEEDRATE)) # lift printhead
 		self._printer.commands(cmd)
