@@ -25,8 +25,6 @@
 
 #include <pylon/ConfigurationEventHandler.h>
 
-#define IMG_SIZE 800
-
 namespace Pylon
 {
     class CInstantCamera;
@@ -34,6 +32,12 @@ namespace Pylon
 class CCameraConfiguration : public Pylon::CConfigurationEventHandler
 {
 public:
+    CCameraConfiguration(int img_size, int exposure_time)
+    {
+        this->img_size = img_size;
+        this->exposure_time = exposure_time;
+    }
+
     void OnOpened( Pylon::CInstantCamera& camera)
     {
         try
@@ -50,8 +54,8 @@ public:
             const CIntegerPtr offsetX = control.GetNode("OffsetX");
             const CIntegerPtr offsetY = control.GetNode("OffsetY");
 
-            width->SetValue(IMG_SIZE);
-            height->SetValue(IMG_SIZE);
+            width->SetValue(this->img_size);
+            height->SetValue(this->img_size);
 
 			uint32_t tmp_offset = 0;
 
@@ -75,7 +79,7 @@ public:
 
 			//set a good exposure time
 			const CIntegerPtr exposureTimeRaw = control.GetNode("ExposureTimeRaw");
-			exposureTimeRaw->SetValue(500);
+			exposureTimeRaw->SetValue(this->exposure_time);
 
 			//tcp packet size
 			const CIntegerPtr packetSize = control.GetNode("GevSCPSPacketSize");
@@ -86,6 +90,8 @@ public:
             throw RUNTIME_EXCEPTION( "Could not apply configuration. GenICam::GenericException caught in OnOpened method msg=%hs", e.what());
         }
     }
+    int img_size;
+    int exposure_time;
 };
 
 #endif /* INCLUDED_CAMERACONFIGURATION_H_00104928 */
