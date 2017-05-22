@@ -95,7 +95,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				"z_pressure": 0,
 				"extruder_nr": 2,
 				"grip_vacuum_gcode": "M340 P0 S1200",
-				"release_vacuum_gcode": "M340 P0 S1500"
+				"release_vacuum_gcode": "M340 P0 S1500",
+				"lower_nozzle_gcode": "",
+				"lift_nozzle_gcode": ""
 			},
 			"camera": {
 				"head": {
@@ -348,8 +350,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		self._printer.commands("T" + str(self._settings.get(["vacnozzle", "extruder_nr"])))
 		cmd = "G1 X" + str(vacuum_dest[0]) + " Y" + str(vacuum_dest[1]) + " F" + str(self.FEEDRATE)
 		self._printer.commands(cmd)
-		self._printer.commands("G1 Z" + str(vacuum_dest[2]+5))
+		self._printer.commands("G1 Z" + str(vacuum_dest[2]+10))
 		self._releaseVacuum()
+		self._lowerVacuumNozzle()
 		self._printer.commands("G1 Z" + str(vacuum_dest[2]) + "F1000")
 		self._gripVacuum()
 		self._printer.commands("G4 S1")
@@ -453,6 +456,22 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		for line in self._settings.get(["vacnozzle", "release_vacuum_gcode"]).splitlines():
 			self._printer.commands(line)
 		self._printer.commands("G4 S1")
+
+	def _lowerVacuumNozzle(self):
+                self._printer.commands("M400")
+                self._printer.commands("M400")
+                self._printer.commands("G4 S1")
+                for line in self._settings.get(["vacnozzle", "lower_nozzle_gcode"]).splitlines():
+                        self._printer.commands(line)
+                self._printer.commands("G4 S1")
+
+        def _liftVacuumNozzle(self):
+                self._printer.commands("M400")
+                self._printer.commands("M400")
+                self._printer.commands("G4 S1")
+                for line in self._settings.get(["vacnozzle", "lift_nozzle_gcode"]).splitlines():
+                        self._printer.commands(line)
+                self._printer.commands("G4 S1")
 
 	def _grabImages(self, camera):
 		result = True
