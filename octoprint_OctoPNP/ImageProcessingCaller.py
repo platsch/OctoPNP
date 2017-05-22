@@ -18,10 +18,12 @@ start_time = time.time()
 
 im._interactive = True
 #im.locatePartInBox("../utils/testimages/head_atmega_SO8.png")
-print im.locatePartInBox("../utils/testimages/head_resistor_1206.png", False)
-#im.getPartOrientation("../utils/testimages/bed_atmega_SO8.png")
+#print im.locatePartInBox("../utils/testimages/head_resistor_1206.png", False)
+print im.getPartOrientation("../utils/testimages/bed_atmega_SO8_rotated.png", 30)
 #im.getPartOrientation("../utils/testimages/bed_resistor_1206.png")
-#im.getPartPosition("../utils/testimages/bed_atmega_SO8.png", 55.65)
+#im.getPartOrientation("../utils/testimages/bed_resistor_1206.png")
+#im.getPartOrientation("../utils/testimages/bed_resistor_1206_black_nozzle.png")
+#im.getPartPosition("../utils/testimages/bed_resistor_1206.png", 55.65)
 #im.getPartPosition("../utils/testimages/bed_resistor_1206.png", 55.65)
 
 end_time = time.time();

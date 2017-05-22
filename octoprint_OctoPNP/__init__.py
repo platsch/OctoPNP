@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
     This file is part of OctoPNP
 
@@ -17,7 +18,6 @@
     Main author: Florens Wasserfall <wasserfall@kalanka.de>
 """
 
-# coding=utf-8
 from __future__ import absolute_import
 
 
@@ -27,7 +27,9 @@ import re
 from subprocess import call
 import os
 import time
+import datetime
 import base64
+import shutil
 
 from .SmdParts import SmdParts
 from .ImageProcessing import ImageProcessing
@@ -116,7 +118,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 					"path": "",
 					"binary_thresh": 150,
 					"grabScriptPath": ""
-				}
+				},
+				"image_logging": False
 			}
 		}
 
@@ -335,6 +338,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 			# update UI
 			self._updateUI("HEADIMAGE", self.imgproc.getLastSavedImagePath())
+
+			# Log image for debugging and documentation
+			if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(headPath)
 		else:
 			cm_x=cm_y=0
 			self._updateUI("ERROR", "Camera not ready")
@@ -381,9 +387,12 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			self._updateUI("BEDIMAGE", bedPath)
 
 			# get rotation offset
-			orientation_offset = self.imgproc.getPartOrientation(bedPath)
+			orientation_offset = self.imgproc.getPartOrientation(bedPath, 0)
 			# update UI
 			self._updateUI("BEDIMAGE", self.imgproc.getLastSavedImagePath())
+
+			# Log image for debugging and documentation
+			if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(bedPath) 
 		else:
 			self._updateUI("ERROR", "Camera not ready")
 
@@ -394,24 +403,44 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 	def _placePart(self, partnr):
 		displacement = [0, 0]
 
-		#sometimes the hook returns to early, very strange... workaround: wait a few ms
-		#time.sleep(1)
+		# find destination at the object
+		destination = self.smdparts.getPartDestination(partnr)
 
 		# take picture to find part offset
 		self._logger.info("Taking bed offset picture NOW")
 		bedPath = self._settings.get(["camera", "bed", "path"])
 		if self._grabImages("BED"):
 
+			orientation_offset = self.imgproc.getPartOrientation(bedPath, destination[3])
 			displacement = self.imgproc.getPartPosition(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM"])))
 			#update UI
 			self._updateUI("BEDIMAGE", self.imgproc.getLastSavedImagePath())
+			
+			# Log image for debugging and documentation
+			if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(bedPath)
 		else:
 			self._updateUI("ERROR", "Camera not ready")
 
-		print "displacement - x: " + str(displacement[0]) + " y: " + str(displacement[1])
+		self._logger.info("displacement - x: " + str(displacement[0]) + " y: " + str(displacement[1]))
 
-		# find destination at the object
-		destination = self.smdparts.getPartDestination(partnr)
+		if(abs(orientation_offset) > 0.5):
+			self._updateUI("INFO", "Incorrect alignment, correcting offset of " + str(-orientation_offset) + "°")
+			self._logger.info("Incorrect alignment, correcting offset of " + str(-orientation_offset) + "°")
+			self._printer.commands("G92 E0")
+			self._printer.commands("G1 E" + str(-orientation_offset) + " F" + str(self.FEEDRATE))
+			# wait a second to execute the rotation
+			time.sleep(2)
+			# take another image for UI
+			if self._grabImages("BED"):
+
+				displacement = self.imgproc.getPartPosition(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM"])))
+				#update UI
+				self._updateUI("BEDIMAGE", self.imgproc.getLastSavedImagePath())
+				
+				# Log image for debugging and documentation
+				if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(bedPath)
+			else:
+				self._updateUI("ERROR", "Camera not ready")
 
 		# move to destination
 		cmd = "G1 X" + str(destination[0]-float(self._settings.get(["vacnozzle", "x"]))+displacement[0]) \
@@ -491,6 +520,14 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			result = False
 		return result
 
+	def _saveDebugImage(self, path):
+		name, ext = os.path.splitext(os.path.basename(path))
+		timestamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d-%H:%M:%S')
+		filename = "/" + name + "_" + timestamp + ext
+		dest_path = os.path.dirname(path) + filename
+		shutil.copy(path, dest_path)
+		self._logger.info("saved %s image to %s", name, dest_path)
+
 
 	def _updateUI(self, event, parameter):
 		data = dict(
@@ -527,6 +564,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				type = parameter,
 			)
 			if self._currentPart: data["part"] = self._currentPart
+		elif event == "INFO":
+			data = dict(
+				type = parameter,
+			)
 		elif event is "HEADIMAGE" or event is "BEDIMAGE":
 			# open image and convert to base64
 			f = open(parameter,"r")
