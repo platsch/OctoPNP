@@ -185,7 +185,7 @@ class ImageProcessing:
 		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 		gray_img=cv2.blur(gray_img, (3,3))
 
-		ret, binary_img = cv2.threshold(gray_img, self.bed_binary_thresh, 255, cv2.THRESH_BINARY)
+		ret, binary_img = cv2.threshold(gray_img, binary_thresh, 255, cv2.THRESH_BINARY)
 		contours, hierarchy = cv2.findContours(binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, (0, 0));
 
 		#cv2.drawContours(img, contours, -1, (0,255,0), 3) # draw basic contours
