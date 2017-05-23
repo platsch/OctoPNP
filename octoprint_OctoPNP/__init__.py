@@ -250,6 +250,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				for i in range(3):
 					self._printer.commands("G4 P50")
 
+				self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), int(self._settings.get(["camera", "bed", "binary_thresh"])), int(self._settings.get(["camera", "head", "binary_thresh"])))
+
 				self._pickPart(self._currentPart)
 				self._printer.commands("M400")
 				self._printer.commands("G4 P1")
