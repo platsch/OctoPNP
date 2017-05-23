@@ -344,12 +344,12 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			if not part_offset:
 				self._updateUI("ERROR", self.imgproc.getLastErrorMessage())
 				part_offset = [0, 0]
+			else:
+				# update UI
+				self._updateUI("HEADIMAGE", self.imgproc.getLastSavedImagePath())
 
-			# update UI
-			self._updateUI("HEADIMAGE", self.imgproc.getLastSavedImagePath())
-
-			# Log image for debugging and documentation
-			if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(headPath)
+				# Log image for debugging and documentation
+				if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(headPath)
 		else:
 			cm_x=cm_y=0
 			self._updateUI("ERROR", "Camera not ready")
