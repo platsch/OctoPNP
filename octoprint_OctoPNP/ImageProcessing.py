@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 """
-    This file is part of OctoPNP
+	This file is part of OctoPNP
 
-    OctoPNP is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+	OctoPNP is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-    OctoPNP is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	OctoPNP is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with OctoPNP.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with OctoPNP.  If not, see <http://www.gnu.org/licenses/>.
 
-    Main author: Florens Wasserfall <wasserfall@kalanka.de>
+	Main author: Florens Wasserfall <wasserfall@kalanka.de>
 """
 
 import cv2
@@ -30,6 +30,8 @@ class ImageProcessing:
 		self.box_size=box_size
 		self.bed_binary_thresh = bed_cam_binary_thresh
 		self.head_binary_thresh = head_cam_binary_thresh
+		self.lower_mask_color = np.array([22,28,26]) # green default
+		self.upper_mask_color = np.array([103,255,255])
 		self._img_path = ""
 		self._last_saved_image_path = None
 		self._last_error = ""
@@ -50,7 +52,7 @@ class ImageProcessing:
 		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
 
 		#detect box boundaries
-		rotated_crop_rect = self._rotatedBoundingBox(img, self.head_binary_thresh, 0.6, 0.9)
+		rotated_crop_rect = self._rotatedBoundingBox(img, self.head_binary_thresh, 0.6, 0.95)
 		if(rotated_crop_rect):
 			rotated_box = cv2.cv.BoxPoints(rotated_crop_rect)
 
@@ -101,24 +103,40 @@ class ImageProcessing:
 # and determining the main orientation of this box
 # Returns the angle of main edges relativ to the
 # next main axis [-45°:45°]
-	def getPartOrientation(self,img_path, offset=0):
+	def getPartOrientation(self,img_path, pxPerMM, offset=0):
 		self._img_path = img_path
+		result = False
 
 		# open image file
 		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
+
+		mask = self._maskBackground(img)
 		
-		rect = self._rotatedBoundingBox(img, self.bed_binary_thresh, 0.001, 0.7)
+		# we should use actual object size here
+		min_area_factor = pxPerMM**2 / (img.shape[1] * img.shape[0]) # 1mm²
+		rect = self._rotatedBoundingBox(img, 50, 0.005, 0.7, mask)
 
-		# compute rotation offset
-		rotation = rect[2] + offset
-		# normalize to positive PI range
-		if rotation < 0:
-			rotation = (rotation % -180) + 180
+		if(rect):
+			# draw rotated bounding box for visualization
+			box = cv2.cv.BoxPoints(rect)
+			box = np.int0(box)
+			cv2.drawContours(img,[box],0,(0,0,255),2)
 
-		rotation = rotation % 90
-		result = -rotation if rotation < 45 else 90-rotation
+			# compute rotation offset
+			rotation = rect[2] + offset
+			# normalize to positive PI range
+			if rotation < 0:
+				rotation = (rotation % -180) + 180
 
-		if self._debug: print "part deviation measured by bed camera: " + str(result)
+			rotation = rotation % 90
+			result = -rotation if rotation < 45 else 90-rotation
+
+			if self._debug: print "Part deviation measured by bed camera: " + str(result)
+		else:
+			if self._debug: print "Unable to locate part for finding the orientation"
+			self._last_error = "Unable to locate part for finding the orientation"
+			result = False
+
 		if self._interactive: cv2.imshow("contours",img)
 		if self._interactive: cv2.waitKey(0)
 
@@ -136,20 +154,31 @@ class ImageProcessing:
 #==============================================================================
 	def getPartPosition(self, img_path, pxPerMM):
 		self._img_path = img_path
+		result = False
 
 		# open image file
 		img=cv2.imread(img_path,cv2.IMREAD_COLOR)
 
-		rect = self._rotatedBoundingBox(img, self.bed_binary_thresh, 0.001, 0.7)
-
-		cm_x = rect[0][0]
-		cm_y = rect[0][1]
+		mask = self._maskBackground(img)
 
 		res_x = img.shape[1]
 		res_y = img.shape[0]
 
-		displacement_x=(cm_x-res_x/2)/pxPerMM
-		displacement_y=((res_y-cm_y)-res_y/2)/pxPerMM
+		# we should use actual object size here
+		min_area_factor = pxPerMM**2 / (res_x * res_y) # 1mm²
+		rect = self._rotatedBoundingBox(img, 50, min_area_factor, 0.7, mask)
+
+		if(rect):
+			cm_x = rect[0][0]
+			cm_y = rect[0][1]
+
+			displacement_x=(cm_x-res_x/2)/pxPerMM
+			displacement_y=((res_y-cm_y)-res_y/2)/pxPerMM
+			result = [displacement_x, -displacement_y]
+		else:
+			if self._debug: print "Unable to locate part for correcting the position"
+			self._last_error = "Unable to locate part for correcting the position"
+			result = False
 
 		# write image for UI
 		cv2.circle(img,(int(cm_x),int(cm_y)),5,(0,255,0),-1)
@@ -161,7 +190,7 @@ class ImageProcessing:
 		if self._interactive: cv2.imshow("Center of Mass",img)
 		if self._interactive: cv2.waitKey(0)
 
-		return [displacement_x, -displacement_y]
+		return result
 
 #==============================================================================
 	def getLastSavedImagePath(self):
@@ -177,21 +206,23 @@ class ImageProcessing:
 		return self._last_error
 
 
-#=========================================================================
-	def _rotatedBoundingBox(self, img, binary_thresh, min_area_factor, max_area_factor):
+#==============================================================================
+	def _rotatedBoundingBox(self, img, binary_thresh, min_area_factor, max_area_factor, binary_img = ()):
 		result = False
 
-		#convert image to grey and blur
-		gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-		gray_img=cv2.blur(gray_img, (3,3))
+		if (len(binary_img) == 0):
+			#convert image to grey and blur
+			gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+			gray_img=cv2.blur(gray_img, (3,3))
 
-		ret, binary_img = cv2.threshold(gray_img, binary_thresh, 255, cv2.THRESH_BINARY)
+			ret, binary_img = cv2.threshold(gray_img, binary_thresh, 255, cv2.THRESH_BINARY)
+
 		contours, hierarchy = cv2.findContours(binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, (0, 0));
 
 		#cv2.drawContours(img, contours, -1, (0,255,0), 3) # draw basic contours
 
-		minArea = gray_img.shape[0] * gray_img.shape[1] * min_area_factor; # how to find a better value??? input from part description?
-		maxArea = gray_img.shape[0] * gray_img.shape[1] * max_area_factor # Y*X | don't detect full image
+		minArea = binary_img.shape[0] * binary_img.shape[1] * min_area_factor; # how to find a better value??? input from part description?
+		maxArea = binary_img.shape[0] * binary_img.shape[1] * max_area_factor # Y*X | don't detect full image
 
 		rectPoints = [];
 
@@ -206,7 +237,7 @@ class ImageProcessing:
 				if self._interactive: cv2.drawContours(img,[box],0,(0,0,255),2)
 			#cv2.imshow("contours",binary_img)
 			#cv2.waitKey(0)
-		if self._interactive: cv2.imshow("Binarized image",img)
+		if self._interactive: cv2.imshow("Binarized image",binary_img)
 		if self._interactive: cv2.waitKey(0)
 		if self._interactive: cv2.imshow("contours",img)
 		if self._interactive: cv2.waitKey(0)
@@ -224,3 +255,32 @@ class ImageProcessing:
 			self._last_error = "Unable to find contour in image"
 
 		return result
+
+# Compute a binary image / mask by removing all pixels in the given color range
+# mask_corners: remove all pixels outside a circle touching the image boundaries
+#      to crop badly illuminated corners
+#==============================================================================
+	def _maskBackground(self, img, mask_corners = True):
+		h,w,c = np.shape(img)
+
+		blur_img=cv2.blur(img, (5,5))
+		hsv = cv2.cvtColor(blur_img, cv2.COLOR_BGR2HSV)
+
+		lower_color = np.array([22,28,26])
+		upper_color = np.array([103,255,255])
+
+		# create binary mask by finding background color range
+		mask = cv2.inRange(hsv, self.lower_mask_color, self.upper_mask_color)
+		# remove the corners from mask since they are prone to illumination problems
+		if(mask_corners):
+			circle_mask = np.zeros((h, w), np.uint8)
+			circle_mask[:, :] = 255
+			cv2.circle(circle_mask,(w/2, h/2), min(w/2, h/2), 0, -1)
+			mask = cv2.bitwise_or(mask,circle_mask)
+		# invert mask to get white objects on black background
+		#inverse_mask = 255 - mask
+
+		if self._interactive: cv2.imshow("binary mask", mask)
+		if self._interactive: cv2.waitKey(0)
+
+		return mask
