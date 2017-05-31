@@ -1,2 +1,3 @@
 OctoPrint
-
+numpy
+opencv-python
