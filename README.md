@@ -17,9 +17,10 @@ To achieve higher compatibility and modularity, OctoPNP doesn't acces the camera
 
 ## Installing the package
 The plugin itself can be installed as any regular python package:
-`pip install https://github.com/platsch/OctoPPNP/archive/master.zip`
+`pip install https://github.com/platsch/OctoPNP/archive/master.zip`
 
 Make sure you use the same Python environment that you installed OctoPrint under, otherwise the plugin won't be able to satisfy its dependencies. Further information can be found in the Octoprint [documentation](http://docs.octoprint.org/en/devel/plugins/using.html)
+OctoPNP requires numpy and opencv2. Try installing those packages by hand if automatic dependency resolving failes.
 
 ## Data Format
 The information for the PNP system is integrated into normal gcode files as a commented XML flavor somewhere in the gcode. OctoPNP extracts the required information automatically everytime a gcode file is loaded in Octoprint. Example files are included in the `utils` folder. The XML structure is still under development and will probably change during the next months. The comment-semicolon causes Octoprint to ignore the SMD-data.
