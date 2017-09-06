@@ -48,6 +48,11 @@ def __plugin_load__():
 	global __plugin_hooks__
 	__plugin_hooks__ = {'octoprint.comm.protocol.gcode.sending': octopnp.hook_gcode_sending, 'octoprint.comm.protocol.gcode.queuing': octopnp.hook_gcode_queuing}
 
+	global __plugin_helpers__
+	__plugin_helpers__ = dict(
+		get_camera_image=octopnp.get_camera_image_xy
+	)
+
 
 class OctoPNP(octoprint.plugin.StartupPlugin,
 			octoprint.plugin.TemplatePlugin,
@@ -70,6 +75,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		self._state = self.STATE_NONE
 		self._currentPart = 0
 		self._currentZ = None
+
+		# store callback to send result of an image capture request back to caller
+		self._helper_callback = None
 
 
 	def on_after_startup(self):
@@ -309,6 +317,20 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 					self._printer.resume_print()
 
 				return "G4 P1" # return dummy command
+
+		if "M363" in cmd: # handle camera positioning for external request (helper function)
+			if self._grabImages("HEAD"):
+				headPath = self._settings.get(["camera", "head", "path"])
+				self._updateUI("HEADIMAGE", headPath)
+				# resume paused printjob into normal operation
+				if self._printer.is_paused():
+					self._printer.resume_print
+				self._helper_callback(headPath)
+			else:
+				self._helper_callback(False)
+			return None
+
+
 
 
 	def _moveCameraToPart(self, partnr):
@@ -589,3 +611,30 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			data=data
 		)
 		self._pluginManager.send_plugin_message("OctoPNP", message)
+
+	def get_camera_image_xy(self, x, y, callback):
+		result = False;
+
+		if self._state == self.STATE_NONE:
+			result = True
+			if self._printer.is_printing():
+				self._printer.pause_print()
+
+
+			# store callback
+			self._helper_callback = callback
+
+			target_position = [x-float(self._settings.get(["camera", "head", "x"])), y-float(self._settings.get(["camera", "head", "y"])), float(self._settings.get(["camera", "head", "z"]))]
+			cmd = "G1 X" + str(target_position[0]) + " Y" + str(target_position[1]) + " F" + str(self.FEEDRATE)
+			self._logger.info("Move camera to: " + cmd)
+			self._printer.commands("G91") # relative positioning
+			self._printer.commands("G1 Z" + str(target_position[2]) + " F" + str(self.FEEDRATE)) # lift printhead
+			self._printer.commands(cmd)
+			self._printer.commands("G1 Z" + str(-target_position[2]) + " F" + str(self.FEEDRATE)) # lower printhead
+
+			self._printer.commands("M400")
+			self._printer.commands("G4 P1")
+			self._printer.commands("M400")
+			self._printer.commands("M363")
+
+		return result
