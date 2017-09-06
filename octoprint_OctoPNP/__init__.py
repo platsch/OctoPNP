@@ -192,7 +192,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 	"""
 	def hook_gcode_queuing(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
 		if "M361" in cmd:
-			if self._state == self.STATE_NONE:
+ 			if self._state == self.STATE_NONE:
 				self._state = self.STATE_PICK
 				if self._printer.get_current_data()["currentZ"]:
 					self._currentZ = float(self._printer.get_current_data()["currentZ"])
@@ -202,6 +202,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				self._currentPart = int(command[1:])
 
 				self._logger.info( "Received M361 command to place part: " + str(self._currentPart))
+
+				# pause running printjob to prevent octoprint from sending new commands from the gcode file during the interactive PnP process
+				if self._printer.is_printing():
+					self._printer.pause_print()
 
 				self._updateUI("OPERATION", "pick")
 
@@ -299,6 +303,11 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 				self._logger.info("Finished placing part " + str(self._currentPart))
 				self._state = self.STATE_NONE
+
+				# resume paused printjob into normal operation
+				if self._printer.is_paused():
+					self._printer.resume_print()
+
 				return "G4 P1" # return dummy command
 
 
