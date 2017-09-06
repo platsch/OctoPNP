@@ -56,13 +56,13 @@ class ImageProcessing:
 		if(rotated_crop_rect):
 			rotated_box = cv2.cv.BoxPoints(rotated_crop_rect)
 
-			left_x = max(rotated_box[0][0],rotated_box[1][0])
-			right_x = min(rotated_box[2][0],rotated_box[3][0])
-			upper_y = max(rotated_box[1][1],rotated_box[2][1])
-			lower_y = min(rotated_box[0][1],rotated_box[3][1])
+			left_x = int(min(rotated_box[0][0],rotated_box[1][0]))
+			right_x = int(max(rotated_box[2][0],rotated_box[3][0]))
+			upper_y = int(min(rotated_box[1][1],rotated_box[2][1]))
+			lower_y = int(max(rotated_box[0][1],rotated_box[3][1]))
 
 			#Crop image
-			img_crop=img[int(upper_y):int(lower_y), int(left_x):int(right_x)]
+			img_crop=img[upper_y:lower_y, left_x:right_x]
 
 			# now find part inside the box
 			cm_rect = self._rotatedBoundingBox(img_crop, self.head_binary_thresh, 0.001, 0.7)
@@ -200,7 +200,6 @@ class ImageProcessing:
 			return False
 
 
-
 #==============================================================================
 	def getLastErrorMessage(self):
 		return self._last_error
@@ -214,7 +213,6 @@ class ImageProcessing:
 			#convert image to grey and blur
 			gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 			gray_img=cv2.blur(gray_img, (3,3))
-
 			ret, binary_img = cv2.threshold(gray_img, binary_thresh, 255, cv2.THRESH_BINARY)
 
 		contours, hierarchy = cv2.findContours(binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, (0, 0));
