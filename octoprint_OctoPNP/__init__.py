@@ -629,8 +629,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 			self._logger.info("Move camera to: " + cmd)
 			self._printer.commands("G91") # relative positioning
 			self._printer.commands("G1 Z" + str(target_position[2]) + " F" + str(self.FEEDRATE)) # lift printhead
+			self._printer.commands("G90") # absolute positioning
 			self._printer.commands(cmd)
-			self._printer.commands("G1 Z" + str(-target_position[2]) + " F" + str(self.FEEDRATE)) # lower printhead
 
 			self._printer.commands("M400")
 			self._printer.commands("G4 P1")
