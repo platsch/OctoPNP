@@ -69,7 +69,6 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 	def __init__(self):
 		self._state = self.STATE_NONE
 		self._currentPart = 0
-		self._currentZ = None
 
 
 	def on_after_startup(self):
@@ -194,13 +193,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		if "M361" in cmd:
  			if self._state == self.STATE_NONE:
 				self._state = self.STATE_PICK
-				if self._printer.get_current_data()["currentZ"]:
-					self._currentZ = float(self._printer.get_current_data()["currentZ"])
-				else:
-					self._currentZ = 0.0
 				command = re.search("P\d*", cmd).group() #strip the M361
 				self._currentPart = int(command[1:])
-
 				self._logger.info( "Received M361 command to place part: " + str(self._currentPart))
 
 				# pause running printjob to prevent octoprint from sending new commands from the gcode file during the interactive PnP process
@@ -321,7 +315,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 		camera_offset = [tray_offset[0]-float(self._settings.get(["camera", "head", "x"])), tray_offset[1]-float(self._settings.get(["camera", "head", "y"])), float(self._settings.get(["camera", "head", "z"])) + tray_offset[2]]
 		cmd = "G1 X" + str(camera_offset[0]) + " Y" + str(camera_offset[1]) + " F" + str(self.FEEDRATE)
 		self._logger.info("Move camera to: " + cmd)
-		self._printer.commands("G1 Z" + str(self._currentZ+5) + " F" + str(self.FEEDRATE)) # lift printhead
+		self._printer.commands("G91") # relative positioning
+		self._printer.commands("G1 Z5 F" + str(self.FEEDRATE)) # lift printhead
+		self._printer.commands("G90") # absolute positioning
 		self._printer.commands(cmd)
 		self._printer.commands("G1 Z" + str(camera_offset[2]) + " F" + str(self.FEEDRATE)) # lower printhead
 
