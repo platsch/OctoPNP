@@ -461,19 +461,20 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 				self._updateUI("ERROR", "Camera not ready")
 
 		# move to destination
+		dest_z = destination[2]+self.smdparts.getPartHeight(partnr)-float(self._settings.get(["vacnozzle", "z_pressure"]))
 		cmd = "G1 X" + str(destination[0]-float(self._settings.get(["vacnozzle", "x"]))+displacement[0]) \
 			  + " Y" + str(destination[1]-float(self._settings.get(["vacnozzle", "y"]))+displacement[1]) \
-			  + " Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)+10+abs(float(self._settings.get(["vacnozzle", "z_pressure"])))) + " F" + str(self.FEEDRATE)
+			  + " F" + str(self.FEEDRATE)
 		self._logger.info("object destination: " + cmd)
-		self._printer.commands("G1 Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)+5) + " F" + str(self.FEEDRATE)) # lift printhead
+		self._printer.commands("G1 Z" + str(dest_z+10) + " F" + str(self.FEEDRATE)) # lift printhead
 		self._printer.commands(cmd)
-		self._printer.commands("G1 Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)-float(self._settings.get(["vacnozzle", "z_pressure"]))))
+		self._printer.commands("G1 Z" + str(dest_z))
 
 		#release part
 		self._releaseVacuum()
 		self._printer.commands("G4 S2") #some extra time to make sure the part has released and the remaining vacuum is gone
-
-		self._printer.commands("G1 Z" + str(destination[2]+self.smdparts.getPartHeight(partnr)+5) + " F" + str(self.FEEDRATE)) # lift printhead againi
+		self._printer.commands("G1 Z" + str(dest_z+10) + " F" + str(self.FEEDRATE)) # lift printhead again
+		self._liftVacuumNozzle()
 
 	# get the position of the box (center of the box) containing part x relative to the [0,0] corner of the tray
 	def _getTrayPosFromPartNr(self, partnr):
