@@ -444,35 +444,25 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 		self._logger.info("displacement - x: " + str(displacement[0]) + " y: " + str(displacement[1]))
 
+		# Double check whether orientation is now correct. Important on unreliable hardware...
 		if(abs(orientation_offset) > 0.5):
 			self._updateUI("INFO", "Incorrect alignment, correcting offset of " + str(-orientation_offset) + "°")
 			self._logger.info("Incorrect alignment, correcting offset of " + str(-orientation_offset) + "°")
 			self._printer.commands("G92 E0")
 			self._printer.commands("G1 E" + str(-orientation_offset) + " F" + str(self.FEEDRATE))
 			# wait a second to execute the rotation
-
-
-			# wait a second to execute the rotation
-#			for i in range(30):
-#				self._printer.commands("G4 P100")
-#
-#				self._printer.commands("M400")
-#				self._printer.commands("G4 P1")
-#				self._printer.commands("M400")
-
-
-			#time.sleep(2)
+			time.sleep(2)
 			# take another image for UI
-#			if self._grabImages("BED"):
-#
-#				displacement = self.imgproc.getPartPosition(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM"])))
-#				#update UI
-#				self._updateUI("BEDIMAGE", self.imgproc.getLastSavedImagePath())
-#
-#				# Log image for debugging and documentation
-#				if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(bedPath)
-#			else:
-#				self._updateUI("ERROR", "Camera not ready")
+			if self._grabImages("BED"):
+
+				displacement = self.imgproc.getPartPosition(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM"])))
+				#update UI
+				self._updateUI("BEDIMAGE", self.imgproc.getLastSavedImagePath())
+
+				# Log image for debugging and documentation
+				if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(bedPath)
+			else:
+				self._updateUI("ERROR", "Camera not ready")
 
 		# move to destination
 		cmd = "G1 X" + str(destination[0]-float(self._settings.get(["vacnozzle", "x"]))+displacement[0]) \
