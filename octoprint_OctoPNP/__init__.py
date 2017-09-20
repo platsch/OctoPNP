@@ -215,7 +215,6 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
                 self._updateUI("OPERATION", "pick")
 
-
                 self._logger.info( "Move camera to part: " + str(self._currentPart))
                 self._moveCameraToPart(self._currentPart)
 
@@ -223,15 +222,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 self._printer.commands("G4 P1")
                 self._printer.commands("M400")
 
-                for i in range(5):
-                    self._printer.commands("G4 P1")
+                self._printer.commands("M362 OctoPNP")
 
-                self._printer.commands("M362")
 
-                for i in range(5):
-                    self._printer.commands("G4 P1")
-
-                return "G4 P1" # return dummy command
+                return (None,) # suppress command
             else:
                 self._logger.info( "ERROR, received M361 command while placing part: " + str(self._currentPart))
 
@@ -248,14 +242,12 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
     """
 
     def hook_gcode_sending(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
-        if "M362" in cmd:
+        if "M362 OctoPNP" in cmd:
             if self._state == self.STATE_PICK:
                 self._state = self.STATE_ALIGN
                 self._logger.info("Pick part " + str(self._currentPart))
 
-                for i in range(3):
-                    self._printer.commands("G4 P50")
-
+                # generate new imageProcessing object with updated settings
                 self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), int(self._settings.get(["camera", "bed", "binary_thresh"])), int(self._settings.get(["camera", "head", "binary_thresh"])))
 
                 self._pickPart(self._currentPart)
@@ -263,51 +255,30 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 self._printer.commands("G4 P1")
                 self._printer.commands("M400")
 
-                for i in range(5):
-                    self._printer.commands("G4 P1")
+                self._printer.commands("M362 OctoPNP")
 
-                self._printer.commands("M362")
-
-                for i in range(5):
-                    self._printer.commands("G4 P1")
-
-                return "G4 P1" # return dummy command
+                return (None,) # suppress command
 
             if self._state == self.STATE_ALIGN:
                 self._state = self.STATE_PLACE
                 self._logger.info("Align part " + str(self._currentPart))
-
-                for i in range(3):
-                    self._printer.commands("G4 P10")
 
                 self._alignPart(self._currentPart)
                 self._printer.commands("M400")
                 self._printer.commands("G4 P1")
                 self._printer.commands("M400")
 
-                for i in range(10):
-                    self._printer.commands("G4 P1")
+                self._printer.commands("M362 OctoPNP")
 
-                self._printer.commands("M362")
-
-                for i in range(5):
-                    self._printer.commands("G4 P1")
-
-                return "G4 P1" # return dummy command
+                return (None,) # suppress command
 
             if self._state == self.STATE_PLACE:
                 self._logger.info("Place part " + str(self._currentPart))
-
-                for i in range(3):
-                    self._printer.commands("G4 P10")
 
                 self._placePart(self._currentPart)
                 self._printer.commands("M400")
                 self._printer.commands("G4 P1")
                 self._printer.commands("M400")
-
-                for i in range(10):
-                    self._printer.commands("G4 P1")
 
                 self._logger.info("Finished placing part " + str(self._currentPart))
                 self._state = self.STATE_NONE
@@ -316,10 +287,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 if self._printer.is_paused():
                     self._printer.resume_print()
 
-                return "G4 P1" # return dummy command
+                return (None,) # suppress command
 
         # handle camera positioning for external request (helper function)
-        if "M365 OctoPNP_camera_external" in cmd:
+        if "M362 OctoPNP_camera_external" in cmd:
             result = self._grabImages("HEAD")
 
             # the current printjob is resumed and octoPNP is set into default state
@@ -687,7 +658,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
             self._printer.commands("M400")
             self._printer.commands("G4 P1")
             self._printer.commands("M400")
-            self._printer.commands("M365 OctoPNP_camera_external")
+            self._printer.commands("M362 OctoPNP_camera_external")
 
         else:
             self._logger.info("Abort, OctoPNP is busy (not in state NONE, current state: " + str(self._state) + ")")
