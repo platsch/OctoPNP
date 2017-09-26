@@ -221,6 +221,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 self._printer.commands("M400")
                 self._printer.commands("G4 P1")
                 self._printer.commands("M400")
+                for i in range(10):
+                    self._printer.commands("G4 P1")
 
                 self._printer.commands("M362 OctoPNP")
 
@@ -255,6 +257,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 self._printer.commands("G4 P1")
                 self._printer.commands("M400")
 
+                for i in range(10):
+                    self._printer.commands("G4 P1")
+
                 self._printer.commands("M362 OctoPNP")
 
                 return (None,) # suppress command
@@ -268,6 +273,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 self._printer.commands("G4 P1")
                 self._printer.commands("M400")
 
+                for i in range(10):
+                    self._printer.commands("G4 P1")
+
                 self._printer.commands("M362 OctoPNP")
 
                 return (None,) # suppress command
@@ -279,6 +287,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 self._printer.commands("M400")
                 self._printer.commands("G4 P1")
                 self._printer.commands("M400")
+
+                for i in range(10):
+                    self._printer.commands("G4 P1")
 
                 self._logger.info("Finished placing part " + str(self._currentPart))
                 self._state = self.STATE_NONE
