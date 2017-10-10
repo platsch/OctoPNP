@@ -630,9 +630,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
     # Returns resolution for 'camera' (HEAD or BED).
     def _helper_get_head_camera_pxPerMM(self, camera):
         if camera == "HEAD":
-            return self._settings.get(["camera", "head", "pxPerMM"])
+            return float(self._settings.get(["camera", "head", "pxPerMM"]))
         if camera == "BED":
-            return self._settings.get(["camera", "bed", "pxPerMM"])
+            return float(self._settings.get(["camera", "bed", "pxPerMM"]))
         return 0.0
 
 
