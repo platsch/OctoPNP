@@ -115,7 +115,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                     "x": 0,
                     "y": 0,
                     "z": 0,
-                    "pxPerMM": 50.0,
+                    "pxPerMM": {
+                        "x": 50.0,
+                        "y": 50.0
+                    },
                     "path": "",
                     "binary_thresh": 150,
                     "grabScriptPath": ""
@@ -124,7 +127,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                     "x": 0,
                     "y": 0,
                     "z": 0,
-                    "pxPerMM": 50.0,
+                    "pxPerMM": {
+                        "x": 50.0,
+                        "y": 50.0
+                    },
                     "path": "",
                     "binary_thresh": 150,
                     "grabScriptPath": ""
@@ -416,7 +422,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
             self._updateUI("BEDIMAGE", bedPath)
 
             # get rotation offset
-            orientation_offset = self.imgproc.getPartOrientation(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM"])), 0)
+            orientation_offset = self.imgproc.getPartOrientation(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])), 0)
             if not orientation_offset:
                 self._updateUI("ERROR", self.imgproc.getLastErrorMessage())
                 orientation_offset = 0.0
@@ -443,12 +449,12 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         bedPath = self._settings.get(["camera", "bed", "path"])
         if self._grabImages("BED"):
 
-            orientation_offset = self.imgproc.getPartOrientation(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM"])), destination[3])
+            orientation_offset = self.imgproc.getPartOrientation(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])), destination[3])
             if not orientation_offset:
                 self._updateUI("ERROR", self.imgproc.getLastErrorMessage())
                 orientation_offset = 0.0
 
-            displacement = self.imgproc.getPartPosition(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM"])))
+            displacement = self.imgproc.getPartPosition(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])))
             if not displacement:
                 self._updateUI("ERROR", self.imgproc.getLastErrorMessage())
                 displacement = [0, 0]
@@ -475,7 +481,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
             # take another image for UI
             if self._grabImages("BED"):
 
-                displacement = self.imgproc.getPartPosition(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM"])))
+                displacement = self.imgproc.getPartPosition(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])))
                 #update UI
                 self._updateUI("BEDIMAGE", self.imgproc.getLastSavedImagePath())
 
@@ -627,12 +633,18 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
     # Helper function to provide camera access to other plugins.
-    # Returns resolution for 'camera' (HEAD or BED).
+    # Returns resolution for 'camera' (HEAD or BED) as a dict with "x" and "y".
     def _helper_get_head_camera_pxPerMM(self, camera):
         if camera == "HEAD":
-            return float(self._settings.get(["camera", "head", "pxPerMM"]))
+            return dict(
+                x = float(self._settings.get(["camera", "head", "pxPerMM", "x"])),
+                y = float(self._settings.get(["camera", "head", "pxPerMM", "y"]))
+            )
         if camera == "BED":
-            return float(self._settings.get(["camera", "bed", "pxPerMM"]))
+            return dict(
+                x = float(self._settings.get(["camera", "bed", "pxPerMM", "x"])),
+                y = float(self._settings.get(["camera", "bed", "pxPerMM", "y"]))
+            )
         return 0.0
 
 
