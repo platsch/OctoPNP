@@ -76,6 +76,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
     def __init__(self):
         self._state = self.STATE_NONE
         self._currentPart = 0
+        self._helper_was_paused = False
 
         # store callback to send result of an image capture request back to caller
         self._helper_callback = None
@@ -315,8 +316,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
             # of the camera_helper by 3. party plugins (the camera helper is triggered from within the callback method).
 
             # resume paused printjob into normal operation
-            if self._printer.is_paused():
-                self._printer.resume_print
+            if self._printer.is_paused() and not self._helper_was_paused:
+                self._printer.resume_print()
 
             # leave external state
             self._state = self.STATE_NONE
@@ -665,6 +666,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
             result = True
             if self._printer.is_printing(): # interrupt running printjobs to prevent octoprint from sending further gcode lines from the file
                 self._printer.pause_print()
+		self._helper_was_paused = False
+            if self._printer.is_paused():
+                self._helper_was_paused = True
 
 
             # store callback
