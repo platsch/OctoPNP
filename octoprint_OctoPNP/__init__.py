@@ -337,7 +337,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
     def _moveCameraToPart(self, partnr):
-        # switch to pimary extruder, since the head camera is relative to this extruder and the offset to PNP nozzle might not be known (firmware offset)
+        # switch to primary extruder, since the head camera is relative to this extruder and the offset to PNP nozzle might not be known (firmware offset)
         self._printer.commands("T0")
         # move camera to part position
         tray_offset = self._getTrayPosFromPartNr(partnr) # get box position on tray
@@ -676,6 +676,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
             target_position = [x-float(self._settings.get(["camera", "head", "x"])), y-float(self._settings.get(["camera", "head", "y"])), float(self._settings.get(["camera", "head", "z"]))]
             cmd = "G1 X" + str(target_position[0]) + " Y" + str(target_position[1]) + " F" + str(self.FEEDRATE)
+
+            # switch to primary extruder, since the head camera is relative to this extruder and the offset to PNP nozzle might not be known (firmware offset)
+            self._printer.commands("T0")
+
             if adjust_focus:
                 self._printer.commands("G91") # relative positioning
                 self._printer.commands("G1 Z" + str(target_position[2]) + " F" + str(self.FEEDRATE)) # lift printhead
