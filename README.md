@@ -9,7 +9,7 @@ It currently requires the following hardware extensions:
 * A (second) bed camera to precisely align the parts during the placing operation
 * A vacuum nozzle to grip parts
 
-![octopnp_main_small](https://cloud.githubusercontent.com/assets/4190756/12095798/74eb13ae-b311-11e5-8120-1a8c525942ca.png)
+![octopnp_screenshot](https://user-images.githubusercontent.com/4190756/35239671-7f378542-ffb1-11e7-9a77-4b9868aa3845.png)
 
 # Installation
 ## Prerequirements
