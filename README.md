@@ -9,7 +9,7 @@ It currently requires the following hardware extensions:
 * A (second) bed camera to precisely align the parts during the placing operation
 * A vacuum nozzle to grip parts
 
-![octopnp_main_small](https://cloud.githubusercontent.com/assets/4190756/12095798/74eb13ae-b311-11e5-8120-1a8c525942ca.png)
+![octopnp_screenshot](https://user-images.githubusercontent.com/4190756/35239671-7f378542-ffb1-11e7-9a77-4b9868aa3845.png)
 
 # Installation
 ## Prerequirements
@@ -19,7 +19,7 @@ To achieve higher compatibility and modularity, OctoPNP doesn't acces the camera
 The plugin itself can be installed as any regular python package:
 `pip install https://github.com/platsch/OctoPNP/archive/master.zip`
 
-Make sure you use the same Python environment that you installed OctoPrint under, otherwise the plugin won't be able to satisfy its dependencies. Further information can be found in the Octoprint [documentation](http://docs.octoprint.org/en/devel/plugins/using.html)
+Make sure you use the same Python environment that you installed OctoPrint under, otherwise the plugin won't be able to satisfy its dependencies. Further information can be found in the Octoprint [documentation](http://docs.octoprint.org/en/stable/plugins/distributing.html#proper-packages-installable-via-pip)
 OctoPNP requires numpy and opencv2. Try installing those packages by hand if automatic dependency resolving failes.
 
 ## Data Format
