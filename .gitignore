@@ -4,6 +4,8 @@
 *.iml
 *.tiff
 *.png
+*.jpeg
+*.jpg
 *.gcode
 *.bak
 *.orig
