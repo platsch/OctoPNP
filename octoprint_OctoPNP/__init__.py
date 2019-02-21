@@ -664,12 +664,11 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         if self._state == self.STATE_NONE:
             self._state = self.STATE_EXTERNAL
             result = True
-            if self._printer.is_printing() or self._printer.is_resuming(): # interrupt running printjobs to prevent octoprint from sending further gcode lines from the file
-                self._printer.pause_print()
-		self._helper_was_paused = False
+            self._helper_was_paused = False
             if self._printer.is_paused() or self._printer.is_pausing():
                 self._helper_was_paused = True
-
+            if self._printer.is_printing() or self._printer.is_resuming(): # interrupt running printjobs to prevent octoprint from sending further gcode lines from the file
+                self._printer.pause_print()
 
             # store callback
             self._helper_callback = callback
@@ -689,6 +688,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
             self._printer.commands("M400")
             self._printer.commands("G4 P1")
             self._printer.commands("M400")
+            for i in range(10):
+                self._printer.commands("G4 P1")
             self._printer.commands("M362 OctoPNP_camera_external")
 
         else:
