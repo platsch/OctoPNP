@@ -217,7 +217,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 self._logger.info( "Received M361 command to place part: " + str(self._currentPart))
 
                 # pause running printjob to prevent octoprint from sending new commands from the gcode file during the interactive PnP process
-                if self._printer.is_printing():
+                if self._printer.is_printing() or self._printer.is_resuming():
                     self._printer.pause_print()
 
                 self._updateUI("OPERATION", "pick")
@@ -302,7 +302,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 self._state = self.STATE_NONE
 
                 # resume paused printjob into normal operation
-                if self._printer.is_paused():
+                if self._printer.is_paused() or self._printer.is_pausing():
                     self._printer.resume_print()
 
                 return (None,) # suppress command
@@ -316,7 +316,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
             # of the camera_helper by 3. party plugins (the camera helper is triggered from within the callback method).
 
             # resume paused printjob into normal operation
-            if self._printer.is_paused() and not self._helper_was_paused:
+            if (self._printer.is_paused() or self._printer.is_pausing()) and not self._helper_was_paused:
                 self._printer.resume_print()
 
             # leave external state
@@ -664,10 +664,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         if self._state == self.STATE_NONE:
             self._state = self.STATE_EXTERNAL
             result = True
-            if self._printer.is_printing(): # interrupt running printjobs to prevent octoprint from sending further gcode lines from the file
+            if self._printer.is_printing() or self._printer.is_resuming(): # interrupt running printjobs to prevent octoprint from sending further gcode lines from the file
                 self._printer.pause_print()
 		self._helper_was_paused = False
-            if self._printer.is_paused():
+            if self._printer.is_paused() or self._printer.is_pausing():
                 self._helper_was_paused = True
 
 
