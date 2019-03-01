@@ -128,7 +128,20 @@ int main(int argc, char* argv[])
 		for ( size_t i = 0; i < cameras.GetSize(); ++i) {
 			if ( cameras[i].GetDeviceInfo().GetUserDefinedName() == camera_name) 
 			{
-				if ( cameras[i].GrabOne( 5000, ptrGrabResult))
+				bool result = 0;
+				int tries = 0;
+
+				while (result == 0 && tries < 10) {
+					try {
+						result = cameras[i].GrabOne(500, ptrGrabResult);
+					} catch (GenICam::GenericException &e) {
+						cout << e.GetDescription() << endl;
+					}
+					tries++;
+				}
+				cout << "Tries needed: " << tries << endl;
+
+				if(result == 1)
 				{
 					// use user defined camera name as filename
 					String_t filename = basedir + "/" + cameras[i].GetDeviceInfo().GetUserDefinedName() + ".tiff";
