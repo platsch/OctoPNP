@@ -25,6 +25,9 @@
 
 #include <pylon/ConfigurationEventHandler.h>
 
+#include "yaml-cpp/yaml.h"
+
+
 namespace Pylon
 {
     class CInstantCamera;
@@ -32,10 +35,15 @@ namespace Pylon
 class CCameraConfiguration : public Pylon::CConfigurationEventHandler
 {
 public:
-    CCameraConfiguration(int img_size, int exposure_time)
+    CCameraConfiguration(int img_size, int exposure_time, int gain_raw, float intensity_red, float intensity_green, float intensity_blue, std::string yaml_file)
     {
         this->img_size = img_size;
         this->exposure_time = exposure_time;
+        this->gain_raw = gain_raw;
+        this->intensity_red = intensity_red;
+        this->intensity_green = intensity_green;
+        this->intensity_blue = intensity_blue;
+        this->config = YAML::LoadFile("config.yaml");
     }
 
     void OnOpened( Pylon::CInstantCamera& camera)
@@ -84,6 +92,28 @@ public:
 			//tcp packet size
 			const CIntegerPtr packetSize = control.GetNode("GevSCPSPacketSize");
 			packetSize->SetValue(1500);
+
+            //-- Configure gain
+
+            //Set raw gain value
+            const CIntegerPtr gainRaw = control.GetNode("GainRaw");
+            gainRaw->SetValue(this->gain_raw);
+
+
+            //-- Configure white balance
+
+            // Set the red intensity
+            CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Red");
+            CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->intensity_red);
+
+            // Set the green intensity
+            CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Green");
+            CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->intensity_green);
+
+            // Set the blue intensity
+            CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Blue");
+            CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->intensity_blue);
+
         }
         catch (GenICam::GenericException& e)
         {
@@ -92,6 +122,12 @@ public:
     }
     int img_size;
     int exposure_time;
+    int gain_raw;
+    float intensity_red;
+    float intensity_green;
+    float intensity_blue;
+    YAML::Node config;
+
 };
 
 #endif /* INCLUDED_CAMERACONFIGURATION_H_00104928 */

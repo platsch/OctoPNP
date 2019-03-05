@@ -39,7 +39,7 @@
 #include <windows.h>
 #else
 #include <unistd.h>
-#endif																														
+#endif
 
 // Namespace for using pylon objects.
 using namespace Pylon;
@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
 
 	//use basedir given by parameter
 	String_t basedir = "";
-	String_t camera_name = "";        
+	String_t camera_name = "";
 	if(argc > 2) {
 		basedir = argv[1];
 		camera_name = argv[2];
@@ -114,19 +114,19 @@ int main(int argc, char* argv[])
         		// By setting the registration mode to RegistrationMode_Append, the configuration handler is added instead of replacing
         		// the already registered configuration handler.
             	if(user_defined_name == "head") {
-                    cameras[i].RegisterConfiguration( new CCameraConfiguration(880, 1015), RegistrationMode_Append, Cleanup_Delete);
+                    cameras[i].RegisterConfiguration( new CCameraConfiguration(880, 1015, 8, 1.0, 1.0, 1.0, "config.yaml"), RegistrationMode_Append, Cleanup_Delete);
             	}else if(user_defined_name == "bed") {
-                    cameras[i].RegisterConfiguration( new CCameraConfiguration(800, 1300), RegistrationMode_Append, Cleanup_Delete);
+                    cameras[i].RegisterConfiguration( new CCameraConfiguration(800, 1300, 199, 1.0, 1.0, 1.0, "config.yaml"), RegistrationMode_Append, Cleanup_Delete);
             	}else{
                     // apply default configuration
-                    cameras[i].RegisterConfiguration( new CCameraConfiguration(1000, 800), RegistrationMode_Append, Cleanup_Delete);
+                    cameras[i].RegisterConfiguration( new CCameraConfiguration(1000, 800, 100, 1.0, 1.0, 1.0, "config.yaml"), RegistrationMode_Append, Cleanup_Delete);
             	}
 			}
         }
 
 		//grab images and save to disk
 		for ( size_t i = 0; i < cameras.GetSize(); ++i) {
-			if ( cameras[i].GetDeviceInfo().GetUserDefinedName() == camera_name) 
+			if ( cameras[i].GetDeviceInfo().GetUserDefinedName() == camera_name)
 			{
 				bool result = 0;
 				int tries = 0;

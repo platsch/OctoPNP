@@ -21,7 +21,7 @@ $(NAME): $(NAME).o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 $(NAME).o: $(NAME).cpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) -std=c++11 $(CPPFLAGS) $(CXXFLAGS) -I/usr/local/include -L/usr/local/lib -lyaml-cpp -c -o $@ $<
 
 clean:
 	$(RM) $(NAME).o $(NAME)

@@ -1,0 +1,17 @@
+---
+cameras:
+ bed:
+  gainRaw: 100
+  red: 1.0
+  green: 1.0
+  blue: 1.0
+ head:
+  gainRaw: 100
+  red: 1.0
+  green: 1.0
+  blue: 1.0
+ default:
+  gainRaw: 100
+  red: 1.0
+  green: 1.0
+  blue: 1.0
