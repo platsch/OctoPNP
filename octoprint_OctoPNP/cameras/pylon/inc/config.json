@@ -1,9 +1,0 @@
-{
-  "name": "bed",
-  "gainRaw": 100,
-  "red": 1.0,
-  "blue": 1.0,
-  "green": 1.0,
-  "img_size": 800,
-  "exposure_time": 1300
-}

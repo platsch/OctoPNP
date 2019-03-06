@@ -34,7 +34,9 @@
 
 #include "./inc/CameraConfiguration.h"
 
+#include <string>
 #include <iostream>
+#include <fstream>
 #ifdef WIN32
 #include <windows.h>
 #else
@@ -47,6 +49,9 @@ using namespace Pylon;
 // Namespace for using cout.
 using namespace std;
 
+// Json parsing ease of use
+using json = nlohmann::json;
+
 // Limits the amount of cameras used for grabbing.
 // It is important to manage the available bandwidth when grabbing with multiple cameras.
 // This applies, for instance, if two GigE cameras are connected to the same network adapter via a switch.
@@ -58,12 +63,11 @@ using namespace std;
 // The bandwidth used by a FireWire camera device can be limited by adjusting the packet size.
 static const size_t c_maxCamerasToUse = 5;
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
 	int exitCode = 0;
-    // Automagically call PylonInitialize and PylonTerminate to ensure the pylon runtime system.
-    // is initialized during the lifetime of this object
-    Pylon::PylonAutoInitTerm autoInitTerm;
+  // Automagically call PylonInitialize and PylonTerminate to ensure the pylon runtime system.
+  // is initialized during the lifetime of this object
+  Pylon::PylonAutoInitTerm autoInitTerm;
 
 	//use basedir given by parameter
 	String_t basedir = "";
@@ -71,97 +75,89 @@ int main(int argc, char* argv[])
 	if(argc > 2) {
 		basedir = argv[1];
 		camera_name = argv[2];
-	}else{
+	} else {
 		cout << "Usage: grab [basedir] [camera_name]" << endl;
 	}
 
-    try
+  // Parse config file
+  ifstream raw_config("./inc/camera_config.json");
+  json config;
+  raw_config >> config;
+  cout << "Config " << config << endl;
+
+  try {
+    // Get the transport layer factory.
+    CTlFactory& tlFactory = CTlFactory::GetInstance();
+
+    // Get all attached devices and exit application if no device is found.
+    DeviceInfoList_t devices;
+    if ( tlFactory.EnumerateDevices(devices) == 0 )
     {
-        // Get the transport layer factory.
-        CTlFactory& tlFactory = CTlFactory::GetInstance();
-
-        // Get all attached devices and exit application if no device is found.
-        DeviceInfoList_t devices;
-        if ( tlFactory.EnumerateDevices(devices) == 0 )
-        {
-            throw RUNTIME_EXCEPTION( "No camera present.");
-        }
-
-        // Create an array of instant cameras for the found devices and avoid exceeding a maximum number of devices.
-        CInstantCameraArray cameras( min( devices.size(), c_maxCamerasToUse));
-
-		//switch off test image
-		for ( size_t i = 0; i < cameras.GetSize(); ++i)
-        {
-			Pylon::CBaslerGigEInstantCamera cam(tlFactory.CreateDevice( devices[ i ]));
-			cam.Open();
-			cam.TestImageSelector = Basler_GigECameraParams::TestImageSelector_Off;
-		}
-
-		// This smart pointer will receive the grab result data.
-        CGrabResultPtr ptrGrabResult;
-
-        // Create and attach all Pylon Devices.
-        for ( size_t i = 0; i < cameras.GetSize(); ++i)
-        {
-            cameras[ i ].Attach( tlFactory.CreateDevice( devices[ i ]));
-			String_t user_defined_name = cameras[i].GetDeviceInfo().GetUserDefinedName();
-			if(user_defined_name == camera_name)
-			{
-            	cout << "Using device " << cameras[ i ].GetDeviceInfo().GetModelName() << " device name: " << cameras[i].GetDeviceInfo().GetUserDefinedName() << endl;
-
-				// Register an additional configuration handler to set the image format and adjust the AOI.
-        		// By setting the registration mode to RegistrationMode_Append, the configuration handler is added instead of replacing
-        		// the already registered configuration handler.
-            	if(user_defined_name == "head") {
-                    cameras[i].RegisterConfiguration( new CCameraConfiguration(880, 1015, "config.json"), RegistrationMode_Append, Cleanup_Delete);
-            	}else if(user_defined_name == "bed") {
-                    cameras[i].RegisterConfiguration( new CCameraConfiguration(800, 1300, "config.json"), RegistrationMode_Append, Cleanup_Delete);
-            	}else{
-                    // apply default configuration
-                    cameras[i].RegisterConfiguration( new CCameraConfiguration(1000, 800, "config.json"), RegistrationMode_Append, Cleanup_Delete);
-            	}
-			}
-        }
-
-		//grab images and save to disk
-		for ( size_t i = 0; i < cameras.GetSize(); ++i) {
-			if ( cameras[i].GetDeviceInfo().GetUserDefinedName() == camera_name)
-			{
-				bool result = 0;
-				int tries = 0;
-
-				while (result == 0 && tries < 10) {
-					try {
-						result = cameras[i].GrabOne(500, ptrGrabResult);
-					} catch (GenICam::GenericException &e) {
-						cout << e.GetDescription() << endl;
-					}
-					tries++;
-				}
-				cout << "Tries needed: " << tries << endl;
-
-				if(result == 1)
-				{
-					// use user defined camera name as filename
-					String_t filename = basedir + "/" + cameras[i].GetDeviceInfo().GetUserDefinedName() + ".tiff";
-
-					// The pylon grab result smart pointer classes provide a cast operator to the IImage
-					// interface. This makes it possible to pass a grab result directly to the
-					// function that saves an image to disk.
-					cout << "Save image to " << filename << endl;
-					CImagePersistence::Save( ImageFileFormat_Tiff, filename, ptrGrabResult);
-				}
-			}
-		}
-    }
-    catch (GenICam::GenericException &e)
-    {
-        // Error handling
-        cerr << "An exception occurred." << endl
-        << e.GetDescription() << endl;
-        exitCode = 1;
+        throw RUNTIME_EXCEPTION( "No camera present.");
     }
 
-    return exitCode;
+    // Create an array of instant cameras for the found devices and avoid exceeding a maximum number of devices.
+    CInstantCameraArray cameras( min( devices.size(), c_maxCamerasToUse));
+
+    //switch off test image
+    for ( size_t i = 0; i < cameras.GetSize(); ++i) {
+      Pylon::CBaslerGigEInstantCamera cam(tlFactory.CreateDevice( devices[ i ]));
+      cam.Open();
+      cam.TestImageSelector = Basler_GigECameraParams::TestImageSelector_Off;
+    }
+
+    // This smart pointer will receive the grab result data.
+      CGrabResultPtr ptrGrabResult;
+
+    // Create and attach all Pylon Devices.
+    for ( size_t i = 0; i < cameras.GetSize(); ++i) {
+      cameras[ i ].Attach( tlFactory.CreateDevice( devices[ i ]));
+      String_t user_defined_name = cameras[i].GetDeviceInfo().GetUserDefinedName();
+      if(user_defined_name == camera_name) {
+        cout << "Using device " << cameras[ i ].GetDeviceInfo().GetModelName() << " device name: " << cameras[i].GetDeviceInfo().GetUserDefinedName() << endl;
+
+        // Register an additional configuration handler to set the image format and adjust the AOI.
+        // By setting the registration mode to RegistrationMode_Append, the configuration handler is added instead of replacing
+        // the already registered configuration handler.
+
+        cameras[i].RegisterConfiguration( new CCameraConfiguration(config[camera_name]), RegistrationMode_Append, Cleanup_Delete);
+      }
+    }
+
+    //grab images and save to disk
+    for ( size_t i = 0; i < cameras.GetSize(); ++i) {
+      if ( cameras[i].GetDeviceInfo().GetUserDefinedName() == camera_name) {
+        bool result = 0;
+        int tries = 0;
+
+        while (result == 0 && tries < 10) {
+          try {
+            result = cameras[i].GrabOne(500, ptrGrabResult);
+          } catch (GenICam::GenericException &e) {
+            cout << e.GetDescription() << endl;
+          }
+          tries++;
+        }
+        cout << "Tries needed: " << tries << endl;
+
+        if(result == 1) {
+          // use user defined camera name as filename
+          String_t filename = basedir + "/" + cameras[i].GetDeviceInfo().GetUserDefinedName() + ".tiff";
+
+          // The pylon grab result smart pointer classes provide a cast operator to the IImage
+          // interface. This makes it possible to pass a grab result directly to the
+          // function that saves an image to disk.
+          cout << "Save image to " << filename << endl;
+          CImagePersistence::Save( ImageFileFormat_Tiff, filename, ptrGrabResult);
+        }
+      }
+    }
+  } catch (GenICam::GenericException &e) {
+      // Error handling
+      cerr << "An exception occurred." << endl
+      << e.GetDescription() << endl;
+      exitCode = 1;
+  }
+
+  return exitCode;
 }

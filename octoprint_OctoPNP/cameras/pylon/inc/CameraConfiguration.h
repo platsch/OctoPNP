@@ -24,104 +24,91 @@
 #define INCLUDED_CAMERACONFIGURATION_H_00104928
 
 #include <pylon/ConfigurationEventHandler.h>
-#include <fstream>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
 
-namespace Pylon
-{
-    class CInstantCamera;
+namespace Pylon {
+  class CInstantCamera;
 }
-class CCameraConfiguration : public Pylon::CConfigurationEventHandler
-{
+class CCameraConfiguration : public Pylon::CConfigurationEventHandler {
 public:
-    CCameraConfiguration(int img_size, int exposure_time, std::string config_file)
-    {
-        this->img_size = img_size;
-        this->exposure_time = exposure_time;
-        std::ifstream raw_config("config.json");
-        raw_config >> this->config;
+  CCameraConfiguration(json config) {
+    this->config = config;
+  }
+
+  void OnOpened( Pylon::CInstantCamera& camera) {
+    try {
+      // Allow all the names in the namespace GenApi to be used without qualification.
+      using namespace GenApi;
+
+      // Get the camera control object.
+      INodeMap &control = camera.GetNodeMap();
+
+      // Get the parameters for setting the image area of interest (Image AOI).
+      const CIntegerPtr width = control.GetNode("Width");
+      const CIntegerPtr height = control.GetNode("Height");
+      const CIntegerPtr offsetX = control.GetNode("OffsetX");
+      const CIntegerPtr offsetY = control.GetNode("OffsetY");
+
+      width->SetValue(this->config["image_size"]);
+      height->SetValue(this->config["image_size"]);
+
+      uint32_t tmp_offset = 0;
+
+      // Maximize the Image AOI.
+      if (IsWritable(offsetX)) {
+        //use maximum possible offset / 2 (and -1 if odd nr of pixels)
+        tmp_offset = offsetX->GetMax()/2;
+        tmp_offset = tmp_offset-tmp_offset%2;
+        offsetX->SetValue(tmp_offset);
+      }
+      if (IsWritable(offsetY)) {
+        tmp_offset = offsetY->GetMax()/2;
+        tmp_offset = tmp_offset-tmp_offset%2;
+        offsetY->SetValue(tmp_offset);
+      }
+
+      // Set the pixel data format.
+      //CEnumerationPtr(control.GetNode("PixelFormat"))->FromString("Mono8");
+
+      //set a good exposure time
+      const CIntegerPtr exposureTimeRaw = control.GetNode("ExposureTimeRaw");
+      exposureTimeRaw->SetValue(this->config["exposure_time"]);
+
+      //tcp packet size
+      const CIntegerPtr packetSize = control.GetNode("GevSCPSPacketSize");
+      packetSize->SetValue(1500);
+
+      //-- Configure gain
+
+      //Set raw gain value
+      const CIntegerPtr gainRaw = control.GetNode("GainRaw");
+      gainRaw->SetValue(this->config["gainRaw"]);
+
+
+      //-- Configure white balance
+
+      // Set the red intensity
+      CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Red");
+      CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["red"]);
+
+      // Set the green intensity
+      CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Green");
+      CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["green"]);
+
+      // Set the blue intensity
+      CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Blue");
+      CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["blue"]);
+
     }
-
-    void OnOpened( Pylon::CInstantCamera& camera)
+    catch (GenICam::GenericException& e)
     {
-        try
-        {
-            // Allow all the names in the namespace GenApi to be used without qualification.
-            using namespace GenApi;
-
-            // Get the camera control object.
-            INodeMap &control = camera.GetNodeMap();
-
-            // Get the parameters for setting the image area of interest (Image AOI).
-            const CIntegerPtr width = control.GetNode("Width");
-            const CIntegerPtr height = control.GetNode("Height");
-            const CIntegerPtr offsetX = control.GetNode("OffsetX");
-            const CIntegerPtr offsetY = control.GetNode("OffsetY");
-
-            width->SetValue(this->config["image_size"]);
-            height->SetValue(this->config["image_size"]);
-
-			uint32_t tmp_offset = 0;
-
-            // Maximize the Image AOI.
-            if (IsWritable(offsetX))
-            {
-				//use maximum possible offset / 2 (and -1 if odd nr of pixels)
-				tmp_offset = offsetX->GetMax()/2;
-				tmp_offset = tmp_offset-tmp_offset%2;
-                offsetX->SetValue(tmp_offset);
-            }
-            if (IsWritable(offsetY))
-            {
-				tmp_offset = offsetY->GetMax()/2;
-				tmp_offset = tmp_offset-tmp_offset%2;
-                offsetY->SetValue(tmp_offset);
-            }
-
-            // Set the pixel data format.
-            //CEnumerationPtr(control.GetNode("PixelFormat"))->FromString("Mono8");
-
-			//set a good exposure time
-			const CIntegerPtr exposureTimeRaw = control.GetNode("ExposureTimeRaw");
-			exposureTimeRaw->SetValue(this->config["exposure_time"]);
-
-			//tcp packet size
-			const CIntegerPtr packetSize = control.GetNode("GevSCPSPacketSize");
-			packetSize->SetValue(1500);
-
-            //-- Configure gain
-
-            //Set raw gain value
-            const CIntegerPtr gainRaw = control.GetNode("GainRaw");
-            gainRaw->SetValue(this->config["gainRaw"]);
-
-
-            //-- Configure white balance
-
-            // Set the red intensity
-            CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Red");
-            CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["red"]);
-
-            // Set the green intensity
-            CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Green");
-            CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["green"]);
-
-            // Set the blue intensity
-            CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Blue");
-            CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["blue"]);
-
-        }
-        catch (GenICam::GenericException& e)
-        {
-            throw RUNTIME_EXCEPTION( "Could not apply configuration. GenICam::GenericException caught in OnOpened method msg=%hs", e.what());
-        }
+      throw RUNTIME_EXCEPTION( "Could not apply configuration. GenICam::GenericException caught in OnOpened method msg=%hs", e.what());
     }
-    int img_size;
-    int exposure_time;
-    json config;
+  }
 
+  json config;
 };
 
 #endif /* INCLUDED_CAMERACONFIGURATION_H_00104928 */
