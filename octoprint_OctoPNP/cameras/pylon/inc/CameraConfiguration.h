@@ -24,9 +24,10 @@
 #define INCLUDED_CAMERACONFIGURATION_H_00104928
 
 #include <pylon/ConfigurationEventHandler.h>
+#include <fstream>
+#include <nlohmann/json.hpp>
 
-#include "yaml-cpp/yaml.h"
-
+using json = nlohmann::json;
 
 namespace Pylon
 {
@@ -35,15 +36,12 @@ namespace Pylon
 class CCameraConfiguration : public Pylon::CConfigurationEventHandler
 {
 public:
-    CCameraConfiguration(int img_size, int exposure_time, int gain_raw, float intensity_red, float intensity_green, float intensity_blue, std::string yaml_file)
+    CCameraConfiguration(int img_size, int exposure_time, std::string config_file)
     {
         this->img_size = img_size;
         this->exposure_time = exposure_time;
-        this->gain_raw = gain_raw;
-        this->intensity_red = intensity_red;
-        this->intensity_green = intensity_green;
-        this->intensity_blue = intensity_blue;
-        this->config = YAML::LoadFile("config.yaml");
+        std::ifstream raw_config("config.json");
+        raw_config >> this->config;
     }
 
     void OnOpened( Pylon::CInstantCamera& camera)
@@ -62,8 +60,8 @@ public:
             const CIntegerPtr offsetX = control.GetNode("OffsetX");
             const CIntegerPtr offsetY = control.GetNode("OffsetY");
 
-            width->SetValue(this->img_size);
-            height->SetValue(this->img_size);
+            width->SetValue(this->config["image_size"]);
+            height->SetValue(this->config["image_size"]);
 
 			uint32_t tmp_offset = 0;
 
@@ -87,7 +85,7 @@ public:
 
 			//set a good exposure time
 			const CIntegerPtr exposureTimeRaw = control.GetNode("ExposureTimeRaw");
-			exposureTimeRaw->SetValue(this->exposure_time);
+			exposureTimeRaw->SetValue(this->config["exposure_time"]);
 
 			//tcp packet size
 			const CIntegerPtr packetSize = control.GetNode("GevSCPSPacketSize");
@@ -97,22 +95,22 @@ public:
 
             //Set raw gain value
             const CIntegerPtr gainRaw = control.GetNode("GainRaw");
-            gainRaw->SetValue(this->gain_raw);
+            gainRaw->SetValue(this->config["gainRaw"]);
 
 
             //-- Configure white balance
 
             // Set the red intensity
             CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Red");
-            CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->intensity_red);
+            CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["red"]);
 
             // Set the green intensity
             CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Green");
-            CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->intensity_green);
+            CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["green"]);
 
             // Set the blue intensity
             CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Blue");
-            CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->intensity_blue);
+            CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["blue"]);
 
         }
         catch (GenICam::GenericException& e)
@@ -122,11 +120,7 @@ public:
     }
     int img_size;
     int exposure_time;
-    int gain_raw;
-    float intensity_red;
-    float intensity_green;
-    float intensity_blue;
-    YAML::Node config;
+    json config;
 
 };
 

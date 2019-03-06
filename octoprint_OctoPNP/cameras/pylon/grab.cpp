@@ -114,12 +114,12 @@ int main(int argc, char* argv[])
         		// By setting the registration mode to RegistrationMode_Append, the configuration handler is added instead of replacing
         		// the already registered configuration handler.
             	if(user_defined_name == "head") {
-                    cameras[i].RegisterConfiguration( new CCameraConfiguration(880, 1015, 8, 1.0, 1.0, 1.0, "config.yaml"), RegistrationMode_Append, Cleanup_Delete);
+                    cameras[i].RegisterConfiguration( new CCameraConfiguration(880, 1015, "config.json"), RegistrationMode_Append, Cleanup_Delete);
             	}else if(user_defined_name == "bed") {
-                    cameras[i].RegisterConfiguration( new CCameraConfiguration(800, 1300, 199, 1.0, 1.0, 1.0, "config.yaml"), RegistrationMode_Append, Cleanup_Delete);
+                    cameras[i].RegisterConfiguration( new CCameraConfiguration(800, 1300, "config.json"), RegistrationMode_Append, Cleanup_Delete);
             	}else{
                     // apply default configuration
-                    cameras[i].RegisterConfiguration( new CCameraConfiguration(1000, 800, 100, 1.0, 1.0, 1.0, "config.yaml"), RegistrationMode_Append, Cleanup_Delete);
+                    cameras[i].RegisterConfiguration( new CCameraConfiguration(1000, 800, "config.json"), RegistrationMode_Append, Cleanup_Delete);
             	}
 			}
         }
