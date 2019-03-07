@@ -74,7 +74,7 @@ public:
       //CEnumerationPtr(control.GetNode("PixelFormat"))->FromString("Mono8");
 
       //set a good exposure time
-      if (this->config["exposureTime"])
+      if (!this->config["exposureTime"].is_null())
        CIntegerPtr(control.GetNode("ExposureTimeRaw"))->SetValue(this->config["exposureTime"]);
 
       //tcp packet size
@@ -84,12 +84,12 @@ public:
       //-- Configure gain
 
       //Set raw gain value
-      if (this->config["gainRaw"])
+      if (!this->config["gainRaw"].is_null())
         CIntegerPtr(control.GetNode("GainRaw"))->SetValue(this->config["gainRaw"]);
 
       //-- Configure white balance
 
-      if (this->config["whiteBalance"]) {
+      if (!this->config["whiteBalance"].is_null()) {
         // Set the red intensity
         CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Red");
         CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["whiteBalance"]["red"]);
@@ -104,15 +104,15 @@ public:
       }
 
       //-- Configure black level
-      if (this->config["blackLevel"])
+      if (!this->config["blackLevel"].is_null())
         CIntegerPtr(control.GetNode("BlackLevelRaw"))->SetValue(this->config["blackLevel"]);
 
       //-- Configure digital shift
-      if (this->config["digitalShift"])
+      if (!this->config["digitalShift"].is_null())
         CIntegerPtr(control.GetNode("DigitalShift"))->SetValue(this->config["digitalShift"]);
 
       //-- Configure gamma correction
-      if (this->config["gamma"]) {
+      if (!this->config["gamma"].is_null()) {
         CBooleanPtr(control.GetNode("GammaEnable"))->SetValue(true);
         CEnumerationPtr(control.GetNode("GammaSelector"))->FromString("User");
         CFloatPtr(control.GetNode("Gamma"))->SetValue(this->config["gamma"]);
@@ -129,18 +129,18 @@ public:
       //   Tungsten
       //   Custom
 
-      if (this->config["useLightPreset"]) {
+      if (!this->config["useLightPreset"].is_null()) {
         const char *charValues = this->config["useLightPreset"].dump().c_str();
         CEnumerationPtr(control.GetNode("LightSourceSelector"))->FromString(charValues);
       } else {
         CEnumerationPtr(control.GetNode("LightSourceSelector"))->FromString("Off");
       }
 
-      if (this->config["reverseX"]) {
+      if (!this->config["reverseX"].is_null()) {
         CBooleanPtr(control.GetNode("ReverseX"))->SetValue(this->config["reverseX"]);
       }
 
-      if (this->config["reverseY"]) {
+      if (!this->config["reverseY"].is_null()) {
         CBooleanPtr(control.GetNode("ReverseY"))->SetValue(this->config["reverseY"]);
       }
 
