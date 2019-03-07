@@ -26,6 +26,9 @@
 #include <pylon/ConfigurationEventHandler.h>
 #include <nlohmann/json.hpp>
 
+// Json parsing ease of use
+using json = nlohmann::json;
+
 namespace Pylon {
   class CInstantCamera;
 }
@@ -121,23 +124,24 @@ public:
       // If active sets presets for white balance, color adjustment and color transformation
       // Presets:
       //   Off
-      //   Daylight 5000 K
-      //   Daylight 6500 K
+      //   Daylight (5000 K)
+      //   Daylight (6500 K)
       //   Tungsten
       //   Custom
 
       if (this->config["useLightPreset"]) {
-        CEnumerationPtr(control.GetNode("LightSourceSelector"))->FromString(this->config["useLightPreset"]);
+        const char *charValues = this->config["useLightPreset"].dump().c_str();
+        CEnumerationPtr(control.GetNode("LightSourceSelector"))->FromString(charValues);
       } else {
         CEnumerationPtr(control.GetNode("LightSourceSelector"))->FromString("Off");
       }
 
       if (this->config["reverseX"]) {
-        CBooleanPtr(control.GetNode("ReverseX"))->SetValue(["reverseX"]);
+        CBooleanPtr(control.GetNode("ReverseX"))->SetValue(this->config["reverseX"]);
       }
 
       if (this->config["reverseY"]) {
-        CBooleanPtr(control.GetNode("ReverseY"))->SetValue(["reverseY"]);
+        CBooleanPtr(control.GetNode("ReverseY"))->SetValue(this->config["reverseY"]);
       }
 
     }
