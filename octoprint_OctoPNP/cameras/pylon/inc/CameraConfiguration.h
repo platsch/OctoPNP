@@ -26,8 +26,6 @@
 #include <pylon/ConfigurationEventHandler.h>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
-
 namespace Pylon {
   class CInstantCamera;
 }
@@ -51,8 +49,8 @@ public:
       const CIntegerPtr offsetX = control.GetNode("OffsetX");
       const CIntegerPtr offsetY = control.GetNode("OffsetY");
 
-      width->SetValue(this->config["image_size"]);
-      height->SetValue(this->config["image_size"]);
+      width->SetValue(this->config["imageSize"]);
+      height->SetValue(this->config["imageSize"]);
 
       uint32_t tmp_offset = 0;
 
@@ -73,8 +71,8 @@ public:
       //CEnumerationPtr(control.GetNode("PixelFormat"))->FromString("Mono8");
 
       //set a good exposure time
-      const CIntegerPtr exposureTimeRaw = control.GetNode("ExposureTimeRaw");
-      exposureTimeRaw->SetValue(this->config["exposure_time"]);
+      if (this->config["exposureTime"])
+       CIntegerPtr(control.GetNode("ExposureTimeRaw"))->SetValue(this->config["exposureTime"]);
 
       //tcp packet size
       const CIntegerPtr packetSize = control.GetNode("GevSCPSPacketSize");
@@ -83,23 +81,64 @@ public:
       //-- Configure gain
 
       //Set raw gain value
-      const CIntegerPtr gainRaw = control.GetNode("GainRaw");
-      gainRaw->SetValue(this->config["gainRaw"]);
-
+      if (this->config["gainRaw"])
+        CIntegerPtr(control.GetNode("GainRaw"))->SetValue(this->config["gainRaw"]);
 
       //-- Configure white balance
 
-      // Set the red intensity
-      CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Red");
-      CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["red"]);
+      if (this->config["whiteBalance"]) {
+        // Set the red intensity
+        CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Red");
+        CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["whiteBalance"]["red"]);
 
-      // Set the green intensity
-      CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Green");
-      CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["green"]);
+        // Set the green intensity
+        CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Green");
+        CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["whiteBalance"]["green"]);
 
-      // Set the blue intensity
-      CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Blue");
-      CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["blue"]);
+        // Set the blue intensity
+        CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Blue");
+        CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["whiteBalance"]["blue"]);
+      }
+
+      //-- Configure black level
+      if (this->config["blackLevel"])
+        CIntegerPtr(control.GetNode("BlackLevelRaw"))->SetValue(this->config["blackLevel"]);
+
+      //-- Configure digital shift
+      if (this->config["digitalShift"])
+        CIntegerPtr(control.GetNode("DigitalShift"))->SetValue(this->config["digitalShift"]);
+
+      //-- Configure gamma correction
+      if (this->config["gamma"]) {
+        CBooleanPtr(control.GetNode("GammaEnable"))->SetValue(true);
+        CEnumerationPtr(control.GetNode("GammaSelector"))->FromString("User");
+        CFloatPtr(control.GetNode("Gamma"))->SetValue(this->config["gamma"]);
+      } else {
+        CBooleanPtr(control.GetNode("GammaEnable"))->SetValue(false);
+      }
+
+      //-- Configure lightsource presets
+      // If active sets presets for white balance, color adjustment and color transformation
+      // Presets:
+      //   Off
+      //   Daylight 5000 K
+      //   Daylight 6500 K
+      //   Tungsten
+      //   Custom
+
+      if (this->config["useLightPreset"]) {
+        CEnumerationPtr(control.GetNode("LightSourceSelector"))->FromString(this->config["useLightPreset"]);
+      } else {
+        CEnumerationPtr(control.GetNode("LightSourceSelector"))->FromString("Off");
+      }
+
+      if (this->config["reverseX"]) {
+        CBooleanPtr(control.GetNode("ReverseX"))->SetValue(["reverseX"]);
+      }
+
+      if (this->config["reverseY"]) {
+        CBooleanPtr(control.GetNode("ReverseY"))->SetValue(["reverseY"]);
+      }
 
     }
     catch (GenICam::GenericException& e)

@@ -1,26 +1,38 @@
 {
   "bed": {
+    "blackLevel": 0,
     "gainRaw": 100,
-    "red": 1.0,
-    "blue": 1.0,
-    "green": 1.0,
+    "whiteBalance": {
+      "red": 1.0,
+      "blue": 1.0,
+      "green": 1.0
+    },
     "img_size": 800,
     "exposure_time": 1300
   },
   "head": {
+    "blackLevel": 0,
     "gainRaw": 8,
-    "red": 1.0,
-    "blue": 1.0,
-    "green": 1.0,
+    "whiteBalance": {
+      "red": 1.0,
+      "blue": 1.0,
+      "green": 1.0
+    },
     "img_size": 880,
     "exposure_time": 1015
   },
   "default": {
+    "blackLevel": 0,
     "gainRaw": 100,
-    "red": 1.0,
-    "blue": 1.0,
-    "green": 1.0,
-    "img_size": 1000,
-    "exposure_time": 800
+    "whiteBalance": {
+      "red": 1.0,
+      "blue": 1.0,
+      "green": 1.0
+    },
+    "useLightPreset": "Off",
+    "imageSize": 1000,
+    "exposureTime": 800,
+    "reverseX": false,
+    "reverseY": false
   }
 }
