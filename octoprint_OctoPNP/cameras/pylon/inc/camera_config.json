@@ -8,7 +8,7 @@
     "exposure_time": 1300
   },
   "head": {
-    "gainRaw": 100,
+    "gainRaw": 8,
     "red": 1.0,
     "blue": 1.0,
     "green": 1.0,

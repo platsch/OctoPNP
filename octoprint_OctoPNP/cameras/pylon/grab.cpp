@@ -72,18 +72,19 @@ int main(int argc, char* argv[]) {
 	//use basedir given by parameter
 	String_t basedir = "";
 	String_t camera_name = "";
+  string config_name = "";
 	if(argc > 2) {
 		basedir = argv[1];
 		camera_name = argv[2];
+    config_name = (argv[3] ? argv[3] : argv[2]);
 	} else {
-		cout << "Usage: grab [basedir] [camera_name]" << endl;
+		cout << "Usage: grab [basedir] [camera_name] [optional: override config]" << endl;
 	}
 
   // Parse config file
   ifstream raw_config("./inc/camera_config.json");
-  json config;
-  raw_config >> config;
-  cout << "Config " << config << endl;
+  json json_config;
+  raw_config >> json_config;
 
   try {
     // Get the transport layer factory.
@@ -120,7 +121,7 @@ int main(int argc, char* argv[]) {
         // By setting the registration mode to RegistrationMode_Append, the configuration handler is added instead of replacing
         // the already registered configuration handler.
 
-        cameras[i].RegisterConfiguration( new CCameraConfiguration(config[camera_name]), RegistrationMode_Append, Cleanup_Delete);
+        cameras[i].RegisterConfiguration( new CCameraConfiguration(json_config[config_name]), RegistrationMode_Append, Cleanup_Delete);
       }
     }
 
