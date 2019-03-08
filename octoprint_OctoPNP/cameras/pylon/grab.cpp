@@ -82,7 +82,8 @@ int main(int argc, char* argv[]) {
 	}
 
   // Parse config file
-  ifstream raw_config("./inc/camera_config.json");
+  // Todo: relative paths collide with the working directory of the executing bash script.
+  ifstream raw_config("/home/odroid/software/OctoPNP/octoprint_OctoPNP/cameras/pylon/inc/camera_config.json");
   json json_config;
   raw_config >> json_config;
 
@@ -115,8 +116,7 @@ int main(int argc, char* argv[]) {
       cameras[ i ].Attach( tlFactory.CreateDevice( devices[ i ]));
       String_t user_defined_name = cameras[i].GetDeviceInfo().GetUserDefinedName();
       if(user_defined_name == camera_name) {
-        cout << "Using device " << cameras[ i ].GetDeviceInfo().GetModelName() << " device name: " << cameras[i].GetDeviceInfo().GetUserDefinedName() << endl;
-
+        cout << "Using device " << cameras[ i ].GetDeviceInfo().GetModelName() << " device name: " << cameras[i].GetDeviceInfo().GetUserDefinedName() << " config: " << config_name << endl;
         // Register an additional configuration handler to set the image format and adjust the AOI.
         // By setting the registration mode to RegistrationMode_Append, the configuration handler is added instead of replacing
         // the already registered configuration handler.

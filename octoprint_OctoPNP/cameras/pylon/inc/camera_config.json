@@ -1,38 +1,44 @@
 {
   "bed": {
+    "type": "piA2400-17gc",
     "blackLevel": 0,
     "gainRaw": 100,
+    "gamma": 1,
+    "digitalShift": 1,
     "whiteBalance": {
-      "red": 1.0,
-      "blue": 1.0,
+      "red": 1.99,
+      "blue": 0.96,
       "green": 1.0
     },
-    "img_size": 800,
-    "exposure_time": 1300
+    "imageSize": 800,
+    "exposureTime": 1300
   },
   "head": {
+    "type": "A2500-14gc",
     "blackLevel": 0,
     "gainRaw": 8,
+    "gamma": 1,
+    "digitalShift": 1,
     "whiteBalance": {
       "red": 1.0,
       "blue": 1.0,
       "green": 1.0
     },
-    "img_size": 880,
-    "exposure_time": 1015
+    "imageSize": 880,
+    "exposureTime": 1015
   },
   "default": {
+    "type": "NONE",
     "blackLevel": 0,
     "gainRaw": 100,
+    "gamma": 1,
+    "digitalShift": 1,
     "whiteBalance": {
       "red": 1.0,
       "blue": 1.0,
       "green": 1.0
     },
-    "useLightPreset": "Off",
     "imageSize": 1000,
-    "exposureTime": 800,
-    "reverseX": false,
-    "reverseY": false
+    "exposureTime": 800
   }
 }

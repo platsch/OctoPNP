@@ -74,8 +74,7 @@ public:
       //CEnumerationPtr(control.GetNode("PixelFormat"))->FromString("Mono8");
 
       //set a good exposure time
-      if (!this->config["exposureTime"].is_null())
-       CIntegerPtr(control.GetNode("ExposureTimeRaw"))->SetValue(this->config["exposureTime"]);
+      CIntegerPtr(control.GetNode("ExposureTimeRaw"))->SetValue(this->config["exposureTime"]);
 
       //tcp packet size
       const CIntegerPtr packetSize = control.GetNode("GevSCPSPacketSize");
@@ -84,33 +83,40 @@ public:
       //-- Configure gain
 
       //Set raw gain value
-      if (!this->config["gainRaw"].is_null())
+      if (!this->config["gamma"].is_null()) {
         CIntegerPtr(control.GetNode("GainRaw"))->SetValue(this->config["gainRaw"]);
-
+      }
+      
       //-- Configure white balance
-
-      if (!this->config["whiteBalance"].is_null()) {
-        // Set the red intensity
+      // Set the red intensity
+      if (!this->config["gamma"].is_null()) {
         CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Red");
         CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["whiteBalance"]["red"]);
+      }
 
-        // Set the green intensity
+      // Set the green intensity
+      if (!this->config["gamma"].is_null()) {
         CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Green");
         CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["whiteBalance"]["green"]);
+      }
 
-        // Set the blue intensity
+      // Set the blue intensity
+      if (!this->config["gamma"].is_null()) {
         CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Blue");
         CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["whiteBalance"]["blue"]);
       }
 
       //-- Configure black level
-      if (!this->config["blackLevel"].is_null())
+      if (!this->config["gamma"].is_null()) {
         CIntegerPtr(control.GetNode("BlackLevelRaw"))->SetValue(this->config["blackLevel"]);
+      }
+      
 
       //-- Configure digital shift
-      if (!this->config["digitalShift"].is_null())
+      if (!this->config["gamma"].is_null()) {
         CIntegerPtr(control.GetNode("DigitalShift"))->SetValue(this->config["digitalShift"]);
-
+      }
+      
       //-- Configure gamma correction
       if (!this->config["gamma"].is_null()) {
         CBooleanPtr(control.GetNode("GammaEnable"))->SetValue(true);
@@ -129,20 +135,23 @@ public:
       //   Tungsten
       //   Custom
 
-      if (!this->config["useLightPreset"].is_null()) {
-        const char *charValues = this->config["useLightPreset"].dump().c_str();
-        CEnumerationPtr(control.GetNode("LightSourceSelector"))->FromString(charValues);
-      } else {
-        CEnumerationPtr(control.GetNode("LightSourceSelector"))->FromString("Off");
-      }
+      // if (!this->config["useLightPreset"].is_null()) {
+      //   cout << this->config["useLightPreset"] << endl;
+      //   const char *charValues = this->config["useLightPreset"].dump().c_str();
+      //   CEnumerationPtr(control.GetNode("LightSourceSelector"))->FromString(charValues);
+      // } else {
+      //   CEnumerationPtr(control.GetNode("LightSourceSelector"))->FromString("Off");
+      // }
 
-      if (!this->config["reverseX"].is_null()) {
-        CBooleanPtr(control.GetNode("ReverseX"))->SetValue(this->config["reverseX"]);
-      }
+      // if (!this->config["reverseX"].is_null()) {
+      //   cout << this->config["reverseX"] << endl;
+      //   CBooleanPtr(control.GetNode("ReverseX"))->SetValue(this->config["reverseX"]);
+      // }
 
-      if (!this->config["reverseY"].is_null()) {
-        CBooleanPtr(control.GetNode("ReverseY"))->SetValue(this->config["reverseY"]);
-      }
+      // if (!this->config["reverseY"].is_null()) {
+      //   cout << this->config["reverseY"] << endl;
+      //   CBooleanPtr(control.GetNode("ReverseY"))->SetValue(this->config["reverseY"]);
+      // }
 
     }
     catch (GenICam::GenericException& e)
