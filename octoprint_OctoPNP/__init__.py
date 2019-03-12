@@ -462,7 +462,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
             #update UI
             self._updateUI("BEDIMAGE", self.imgproc.getLastSavedImagePath())
-			
+
             # Log image for debugging and documentation
             if self._settings.get(["camera", "image_logging"]):
                 self._saveDebugImage(bedPath)

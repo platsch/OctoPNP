@@ -63,9 +63,13 @@ class ImageProcessing:
             # Calcuates the displacement from the center of the camera in real world units (mm?)
             displacement_x=(cm_x-res_x/2)*self.box_size/res_x
             displacement_y=((res_y-cm_y)-res_y/2)*self.box_size/res_y
+            print "Displacement " + str(displacement_x) + ", " + str(displacement_y)
             result = displacement_x,displacement_y
 
             # Generate result image and return
+            box = cv2.boxPoints(cm_rect)
+            box = np.int0(box)
+            cv2.drawContours(img,[box],0,(0,255,0),2)
             cv2.circle(img,(int(cm_x),int(cm_y)), 5, (0,255,0), -1)
             filename="/finalcm_"+os.path.basename(self._img_path)
             finalcm_path=os.path.dirname(self._img_path)+filename
@@ -188,7 +192,7 @@ class ImageProcessing:
 #==============================================================================
     def _rotatedBoundingBox(self, img, binary_thresh, min_area_factor, max_area_factor, binary_img = ()):
         result = False
-        DEBUG = True
+        DEBUG = False
 
         #-- Copy image
         img_copy = np.copy(img)
@@ -249,15 +253,16 @@ class ImageProcessing:
         cntsSorted = sorted(contours, key=lambda x: cv2.contourArea(x))
         max_contour = cntsSorted[-1]
 
+        rect = cv2.minAreaRect(max_contour)
+
         if DEBUG:
             cv2.drawContours(img_copy, max_contour, -1, (0,0,255), 3)
 
-            rect = cv2.minAreaRect(max_contour)
             box = cv2.boxPoints(rect)
             box = np.int0(box)
 
             cv2.drawContours(img_copy,[box],0,(0,255,0),2)
-            self._saveImage("contours.png",img_copy)
+            self._saveImage("5_contours.png",img_copy)
 
         result = rect
 
