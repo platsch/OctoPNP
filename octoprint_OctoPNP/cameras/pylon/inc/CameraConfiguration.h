@@ -83,40 +83,40 @@ public:
       //-- Configure gain
 
       //Set raw gain value
-      if (!this->config["gamma"].is_null()) {
+      if (!this->config["gainRaw"].is_null()) {
         CIntegerPtr(control.GetNode("GainRaw"))->SetValue(this->config["gainRaw"]);
       }
-      
+
       //-- Configure white balance
       // Set the red intensity
-      if (!this->config["gamma"].is_null()) {
+      if (!this->config["whiteBalance"]["red"].is_null()) {
         CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Red");
         CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["whiteBalance"]["red"]);
       }
 
       // Set the green intensity
-      if (!this->config["gamma"].is_null()) {
+      if (!this->config["whiteBalance"]["green"].is_null()) {
         CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Green");
         CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["whiteBalance"]["green"]);
       }
 
       // Set the blue intensity
-      if (!this->config["gamma"].is_null()) {
+      if (!this->config["whiteBalance"]["blue"].is_null()) {
         CEnumerationPtr(control.GetNode("BalanceRatioSelector"))->FromString("Blue");
         CFloatPtr(control.GetNode("BalanceRatioAbs"))->SetValue(this->config["whiteBalance"]["blue"]);
       }
 
       //-- Configure black level
-      if (!this->config["gamma"].is_null()) {
+      if (!this->config["blackLevel"].is_null()) {
         CIntegerPtr(control.GetNode("BlackLevelRaw"))->SetValue(this->config["blackLevel"]);
       }
-      
+
 
       //-- Configure digital shift
-      if (!this->config["gamma"].is_null()) {
+      if (!this->config["digitalShift"].is_null()) {
         CIntegerPtr(control.GetNode("DigitalShift"))->SetValue(this->config["digitalShift"]);
       }
-      
+
       //-- Configure gamma correction
       if (!this->config["gamma"].is_null()) {
         CBooleanPtr(control.GetNode("GammaEnable"))->SetValue(true);

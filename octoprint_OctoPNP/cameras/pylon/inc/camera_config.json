@@ -3,8 +3,6 @@
     "type": "piA2400-17gc",
     "blackLevel": 0,
     "gainRaw": 100,
-    "gamma": 1,
-    "digitalShift": 1,
     "whiteBalance": {
       "red": 1.99,
       "blue": 0.96,
@@ -17,12 +15,10 @@
     "type": "A2500-14gc",
     "blackLevel": 0,
     "gainRaw": 8,
-    "gamma": 1,
-    "digitalShift": 1,
     "whiteBalance": {
-      "red": 1.0,
-      "blue": 1.0,
-      "green": 1.0
+      "red": 0.9,
+      "blue": 0.7,
+      "green": 0.7
     },
     "imageSize": 880,
     "exposureTime": 1015

@@ -51,50 +51,31 @@ class ImageProcessing:
         # open image file
         img=cv2.imread(img_path,cv2.IMREAD_COLOR)
 
-        #detect box boundaries
-        rotated_crop_rect = self._rotatedBoundingBox(img, self.head_binary_thresh, 0.6, 0.95)
-        if(rotated_crop_rect):
-            rotated_box = cv2.boxPoints(rotated_crop_rect)
+        # now find part inside the box
+        cm_rect = self._rotatedBoundingBox(img, self.head_binary_thresh, 0.001, 0.7)
+        if(cm_rect):
+            cm_x = cm_rect[0][0]
+            cm_y = cm_rect[0][1]
 
-            left_x = int(min(rotated_box[0][0],rotated_box[1][0]))
-            right_x = int(max(rotated_box[2][0],rotated_box[3][0]))
-            upper_y = int(min(rotated_box[1][1],rotated_box[2][1]))
-            lower_y = int(max(rotated_box[0][1],rotated_box[3][1]))
+            res_x = img.shape[1]
+            res_y = img.shape[0]
 
-            #Crop image
-            img_crop=img[upper_y:lower_y, left_x:right_x]
+            # Calcuates the displacement from the center of the camera in real world units (mm?)
+            displacement_x=(cm_x-res_x/2)*self.box_size/res_x
+            displacement_y=((res_y-cm_y)-res_y/2)*self.box_size/res_y
+            result = displacement_x,displacement_y
 
-            # now find part inside the box
-            cm_rect = self._rotatedBoundingBox(img_crop, self.head_binary_thresh, 0.001, 0.7)
-            if(cm_rect):
-                cm_x = cm_rect[0][0]
-                cm_y = cm_rect[0][1]
+            # Generate result image and return
+            cv2.circle(img,(int(cm_x),int(cm_y)), 5, (0,255,0), -1)
+            filename="/finalcm_"+os.path.basename(self._img_path)
+            finalcm_path=os.path.dirname(self._img_path)+filename
+            cv2.imwrite(finalcm_path,img)
+            self._last_saved_image_path = finalcm_path
 
-                res_x = img_crop.shape[1]
-                res_y = img_crop.shape[0]
-
-                displacement_x=(cm_x-res_x/2)*self.box_size/res_x
-                displacement_y=((res_y-cm_y)-res_y/2)*self.box_size/res_y
-                if relative_to_camera:
-                    #incorporate the position of the tray box in relation to the image
-                    displacement_x += (left_x - (img.shape[1]-right_x))/2 * self.box_size/res_x
-                    displacement_y -= (upper_y - (img.shape[0]-(lower_y)))/2 * self.box_size/res_y
-                result = displacement_x,displacement_y
-
-
-                # Generate result image and return
-                cv2.circle(img_crop,(int(cm_x),int(cm_y)), 5, (0,255,0), -1)
-                filename="/finalcm_"+os.path.basename(self._img_path)
-                finalcm_path=os.path.dirname(self._img_path)+filename
-                cv2.imwrite(finalcm_path,img_crop)
-                self._last_saved_image_path = finalcm_path
-
-                if self._interactive: cv2.imshow("Part in box: ",img_crop)
-                if self._interactive: cv2.waitKey(0)
-            else:
-                self._last_error = "Unable to find part in box"
+            if self._interactive: cv2.imshow("Part in box: ",img)
+            if self._interactive: cv2.waitKey(0)
         else:
-            self._last_error = "Unable to locate box"
+            self._last_error = "Unable to find part in box"
 
         return result
 
@@ -204,53 +185,81 @@ class ImageProcessing:
     def getLastErrorMessage(self):
         return self._last_error
 
-
 #==============================================================================
     def _rotatedBoundingBox(self, img, binary_thresh, min_area_factor, max_area_factor, binary_img = ()):
         result = False
+        DEBUG = True
 
-        if (len(binary_img) == 0):
-            #convert image to grey and blur
-            gray_img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-            gray_img=cv2.blur(gray_img, (3,3))
-            ret, binary_img = cv2.threshold(gray_img, binary_thresh, 255, cv2.THRESH_BINARY)
+        #-- Copy image
+        img_copy = np.copy(img)
 
-        # contours, hierarchy = cv2.findContours(binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, (0, 0));
-        _, contours, hierarchy = cv2.findContours(binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        #cv2.drawContours(img, contours, -1, (0,255,0), 3) # draw basic contours
 
-        minArea = binary_img.shape[0] * binary_img.shape[1] * min_area_factor; # how to find a better value??? input from part description?
-        maxArea = binary_img.shape[0] * binary_img.shape[1] * max_area_factor # Y*X | don't detect full image
+        #-- Remove green
+        if (len(binary_img) != 0):
+            blur_img=cv2.blur(img_copy, (5,5))
+            hsv = cv2.cvtColor(blur_img, cv2.COLOR_BGR2HSV)
 
-        rectPoints = [];
+            lower_color = np.array([20,20,20])
+            upper_color = np.array([100,255,255])
 
-        for contour in contours:
-            rect = cv2.minAreaRect(contour)
-            rectArea = rect[1][0] * rect[1][1]
-            if(rectArea > minArea and rectArea < maxArea):
-                box = cv2.boxPoints(rect)
-                for point in box:
-                    rectPoints.append(np.array(point, dtype=np.int32))
-                if self._interactive: box = np.int0(box)
-                if self._interactive: cv2.drawContours(img,[box],0,(0,0,255),2)
-            #cv2.imshow("contours",binary_img)
-            #cv2.waitKey(0)
-        if self._interactive: cv2.imshow("Binarized image",binary_img)
-        if self._interactive: cv2.waitKey(0)
-        if self._interactive: cv2.imshow("contours",img)
-        if self._interactive: cv2.waitKey(0)
+            # create binary mask by finding background color range
+            mask = cv2.inRange(hsv, lower_color, upper_color)
+            # mask = (255 - mask)
+            mask = cv2.bitwise_not(img_copy,img_copy, mask=mask)
+            if DEBUG:
+                self._saveImage('1_bed_mask.jpg',mask)
 
-        if (len(rectPoints) >= 4):
-            rectArray = np.array(rectPoints)
-            rect = cv2.minAreaRect(rectArray)
+            #-- Edge detection
+            edges = cv2.Canny(mask, 0, 255)
 
-            # draw rotated bounding box for visualization
+        else:
+            #-- gray
+            gray = cv2.cvtColor(img_copy,cv2.COLOR_BGR2GRAY)
+
+            #-- Create CLAHE
+            # clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(7,7))
+            # cl1 = clahe.apply(gray)
+            # if DEBUG:
+            #     self._saveImage('0_clahe.png',cl1)
+
+            # blur = cv2.bilateralFilter(cl1,10,200,200)
+            # if DEBUG:
+            #     self._saveImage("1_blur.png",blur)
+
+            #-- Read threshold value from image
+            ret, thresh = cv2.threshold(gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+            if DEBUG:
+                self._saveImage("1_head_thresh.png",thresh)
+
+            #-- Edge detection
+            edges = cv2.Canny(gray, ret * 0.6, ret)
+
+        if DEBUG:
+            self._saveImage("2_canny.png",edges)
+        edges = cv2.dilate(edges, None)
+        if DEBUG:
+           self. _saveImage("3_dilate.png",edges)
+        edges = cv2.erode(edges, None)
+        if DEBUG:
+            self._saveImage("4_erode.png",edges)
+
+        #-- Find contours in edges, sort by area
+        contour_info = []
+        _, contours, _ = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+        cntsSorted = sorted(contours, key=lambda x: cv2.contourArea(x))
+        max_contour = cntsSorted[-1]
+
+        if DEBUG:
+            cv2.drawContours(img_copy, max_contour, -1, (0,0,255), 3)
+
+            rect = cv2.minAreaRect(max_contour)
             box = cv2.boxPoints(rect)
             box = np.int0(box)
-            cv2.drawContours(img,[box],0,(0,0,255),2)
-            result = rect
-        else:
-            self._last_error = "Unable to find contour in image"
+
+            cv2.drawContours(img_copy,[box],0,(0,255,0),2)
+            self._saveImage("contours.png",img_copy)
+
+        result = rect
 
         return result
 
@@ -282,3 +291,9 @@ class ImageProcessing:
         if self._interactive: cv2.waitKey(0)
 
         return mask
+
+#==============================================================================
+    def _saveImage(self, filename, img):
+        img_path=os.path.dirname(self._img_path)+filename
+        cv2.imwrite(img_path,img)
+        return;
