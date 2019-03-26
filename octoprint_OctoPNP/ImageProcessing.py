@@ -298,7 +298,7 @@ class ImageProcessing:
 
             #-- Edge detection
             edges = cv2.Canny(gray, ret * 0.6, ret)
-            
+
         if DEBUG:
             self._saveImage("2_canny.png",edges)
         edges = cv2.dilate(edges, None)

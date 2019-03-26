@@ -4,9 +4,9 @@
     "blackLevel": 0,
     "gainRaw": 100,
     "whiteBalance": {
-      "red": 1.99,
-      "blue": 0.96,
-      "green": 1.0
+      "red": 1.4375,
+      "blue": 3.984,
+      "green": 1.5
     },
     "imageSize": 800,
     "exposureTime": 1300
@@ -16,9 +16,9 @@
     "blackLevel": 0,
     "gainRaw": 8,
     "whiteBalance": {
-      "red": 0.9,
-      "blue": 0.7,
-      "green": 0.7
+      "red": 1.5,
+      "blue": 1.3,
+      "green": 1.0
     },
     "imageSize": 880,
     "exposureTime": 1015
