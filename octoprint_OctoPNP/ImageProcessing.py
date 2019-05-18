@@ -23,15 +23,13 @@ import numpy as np
 import math
 import os
 import shutil
+import VisionPNP
 
 class ImageProcessing:
 
-    def __init__(self, box_size, bed_cam_binary_thresh, head_cam_binary_thresh):
+    def __init__(self, box_size, color_mask):
         self.box_size=box_size
-        self.bed_binary_thresh = bed_cam_binary_thresh
-        self.head_binary_thresh = head_cam_binary_thresh
-        self.lower_mask_color = np.array([22,28,26]) # green default
-        self.upper_mask_color = np.array([103,255,255])
+        self.color_mask = color_mask
         self._img_path = ""
         self._last_saved_image_path = None
         self._last_error = ""
@@ -44,42 +42,32 @@ class ImageProcessing:
 # Returns displacement with respect to the center of the box if a part is detected, False otherwise.
 # boolean relative_to_camera sets wether the offset should be relative to the box or to the camera.
 #===================================================================================================
-    def locatePartInBox(self,img_path, relative_to_camera):
+    def locatePartInBox(self, img_path, relative_to_camera):
         result = False
 
         self._img_path = img_path
-        # open image file
-        img=cv2.imread(img_path,cv2.IMREAD_COLOR)
+        cv2.imread(img_path, inputImage)
 
-        #detect box boundaries
-        rotated_crop_rect = self._extractBox(img)
-        if(rotated_crop_rect):
-            rotated_box = cv2.boxPoints(rotated_crop_rect)
+        #---------<
+        # Create a binarized image of the input containing only the areas within the
+        # provided color mask (black)
+        maskImageRaw = VisionPNP.createColorRangeMask(inputImage, self.color_mask)
+        maskImage = np.array(maskImageRaw)
 
-            left_x = int(min(rotated_box[0][0],rotated_box[1][0]))
-            right_x = int(max(rotated_box[2][0],rotated_box[3][0]))
-            upper_y = int(min(rotated_box[1][1],rotated_box[2][1]))
-            lower_y = int(max(rotated_box[0][1],rotated_box[3][1]))
+        #---------<
+        # Crop the input image to the shape of the provided mask
+        croppedImageRaw = VisionPNP.cropImageToMask(headCamImage, maskImageConv)
+        croppedImage = np.array(croppedImageRaw)
 
-            #Crop image
-            img_crop=img[upper_y:lower_y, left_x:right_x]
+        if(croppedImage):
+            #---------<
+            # Find the position of a single object inside the provided image
+            position = VisionPNP.findShape(croppedImage)
+            print(position)
 
-            # now find part inside the box
-            cm_rect = self._rotatedBoundingBox(img_crop, self.head_binary_thresh, 0.001, 0.7)
-
-            if(cm_rect):
-                # cm_x = cm_rect[0][0]
-                # cm_y = cm_rect[0][1]
-
-                # res_x = img.shape[1]
-                # res_y = img.shape[0]
-
-                # Calcuates the displacement from the center of the camera in real world units (mm?)
-                # displacement_x=(cm_x-res_x/2)*self.box_size/res_x
-                # displacement_y=((res_y-cm_y)-res_y/2)*self.box_size/res_y
-                # print "Displacement " + str(displacement_x) + ", " + str(displacement_y)
-                # result = displacement_x,displacement_y
-
+            if(position):
+                # TODO:
+                # Calculate offset
                 cm_x = cm_rect[0][0]
                 cm_y = cm_rect[0][1]
 
@@ -94,15 +82,11 @@ class ImageProcessing:
                     displacement_y -= (upper_y - (img.shape[0]-(lower_y)))/2 * self.box_size/res_y
                 result = displacement_x,displacement_y
 
-
                 # Generate result image and return
-                box = cv2.boxPoints(cm_rect)
-                box = np.int0(box)
-                cv2.drawContours(img_crop,[box],0,(0,255,0),2)
-                cv2.circle(img_crop,(int(cm_x),int(cm_y)), 5, (0,255,0), -1)
+                cv2.circle(croppedImage,(position[0], position[1]), 4, (0,0,255), -1)
                 filename="/finalcm_"+os.path.basename(self._img_path)
                 finalcm_path=os.path.dirname(self._img_path)+filename
-                cv2.imwrite(finalcm_path,img_crop)
+                cv2.imwrite(finalcm_path,croppedImage)
                 self._last_saved_image_path = finalcm_path
 
                 if self._interactive: cv2.imshow("Part in box: ",img_crop)
@@ -111,7 +95,6 @@ class ImageProcessing:
                 self._last_error = "Unable to find part in box"
         else:
             self._last_error = "Unable to locate box"
-
         return result
 
 

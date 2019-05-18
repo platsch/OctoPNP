@@ -16,3 +16,4 @@ dist
 *.egg*
 .DS_Store
 *.save*
+.vscode
