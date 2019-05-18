@@ -72,8 +72,8 @@ class ImageProcessing:
                 cm_x = cm_rect[0][0]
                 cm_y = cm_rect[0][1]
 
-                res_x = img_crop.shape[1]
-                res_y = img_crop.shape[0]
+                res_x = croppedImage.shape[1]
+                res_y = croppedImage.shape[0]
 
                 displacement_x=(cm_x-res_x/2)*self.box_size/res_x
                 displacement_y=((res_y-cm_y)-res_y/2)*self.box_size/res_y
@@ -91,7 +91,7 @@ class ImageProcessing:
                 cv2.imwrite(finalcm_path,croppedImage)
                 self._last_saved_image_path = finalcm_path
 
-                if self._interactive: cv2.imshow("Part in box: ",img_crop)
+                if self._interactive: cv2.imshow("Part in box: ",croppedImage)
                 if self._interactive: cv2.waitKey(0)
             else:
                 self._last_error = "Unable to find part in box"
@@ -104,27 +104,18 @@ class ImageProcessing:
 # and determining the main orientation of this box
 # Returns the angle of main edges relativ to the
 # next main axis [-45°:45°]
-    def getPartOrientation(self,img_path, pxPerMM, offset=0):
+    def getPartOrientation(self,img_path, template_path, pxPerMM, offset=0):
         self._img_path = img_path
         result = False
 
-        # open image file
-        img=cv2.imread(img_path)
+        inputImage = cv2.imread(img_path)
 
-        mask = self._maskBackground(img)
+        # Find orientation
+        orientation = VisionPNP.matchTemplate(img_path, template_path, self.color_mask)
 
-        # we should use actual object size here
-        min_area_factor = pxPerMM**2 / (img.shape[1] * img.shape[0]) # 1mm²
-        rect = self._rotatedBoundingBox(img, 50, 0.005, 0.7, mask)
-
-        if(rect):
-            # draw rotated bounding box for visualization
-            box = cv2.boxPoints(rect)
-            box = np.int0(box)
-            cv2.drawContours(img,[box],0,(0,0,255),2)
-
+        if(orientation):
             # compute rotation offset
-            rotation = rect[2] + offset
+            rotation = orientation + offset
             # normalize to positive PI range
             if rotation < 0:
                 rotation = (rotation % -180) + 180
@@ -144,7 +135,7 @@ class ImageProcessing:
         #save result as image for GUI
         filename="/orientation_"+os.path.basename(self._img_path)
         orientation_img_path=os.path.dirname(self._img_path)+filename
-        cv2.imwrite(orientation_img_path, img)
+        cv2.imwrite(orientation_img_path, inputImage)
         self._last_saved_image_path = orientation_img_path
 
         return result
@@ -206,4 +197,4 @@ class ImageProcessing:
     def _saveImage(self, filename, img):
         img_path=os.path.dirname(self._img_path)+filename
         cv2.imwrite(img_path,img)
-        return;
+        return
