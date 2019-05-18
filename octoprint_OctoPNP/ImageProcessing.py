@@ -66,7 +66,8 @@ class ImageProcessing:
             print(position)
 
             if(position):
-                # TODO:
+#---------< START TODO
+# IDEA: Either return object containing cropped image AND x/y offset or just the shape and crop in python.
                 # Calculate offset
                 cm_x = cm_rect[0][0]
                 cm_y = cm_rect[0][1]
@@ -81,6 +82,7 @@ class ImageProcessing:
                     displacement_x += (left_x - (img.shape[1]-right_x))/2 * self.box_size/res_x
                     displacement_y -= (upper_y - (img.shape[0]-(lower_y)))/2 * self.box_size/res_y
                 result = displacement_x,displacement_y
+#---------< END TODO
 
                 # Generate result image and return
                 cv2.circle(croppedImage,(position[0], position[1]), 4, (0,0,255), -1)
@@ -107,7 +109,7 @@ class ImageProcessing:
         result = False
 
         # open image file
-        img=cv2.imread(img_path,cv2.IMREAD_COLOR)
+        img=cv2.imread(img_path)
 
         mask = self._maskBackground(img)
 
@@ -156,34 +158,32 @@ class ImageProcessing:
         result = False
 
         # open image file
-        img=cv2.imread(img_path,cv2.IMREAD_COLOR)
+        inputImage=cv2.imread(img_path)
 
-        mask = self._maskBackground(img)
+        # Clean green background
+        cleanedImageRaw = VisionPNP.removeColorRange(inputImage, maskValues)
+        cleanedImage = np.array(cleanedImageRaw)
 
-        res_x = img.shape[1]
-        res_y = img.shape[0]
+        # Find center of mass
+        center = VisionPNP.findShape(cleanedImage)
 
-        # we should use actual object size here
-        min_area_factor = pxPerMM**2 / (res_x * res_y) # 1mm²
-        rect = self._rotatedBoundingBox(img, 50, min_area_factor, 0.7, mask)
-
-        if(rect):
-            cm_x = rect[0][0]
-            cm_y = rect[0][1]
+        if(center):
+            cm_x = center[0]
+            cm_y = center[1]
 
             displacement_x=(cm_x-res_x/2)/pxPerMM
             displacement_y=((res_y-cm_y)-res_y/2)/pxPerMM
             result = [displacement_x, -displacement_y]
+            cv2.circle(inputImage,(center[0], center[1]), 4, (0,0,255), -1)
         else:
             if self._debug: print "Unable to locate part for correcting the position"
             self._last_error = "Unable to locate part for correcting the position"
             result = False
 
         # write image for UI
-        cv2.circle(img,(int(cm_x),int(cm_y)),5,(0,255,0),-1)
         filename="/final_"+os.path.basename(self._img_path)
         final_img_path=os.path.dirname(self._img_path)+filename
-        cv2.imwrite(final_img_path,img)
+        cv2.imwrite(final_img_path,inputImage)
         self._last_saved_image_path = final_img_path
 
         if self._interactive: cv2.imshow("Center of Mass",img)
@@ -198,148 +198,9 @@ class ImageProcessing:
         else:
             return False
 
-
 #==============================================================================
     def getLastErrorMessage(self):
         return self._last_error
-
-#==============================================================================
-    def _extractBox(self, img):
-        blur_img=cv2.blur(img, (5,5))
-        hsv = cv2.cvtColor(blur_img, cv2.COLOR_BGR2HSV)
-
-        lower_color = np.array([45,70,70])
-        upper_color = np.array([70,255,255])
-
-        # create binary mask by extracting green color range
-        mask = cv2.inRange(hsv, lower_color, upper_color)
-        # invert image
-        mask = (255 - mask)
-
-        # get biggest contour
-        _, contours, _ = cv2.findContours(mask, 1, 2)
-        cntsSorted = sorted(contours, key=lambda x: cv2.contourArea(x))
-        max_contour = cntsSorted[-1]
-
-        # return rotated boundingbox
-        rect = cv2.minAreaRect(max_contour)
-
-        return rect
-
-
-#==============================================================================
-    def _rotatedBoundingBox(self, img, binary_thresh, min_area_factor, max_area_factor, binary_img = ()):
-        result = False
-        DEBUG = False
-
-        #-- Copy image
-        img_copy = np.copy(img)
-
-
-        #-- Remove green
-        if (len(binary_img) != 0):
-            blur_img=cv2.blur(img_copy, (5,5))
-            hsv = cv2.cvtColor(blur_img, cv2.COLOR_BGR2HSV)
-
-            lower_color = np.array([20,20,20])
-            upper_color = np.array([100,255,255])
-
-            # create binary mask by finding background color range
-            mask = cv2.inRange(hsv, lower_color, upper_color)
-            # mask = (255 - mask)
-            mask = cv2.bitwise_not(img_copy,img_copy, mask=mask)
-            if DEBUG:
-                self._saveImage('1_bed_mask.jpg',mask)
-
-            #-- Edge detection
-            edges = cv2.Canny(mask, 0, 255)
-
-        else:
-            #-- gray
-            gray = cv2.cvtColor(img_copy,cv2.COLOR_BGR2GRAY)
-
-            #-- Create CLAHE
-            clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(2,2))
-            cl1 = clahe.apply(gray)
-            if DEBUG:
-                cv2.imwrite('0_clahe.png',cl1)
-
-            blur = cv2.bilateralFilter(cl1,10,200,200)
-            if DEBUG:
-                cv2.imwrite("1_blur.png",blur)
-
-            #-- Read threshold value from image
-            _,test_thresh = cv2.threshold( cl1, 70,255,cv2.THRESH_BINARY )
-            pre_thresh = cv2.bitwise_or(gray, test_thresh)
-
-            if DEBUG:
-                cv2.imwrite("1.2_thresh.png",pre_thresh)
-            ret, thresh = cv2.threshold(pre_thresh,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-            print(ret)
-            if DEBUG:
-                cv2.imwrite("2_thresh.png",thresh)
-
-            #-- Edge detection
-            edges = cv2.Canny(gray, ret * 0.6, ret)
-
-        if DEBUG:
-            self._saveImage("2_canny.png",edges)
-        edges = cv2.dilate(edges, None)
-        if DEBUG:
-           self. _saveImage("3_dilate.png",edges)
-        # edges = cv2.erode(edges, None)
-        # if DEBUG:
-        #     self._saveImage("4_erode.png",edges)
-
-        #-- Find contours in edges, sort by area
-        contour_info = []
-        _, contours, _ = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
-        cntsSorted = sorted(contours, key=lambda x: cv2.contourArea(x))
-        max_contour = cntsSorted[-1]
-
-        rect = cv2.minAreaRect(max_contour)
-
-        if DEBUG:
-            cv2.drawContours(img_copy, max_contour, -1, (0,0,255), 3)
-
-            box = cv2.boxPoints(rect)
-            box = np.int0(box)
-
-            cv2.drawContours(img_copy,[box],0,(0,255,0),2)
-            self._saveImage("5_contours.png",img_copy)
-
-        result = rect
-
-        return result
-
-# Compute a binary image / mask by removing all pixels in the given color range
-# mask_corners: remove all pixels outside a circle touching the image boundaries
-#      to crop badly illuminated corners
-#==============================================================================
-    def _maskBackground(self, img, mask_corners = True):
-        h,w,c = np.shape(img)
-
-        blur_img=cv2.blur(img, (5,5))
-        hsv = cv2.cvtColor(blur_img, cv2.COLOR_BGR2HSV)
-
-        lower_color = np.array([22,28,26])
-        upper_color = np.array([103,255,255])
-
-        # create binary mask by finding background color range
-        mask = cv2.inRange(hsv, self.lower_mask_color, self.upper_mask_color)
-        # remove the corners from mask since they are prone to illumination problems
-        if(mask_corners):
-            circle_mask = np.zeros((h, w), np.uint8)
-            circle_mask[:, :] = 255
-            cv2.circle(circle_mask,(w/2, h/2), min(w/2, h/2), 0, -1)
-            mask = cv2.bitwise_or(mask,circle_mask)
-        # invert mask to get white objects on black background
-        #inverse_mask = 255 - mask
-
-        if self._interactive: cv2.imshow("binary mask", mask)
-        if self._interactive: cv2.waitKey(0)
-
-        return mask
 
 #==============================================================================
     def _saveImage(self, filename, img):
