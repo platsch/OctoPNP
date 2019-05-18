@@ -83,7 +83,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
     def on_after_startup(self):
-        self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), int(self._settings.get(["camera", "bed", "binary_thresh"])), int(self._settings.get(["camera", "head", "binary_thresh"])))
+        self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), self._settings.get(["camera", "color_range"])))
         #used for communication to UI
         self._pluginManager = octoprint.plugin.plugin_manager()
 
@@ -136,7 +136,18 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                     "binary_thresh": 150,
                     "grabScriptPath": ""
                 },
-                "image_logging": False
+                "image_logging": False,
+                "color_range": {
+                  {
+                    0, 0, 0
+                  },
+                  {
+                    255, 255, 255
+                  }
+                },
+                "template": {
+                  "path": ""
+                }
             }
         }
 
@@ -257,7 +268,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 self._logger.info("Pick part " + str(self._currentPart))
 
                 # generate new imageProcessing object with updated settings
-                self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), int(self._settings.get(["camera", "bed", "binary_thresh"])), int(self._settings.get(["camera", "head", "binary_thresh"])))
+                self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), self._settings.get(["camera", "color_range"])))
 
                 self._pickPart(self._currentPart)
                 self._printer.commands("M400")
@@ -418,12 +429,13 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         # take picture
         self._logger.info("Taking bed align picture NOW")
         bedPath = self._settings.get(["camera", "bed", "path"])
+        tempPath = self._settings.get(["camera", "template", "path"])
         if self._grabImages("BED"):
             #update UI
             self._updateUI("BEDIMAGE", bedPath)
 
             # get rotation offset
-            orientation_offset = self.imgproc.getPartOrientation(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])), 0)
+            orientation_offset = self.imgproc.getPartOrientation(bedPath, tempPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])), 0)
             if not orientation_offset:
                 self._updateUI("ERROR", self.imgproc.getLastErrorMessage())
                 orientation_offset = 0.0
@@ -448,9 +460,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         # take picture to find part offset
         self._logger.info("Taking bed offset picture NOW")
         bedPath = self._settings.get(["camera", "bed", "path"])
+        tempPath = self._settings.get(["camera", "template", "path"])
         if self._grabImages("BED"):
 
-            orientation_offset = self.imgproc.getPartOrientation(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])), destination[3])
+            orientation_offset = self.imgproc.getPartOrientation(bedPath, tempPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])), destination[3])
             if not orientation_offset:
                 self._updateUI("ERROR", self.imgproc.getLastErrorMessage())
                 orientation_offset = 0.0
