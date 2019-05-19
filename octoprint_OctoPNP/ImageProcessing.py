@@ -183,6 +183,9 @@ class ImageProcessing:
         return result
 
 #==============================================================================
+    def getColorRange(self, img_path):
+      return VisionPNP.getHSVColorRange(img_path)
+#==============================================================================
     def getLastSavedImagePath(self):
         if self._last_saved_image_path:
             return self._last_saved_image_path

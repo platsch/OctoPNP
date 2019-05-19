@@ -163,7 +163,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
       if self._grabImages("BED"):
           imagePath = self._settings.get(["camera", "bed", "path"])
           try:
-              result = flask.jsonify(src=VisionPNP.getHSVColorRange(imagePath))
+              result = flask.jsonify(src=self.imgproc.getColorRange(imagePath))
           except IOError:
               result = flask.jsonify(error="Unable to create color range after fetching. Image path: " + imagePath)
       else:
