@@ -83,7 +83,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
     def on_after_startup(self):
-        self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), ((0,0,0),(255,255,255)))
+        self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), self._settings.get(["camera", "color_range"]))
         #used for communication to UI
         self._pluginManager = octoprint.plugin.plugin_manager()
 
@@ -274,7 +274,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 self._logger.info("Pick part " + str(self._currentPart))
 
                 # generate new imageProcessing object with updated settings
-                self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), ((0,0,0)(255,255,255)))
+                self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), self._settings.get(["camera", "color_range"]))
 
                 self._pickPart(self._currentPart)
                 self._printer.commands("M400")
