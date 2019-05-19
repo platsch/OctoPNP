@@ -83,7 +83,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
     def on_after_startup(self):
-        self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), self._settings.get(["camera", "color_range"])))
+        self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), ((0,0,0),(255,255,255)))
         #used for communication to UI
         self._pluginManager = octoprint.plugin.plugin_manager()
 
@@ -137,14 +137,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                     "grabScriptPath": ""
                 },
                 "image_logging": False,
-                "color_range": {
-                  {
-                    0, 0, 0
-                  },
-                  {
-                    255, 255, 255
-                  }
-                },
+                "color_range": 0,
                 "template": {
                   "path": ""
                 }
@@ -164,6 +157,19 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 "js/smdTray.js",
                 "js/settings.js"]
         )
+    # Flask endpoint for the GUI to request camera images. Possible request parameters are "BED" and "HEAD".
+    @octoprint.plugin.BlueprintPlugin.route("/color_range", methods=["GET"])
+    def getColorRange(self):
+      if self._grabImages("BED"):
+          imagePath = self._settings.get(["camera", "bed", "path"])
+          try:
+              result = flask.jsonify(src=VisionPNP.getHSVColorRange(imagePath))
+          except IOError:
+              result = flask.jsonify(error="Unable to create color range after fetching. Image path: " + imagePath)
+      else:
+          result = flask.jsonify(error="Unable to fetch image. Check octoprint log for details.")
+      return flask.make_response(result, 200)
+
 
     # Flask endpoint for the GUI to request camera images. Possible request parameters are "BED" and "HEAD".
     @octoprint.plugin.BlueprintPlugin.route("/camera_image", methods=["GET"])
@@ -268,7 +274,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 self._logger.info("Pick part " + str(self._currentPart))
 
                 # generate new imageProcessing object with updated settings
-                self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), self._settings.get(["camera", "color_range"])))
+                self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), ((0,0,0)(255,255,255)))
 
                 self._pickPart(self._currentPart)
                 self._printer.commands("M400")

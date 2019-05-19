@@ -47,7 +47,7 @@ $(function() {
         self.onBeforeBinding = function() {
             self.settings = self.settings.settings;
         };
-        
+
         // Home X Y
         self.homeXY = function() {
 
@@ -55,7 +55,7 @@ $(function() {
             self.control.sendCustomCommand({command: "T0"});
             self.control.sendCustomCommand({command: "G28 X Y"});
         };
-        
+
         // Calibrate offset between primary extruder and head-camera
         self.headCameraOffset = function() {
             //deactivate other processes
@@ -64,7 +64,7 @@ $(function() {
             self.statusBedCameraOffset(false);
             // delete if pnp offset in eeprom
             self.statusPnpNozzleOffset(false);
-            
+
             // Load eeprom for extruder calibation
             self.loadEeprom();
 
@@ -120,7 +120,7 @@ $(function() {
             //console.log(offsetX);
             //console.log(offsetY);
             self.saveEeprom();
-            
+
             //reset offset correction values
             self.offsetCorrectionX(0.0);
             self.offsetCorrectionY(0.0);
@@ -157,41 +157,41 @@ $(function() {
             //trigger immage fetching
             setTimeout(function() {self._getImage('BED');}, 8000);
         };
-        
+
         self.saveExtruderHeadCameraOffset = function() {
             // save offset
             self.saveExtruderOffset(self.selectedHeadExtruder());
-            
+
             // deactivate Button
             self.statusHeadCameraOffset(false);
         };
-        
-        
+
+
         self.saveExtruderBedCameraOffset = function() {
             // invert X and Y axis
             self.offsetCorrectionX(self.offsetCorrectionX()*-1);
             self.offsetCorrectionY(self.offsetCorrectionY()*-1);
-            
+
             // save offset
             self.saveExtruderOffset(self.selectedBedExtruder());
-            
+
             // deactivate Button
             self.statusBedCameraOffset(false);
         };
 
-        
+
         self.saveBedCameraPosition = function() {
             //save values
             self.settings.plugins.OctoPNP.camera.bed.x(parseFloat(self.settings.plugins.OctoPNP.camera.bed.x())+self.offsetCorrectionX());
             self.settings.plugins.OctoPNP.camera.bed.y(parseFloat(self.settings.plugins.OctoPNP.camera.bed.y())+self.offsetCorrectionY());
 
             //deactivate Keycontrol
-            
+
             self.keycontrolPossible(false);
             self.statusBedCameraOffset(false);
         };
-        
-        
+
+
         // delete if pnp offset in eeprom
         // Move Vacuum bed camera to Nozzle.
         self.pnpNozzleOffset = function() {
@@ -207,12 +207,12 @@ $(function() {
             self.control.sendCustomCommand({command: "G1 X100 Y150 F3000"});
             // Switch to VacNozzle extruder
             self.control.sendCustomCommand({command: "T" + self.settings.plugins.OctoPNP.vacnozzle.extruder_nr().toString()});
-            
+
             //move camera to object
             var x = parseFloat(self.settings.plugins.OctoPNP.camera.bed.x()) - parseFloat(self.settings.plugins.OctoPNP.vacnozzle.x());
             var y = parseFloat(self.settings.plugins.OctoPNP.camera.bed.y()) - parseFloat(self.settings.plugins.OctoPNP.vacnozzle.y());
             self.control.sendCustomCommand({command: "G1 X" + x + " Y" + y + " Z" + self.settings.plugins.OctoPNP.camera.bed.z() + " F3000"});
-            
+
             //reset offset correction values
             self.offsetCorrectionX(0.0);
             self.offsetCorrectionY(0.0);
@@ -223,7 +223,7 @@ $(function() {
             //trigger immage fetching
             setTimeout(function() {self._getImage('BED');}, 8000);
         };
-        
+
         // delete if pnp offset in eeprom
         self.savePnpNozzleOffset = function() {
             //save values
@@ -234,7 +234,7 @@ $(function() {
             self.keycontrolPossible(false);
             self.statusPnpNozzleOffset(false);
         };
-        
+
         // calibrate tray position relative to primary extruder
         self.trayPosition = function(corner) {
             //deactivate other processes
@@ -252,19 +252,19 @@ $(function() {
             var cornerOffsetX = 0.0;
             var cornerOffsetY = 0.0;
             switch (corner) {
-                case "TL": 
+                case "TL":
                     var rows = parseFloat(self.settings.plugins.OctoPNP.tray.rows());
                     cornerOffsetY = rows*parseFloat(self.settings.plugins.OctoPNP.tray.boxsize()) + (rows+1)*parseFloat(self.settings.plugins.OctoPNP.tray.rimsize());
                     self.statusTrayPosition(false);
                     break;
-                case "TR": 
+                case "TR":
                     var rows = parseFloat(self.settings.plugins.OctoPNP.tray.rows());
                     var cols = parseFloat(self.settings.plugins.OctoPNP.tray.columns());
                     cornerOffsetY = rows*parseFloat(self.settings.plugins.OctoPNP.tray.boxsize()) + (rows+1)*parseFloat(self.settings.plugins.OctoPNP.tray.rimsize());
                     cornerOffsetX = cols*parseFloat(self.settings.plugins.OctoPNP.tray.boxsize()) + (cols+1)*parseFloat(self.settings.plugins.OctoPNP.tray.rimsize());
                     self.statusTrayPosition(false);
                     break;
-                case "BR": 
+                case "BR":
                     var cols = parseFloat(self.settings.plugins.OctoPNP.tray.columns());
                     cornerOffsetX = cols*parseFloat(self.settings.plugins.OctoPNP.tray.boxsize()) + (cols+1)*parseFloat(self.settings.plugins.OctoPNP.tray.rimsize());
                     self.statusTrayPosition(false);
@@ -305,6 +305,29 @@ $(function() {
             self.statusTrayPosition(false);
         };
 
+        self.createGripperMask = function() {
+          $.ajax({
+            url: PLUGIN_BASEURL + "OctoPNP/color_range",
+            type: "GET",
+            dataType: "json",
+            contentType: "application/json; charset=UTF-8",
+            success: function(response) {
+              if(response.hasOwnProperty("src")) {
+                self.settings.plugins.OctoPNP.camera.color_range(response.src)
+              }
+              if(response.hasOwnProperty("error")) {
+                  alert(response.error);
+              }
+              if (callback) callback();
+              }
+          });
+        };
+
+        self.saveGripperMask = function() {
+          //save values
+          self.settings.plugins.OctoPNP.camera.color_range(parseFloat(self.settings.plugins.OctoPNP.camera.color_range()));
+        };
+
 
         self._getImage = function(imagetype, callback) {
             $.ajax({
@@ -326,7 +349,7 @@ $(function() {
         };
 
         self._drawImage = function(img) {
-            var ctx=self._headCanvas.getContext("2d");  
+            var ctx=self._headCanvas.getContext("2d");
             var localimg = new Image();
             localimg.src = img;
             localimg.onload = function () {

@@ -377,11 +377,11 @@
                             </div>
                             <div id="webcam_container" tabindex="0" data-bind="event: { keydown: onKeyDown, mouseover: onMouseOver, mouseout: onMouseOut, focus: onFocus }">
                                 <canvas id="headCanvas" width="400" height="400"></canvas>
-                            
+
                                 <div class="keycontrol_overlay" data-bind="visible: showKeycontrols">
 
                                     <div class="keycontrol_overlay_heading">{{ _("Keyboard controls active") }} <a href="#" data-bind="click: toggleKeycontrolHelp"><i data-bind="css: { 'icon-chevron-down': !keycontrolHelpActive(), 'icon-chevron-up': keycontrolHelpActive() }"></i></a></div>
-                                    
+
                                     <div data-bind="visible: keycontrolHelpActive">
                                         <div class="keycontrol_overlay_column">
                                             <kbd>&rarr;</kbd> / <kbd>&larr;</kbd>: {{ _("X Axis") }} +/-<br>
@@ -407,7 +407,7 @@
                             <div class="form-group">
                                 <span>X&nbsp;</span><input id="objectPosX" type="number" step="0.01" class="input-mini text-right" data-bind="value: objectPositionX"></input>
                                 <span>Y&nbsp;</span><input id="objectPosY" type="number" step="0.01" class="input-mini text-right" data-bind="value: objectPositionY"></input>
-                            </div> 
+                            </div>
                             <br><br>
 
                             <h4>Ex <-> HeadCamera</h4>
@@ -417,7 +417,7 @@
                             <button data-bind="click: saveExtruderHeadCameraOffset, enable: (statusHeadCameraOffset() && isRepetierFirmware())">{{ _('Save extruder offset') }}</button>
                             <span style="color: red" data-bind="visible: !isRepetierFirmware()">Repetier firmware required.</span>
                             <br><br>
-                            
+
                             <h4>Ex <-> BedCamera</h4>
                             <button data-bind="click: bedCameraPosition, enable: isConnected">{{ _('Extruder to Camera') }}</button><br>
                             E: <input type="number" step="1" class="input-mini text-right" data-bind="value: selectedBedExtruder">
@@ -429,7 +429,7 @@
                             <h4>BedCamera <-> PNPNozzle</h4>
                             <button data-bind="click: pnpNozzleOffset, enable: isConnected">{{ _('PNPNozzle to Camera') }}</button>
                             <button data-bind="click: savePnpNozzleOffset, enable: statusPnpNozzleOffset">{{ _('Save nozzle offset') }}</button>
-                            
+
                             <h4>Tray position</h4>
                             <button data-bind="click: function() { $root.trayPosition('TL') }, enable: isConnected">{{ _('TL') }}</button>
                             <button data-bind="click: function() { $root.trayPosition('TR') }, enable: isConnected">{{ _('TR') }}</button><br>
@@ -437,11 +437,16 @@
                             <button data-bind="click: function() { $root.trayPosition('BR') }, enable: isConnected">{{ _('BR') }}</button>
                             <button data-bind="click: saveTrayPosition, enable: statusTrayPosition">{{ _('Save tray offset') }}</button>
                             <br><br>
+
+                            <h4>Gripper masking</h4>
+                            <button data-bind="click: pnpNozzleOffset, enable: isConnected">{{ _('PNPNozzle to Camera') }}</button>
+                            <button data-bind="click: createGripperMask">{{ _('Create color mask') }}</button>
+                            <button data-bind="click: saveGripperMask">{{ _('Save color mask') }}</button>
+                            <br><br>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
     </div>
 </form>
