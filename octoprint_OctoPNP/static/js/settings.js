@@ -323,12 +323,6 @@ $(function() {
           });
         };
 
-        self.saveGripperMask = function() {
-          //save values
-          self.settings.plugins.OctoPNP.camera.color_range(parseFloat(self.settings.plugins.OctoPNP.camera.color_range()));
-        };
-
-
         self._getImage = function(imagetype, callback) {
             $.ajax({
                 url: PLUGIN_BASEURL + "OctoPNP/camera_image?imagetype=" + imagetype,
