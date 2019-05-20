@@ -137,10 +137,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                     "grabScriptPath": ""
                 },
                 "image_logging": False,
-                "color_range": 0,
-                "template": {
-                  "path": ""
-                }
+                "color_range": 0
             }
         }
 
@@ -157,7 +154,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 "js/smdTray.js",
                 "js/settings.js"]
         )
-    # Flask endpoint for the GUI to request camera images. Possible request parameters are "BED" and "HEAD".
+
+    # Flask endpoint for the GUI to request the color range from the gripper background.
     @octoprint.plugin.BlueprintPlugin.route("/color_range", methods=["GET"])
     def getColorRange(self):
       if self._grabImages("BED"):
@@ -432,10 +430,15 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         # find destination at the object
         destination = self.smdparts.getPartDestination(partnr)
 
+        # Create part template
+        partShape = self.smdparts.getPartShape(partnr)
+        partPads = self.smdparts.getPartPads(partnr)
+        cv2.imwrite("./template_image.png", self.imgproc.createTemplate(partShape, partPads))
+
         # take picture
         self._logger.info("Taking bed align picture NOW")
         bedPath = self._settings.get(["camera", "bed", "path"])
-        tempPath = self._settings.get(["camera", "template", "path"])
+        tempPath = "./template_image.png"
         if self._grabImages("BED"):
             #update UI
             self._updateUI("BEDIMAGE", bedPath)
@@ -463,10 +466,15 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         # find destination at the object
         destination = self.smdparts.getPartDestination(partnr)
 
+        # Create part template
+        partShape = self.smdparts.getPartShape(partnr)
+        partPads = self.smdparts.getPartPads(partnr)
+        cv2.imwrite("./template_image.png", self.imgproc.createTemplate(partShape, partPads))
+
         # take picture to find part offset
         self._logger.info("Taking bed offset picture NOW")
         bedPath = self._settings.get(["camera", "bed", "path"])
-        tempPath = self._settings.get(["camera", "template", "path"])
+        tempPath = "./template_image.png"
         if self._grabImages("BED"):
 
             orientation_offset = self.imgproc.getPartOrientation(bedPath, tempPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])), destination[3])
