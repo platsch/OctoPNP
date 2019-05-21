@@ -63,10 +63,14 @@ class ImageProcessing:
         croppedImageRaw = VisionPNP.cropImageToRect(inputImage, bRect)
         croppedImage = np.array(croppedImageRaw)
 
+        filename="/cropped_"+os.path.basename(self._img_path)
+        finalcm_path=os.path.dirname(self._img_path)+filename
+        cv2.imwrite(finalcm_path,croppedImage)
+
         if(croppedImage.any()):
             #---------<
             # Find the position of a single object inside the provided image
-            position = VisionPNP.findShape(croppedImage)
+            position = VisionPNP.findShape(finalcm_path)
 
             left_x = bRect[2]
             right_x = bRect[2] + bRect[1]
@@ -105,11 +109,6 @@ class ImageProcessing:
             self._last_error = "Unable to locate box"
         return result
 
-
-# Get part orientation by computing a rotated bounding box around contours
-# and determining the main orientation of this box
-# Returns the angle of main edges relativ to the
-# next main axis [-45°:45°]
     def getPartOrientation(self,img_path, template_path, pxPerMM, offset=0):
         self._img_path = img_path
         result = False
@@ -119,7 +118,7 @@ class ImageProcessing:
         # Find orientation
         orientation = VisionPNP.matchTemplate(img_path, template_path, self.color_mask)
 
-        if(orientation):
+        if(orientation != False):
             # compute rotation offset
             rotation = orientation + offset
             # normalize to positive PI range

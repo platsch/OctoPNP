@@ -14,7 +14,7 @@
   "head": {
     "type": "A2500-14gc",
     "blackLevel": 0,
-    "gainRaw": 100,
+    "gainRaw": 0,
     "whiteBalance": {
       "red": 1.0,
       "blue": 1.0,
