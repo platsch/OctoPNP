@@ -29,7 +29,7 @@ class ImageProcessing:
 
     def __init__(self, box_size, color_mask):
         self.box_size=box_size
-        self.color_mask = ((22,28,26), (103,255,255)) # color_mask
+        self.color_mask = color_mask
         self._img_path = ""
         self._last_saved_image_path = None
         self._last_error = ""

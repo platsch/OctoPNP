@@ -312,15 +312,15 @@ $(function() {
             dataType: "json",
             contentType: "application/json; charset=UTF-8",
             success: function(response) {
-              if(response.hasOwnProperty("src")) {
-                self.settings.plugins.OctoPNP.camera.color_range(response.src)
-              }
-              if(response.hasOwnProperty("error")) {
-                  alert(response.error);
-              }
-              if (callback) callback();
-              }
-          });
+                    if(response.hasOwnProperty("src")) {
+                        console.log(response.src)
+                        self.settings.plugins.OctoPNP.camera.color_range(response.src)
+                    }
+                    if(response.hasOwnProperty("error")) {
+                        alert(response.error);
+                    }
+                }
+            });
         };
 
         self._getImage = function(imagetype, callback) {
