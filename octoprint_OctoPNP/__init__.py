@@ -30,6 +30,7 @@ import time
 import datetime
 import base64
 import shutil
+import cv2
 
 from .SmdParts import SmdParts
 from .ImageProcessing import ImageProcessing

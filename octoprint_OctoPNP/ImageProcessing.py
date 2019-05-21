@@ -29,7 +29,7 @@ class ImageProcessing:
 
     def __init__(self, box_size, color_mask):
         self.box_size=box_size
-        self.color_mask = color_mask
+        self.color_mask = ((22,28,26), (103,255,255)) # color_mask
         self._img_path = ""
         self._last_saved_image_path = None
         self._last_error = ""
@@ -46,7 +46,7 @@ class ImageProcessing:
         result = False
 
         self._img_path = img_path
-        cv2.imread(img_path, inputImage)
+        inputImage = cv2.imread(img_path)
 
         #---------<
         # Create a binarized image of the input containing only the areas within the
@@ -63,7 +63,7 @@ class ImageProcessing:
         croppedImageRaw = VisionPNP.cropImageToRect(inputImage, bRect)
         croppedImage = np.array(croppedImageRaw)
 
-        if(croppedImage):
+        if(croppedImage.any()):
             #---------<
             # Find the position of a single object inside the provided image
             position = VisionPNP.findShape(croppedImage)
@@ -86,8 +86,8 @@ class ImageProcessing:
                 displacement_y=((res_y-cm_y)-res_y/2)*self.box_size/res_y
                 if relative_to_camera:
                     #incorporate the position of the tray box in relation to the image
-                    displacement_x += (left_x - (img.shape[1]-right_x))/2 * self.box_size/res_x
-                    displacement_y -= (upper_y - (img.shape[0]-(lower_y)))/2 * self.box_size/res_y
+                    displacement_x += (left_x - (inputImage.shape[1]-right_x))/2 * self.box_size/res_x
+                    displacement_y -= (upper_y - (inputImage.shape[0]-(lower_y)))/2 * self.box_size/res_y
                 result = displacement_x,displacement_y
 
                 # Generate result image and return
@@ -158,7 +158,7 @@ class ImageProcessing:
         inputImage=cv2.imread(img_path)
 
         # Clean green background
-        cleanedImageRaw = VisionPNP.removeColorRange(inputImage, maskValues)
+        cleanedImageRaw = VisionPNP.removeColorRange(inputImage, self.color_mask)
         cleanedImage = np.array(cleanedImageRaw)
 
         # Find center of mass
@@ -167,6 +167,8 @@ class ImageProcessing:
         if(center):
             cm_x = center[0]
             cm_y = center[1]
+            res_x = inputImage.shape[1]
+            res_y = inputImage.shape[0]
 
             displacement_x=(cm_x-res_x/2)/pxPerMM
             displacement_y=((res_y-cm_y)-res_y/2)/pxPerMM
@@ -206,9 +208,9 @@ class ImageProcessing:
 # INPUT: array for shape and pads, square resolution for template (default 200px)
 # OUTPUT: template image (numpy array)
 
-    def createTemplate(xmlShape, xmlPads, resolution=200):
+    def createTemplate(self, xmlShape, xmlPads, resolution=200):
       # create white template background
-      templateImage = np.zeros([resolution,resolution,1],dtype=np.uint8)
+      templateImage = np.zeros((resolution,resolution,1),dtype=np.uint8)
       templateImage.fill(255)
 
       # convert arrays to numpy arrays
@@ -216,12 +218,12 @@ class ImageProcessing:
       pads = np.array(xmlPads, dtype=float)
 
       # retrieve max value from coordinates
-      maximum = _getMaximum(shape, pads)
+      maximum = self._getMaximum(shape, pads)
 
       # create polygon from shape
       shapePoints = []
       for pos in shape:
-          p = _toPixelPoint(resolution, maximum, (pos[0], pos[1]))
+          p = self._toPixelPoint(resolution, maximum, (pos[0], pos[1]))
           shapePoints.append(p)
 
       # draw polygon
@@ -231,15 +233,15 @@ class ImageProcessing:
       # create rectangles from pads
       for pad in pads:
           # Convert template coordinates to pixel format
-          p1 = _toPixelPoint(resolution, maximum, (pad[0], pad[1]))
-          p2 = _toPixelPoint(resolution, maximum, (pad[2], pad[3]))
+          p1 = self._toPixelPoint(resolution, maximum, (pad[0], pad[1]))
+          p2 = self._toPixelPoint(resolution, maximum, (pad[2], pad[3]))
           # draw
           cv2.rectangle(templateImage, p1, p2, (0,0,0), -1)
       return templateImage
 
 #==============================================================================
 # Return maximum point from vector coordinates
-    def _getMaximum(shape, pads):
+    def _getMaximum(self, shape, pads):
         maxPosition = []
         # Maximum for shape
         maxPosition.append(np.amax(shape))
@@ -253,7 +255,7 @@ class ImageProcessing:
 
 #==============================================================================
 # Converts XML vector coordinates to pixel coordinates
-    def _toPixelPoint(resolution, maximum, point):
+    def _toPixelPoint(self, resolution, maximum, point):
         return (int(resolution * ((point[0] + maximum) / (maximum * 2))),
                 int(resolution * ((point[1] + maximum) / (maximum * 2))))
 
