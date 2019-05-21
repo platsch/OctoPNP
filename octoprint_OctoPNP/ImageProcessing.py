@@ -55,22 +55,29 @@ class ImageProcessing:
         maskImage = np.array(maskImageRaw)
 
         #---------<
+        # Extract bouding rect fom binarized mask image
+        bRect = VisionPNP.findContainedRect(maskImage)
+
+        #---------<
         # Crop the input image to the shape of the provided mask
-        croppedImageRaw = VisionPNP.cropImageToMask(headCamImage, maskImageConv)
+        croppedImageRaw = VisionPNP.cropImageToRect(inputImage, bRect)
         croppedImage = np.array(croppedImageRaw)
 
         if(croppedImage):
             #---------<
             # Find the position of a single object inside the provided image
             position = VisionPNP.findShape(croppedImage)
-            print(position)
+
+            left_x = bRect[2]
+            right_x = bRect[2] + bRect[1]
+            upper_y = bRect[3]
+            lower_y = bRect[3] + bRect[0]
+
 
             if(position):
-#---------< START TODO
-# IDEA: Either return object containing cropped image AND x/y offset or just the shape and crop in python.
                 # Calculate offset
-                cm_x = cm_rect[0][0]
-                cm_y = cm_rect[0][1]
+                cm_x = position[0]
+                cm_y = position[1]
 
                 res_x = croppedImage.shape[1]
                 res_y = croppedImage.shape[0]
@@ -82,7 +89,6 @@ class ImageProcessing:
                     displacement_x += (left_x - (img.shape[1]-right_x))/2 * self.box_size/res_x
                     displacement_y -= (upper_y - (img.shape[0]-(lower_y)))/2 * self.box_size/res_y
                 result = displacement_x,displacement_y
-#---------< END TODO
 
                 # Generate result image and return
                 cv2.circle(croppedImage,(position[0], position[1]), 4, (0,0,255), -1)
