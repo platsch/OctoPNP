@@ -114,9 +114,10 @@ class ImageProcessing:
         result = False
 
         inputImage = cv2.imread(img_path)
+        inputTemplate = cv2.imread(template_path)
 
         # Find orientation
-        orientation = VisionPNP.matchTemplate(img_path, template_path, self.color_mask)
+        orientation = VisionPNP.matchTemplate(inputImage, inputTemplate, self.color_mask, componentSize)
 
         if(orientation != False):
             # compute rotation offset
@@ -157,7 +158,7 @@ class ImageProcessing:
         inputImage=cv2.imread(img_path)
 
         # Clean green background
-        cleanedImageRaw = VisionPNP.removeColorRange(inputImage, self.color_mask)
+        cleanedImageRaw = VisionPNP.binaryFromRange(inputImage, self.color_mask)
         cleanedImage = np.array(cleanedImageRaw)
 
         # Find center of mass
