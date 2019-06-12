@@ -117,9 +117,13 @@ class ImageProcessing:
         inputTemplate = cv2.imread(template_path)
 
         # Find orientation
-        orientation = VisionPNP.matchTemplate(inputImage, inputTemplate, self.color_mask, componentSize)
+        bestCandidate = VisionPNP.matchTemplate(inputImage, inputTemplate, self.color_mask, componentSize)
+        candidateImage = VisionPNP.drawCandidate(inputImage, inputTemplate, bestCandidate)
+
+        orientation = bestCandidate[3]
 
         if(orientation != False):
+            orientation = orientation * (180 / math.pi)
             # compute rotation offset
             rotation = orientation + offset
             # normalize to positive PI range
@@ -135,13 +139,13 @@ class ImageProcessing:
             self._last_error = "Unable to locate part for finding the orientation"
             result = False
 
-        if self._interactive: cv2.imshow("contours",img)
+        if self._interactive: cv2.imshow("contours",candidateImage)
         if self._interactive: cv2.waitKey(0)
 
         #save result as image for GUI
         filename="/orientation_"+os.path.basename(self._img_path)
         orientation_img_path=os.path.dirname(self._img_path)+filename
-        cv2.imwrite(orientation_img_path, inputImage)
+        cv2.imwrite(orientation_img_path, candidateImage)
         self._last_saved_image_path = orientation_img_path
 
         return result
