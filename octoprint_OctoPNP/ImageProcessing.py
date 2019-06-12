@@ -51,8 +51,7 @@ class ImageProcessing:
         #---------<
         # Create a binarized image of the input containing only the areas within the
         # provided color mask (black)
-        maskImageRaw = VisionPNP.createColorRangeMask(inputImage, self.color_mask)
-        maskImage = np.array(maskImageRaw)
+        maskImage = VisionPNP.createColorRangeMask(inputImage, self.color_mask)
 
         #---------<
         # Extract bouding rect fom binarized mask image
@@ -60,8 +59,7 @@ class ImageProcessing:
 
         #---------<
         # Crop the input image to the shape of the provided mask
-        croppedImageRaw = VisionPNP.cropImageToRect(inputImage, bRect)
-        croppedImage = np.array(croppedImageRaw)
+        croppedImage = VisionPNP.cropImageToRect(inputImage, bRect)
 
         filename="/cropped_"+os.path.basename(self._img_path)
         finalcm_path=os.path.dirname(self._img_path)+filename
@@ -70,7 +68,7 @@ class ImageProcessing:
         if(croppedImage.any()):
             #---------<
             # Find the position of a single object inside the provided image
-            position = VisionPNP.findShape(finalcm_path)
+            position = VisionPNP.findShape(croppedImage)
 
             left_x = bRect[2]
             right_x = bRect[2] + bRect[1]
@@ -93,9 +91,11 @@ class ImageProcessing:
                     displacement_x += (left_x - (inputImage.shape[1]-right_x))/2 * self.box_size/res_x
                     displacement_y -= (upper_y - (inputImage.shape[0]-(lower_y)))/2 * self.box_size/res_y
                 result = displacement_x,displacement_y
+                print("Displacement X-Y center:")
+                print(result)
 
                 # Generate result image and return
-                cv2.circle(croppedImage,(position[0], position[1]), 4, (0,0,255), -1)
+                cv2.circle(inputImage,(int(position[0] + left_x), int(position[1] + upper_y)), 4, (0,0,255), -1)
                 filename="/finalcm_"+os.path.basename(self._img_path)
                 finalcm_path=os.path.dirname(self._img_path)+filename
                 cv2.imwrite(finalcm_path,croppedImage)
@@ -117,10 +117,13 @@ class ImageProcessing:
         inputTemplate = cv2.imread(template_path)
 
         # Find orientation
-        bestCandidate = VisionPNP.matchTemplate(inputImage, inputTemplate, self.color_mask, componentSize)
+        bestCandidate = []
+        bestCandidate = VisionPNP.matchTemplate(inputImage, inputTemplate, self.color_mask, 200)
         candidateImage = VisionPNP.drawCandidate(inputImage, inputTemplate, bestCandidate)
+        print(bestCandidate)
 
         orientation = bestCandidate[3]
+        del bestCandidate
 
         if(orientation != False):
             orientation = orientation * (180 / math.pi)
@@ -162,8 +165,7 @@ class ImageProcessing:
         inputImage=cv2.imread(img_path)
 
         # Clean green background
-        cleanedImageRaw = VisionPNP.binaryFromRange(inputImage, self.color_mask)
-        cleanedImage = np.array(cleanedImageRaw)
+        cleanedImage = VisionPNP.binaryFromRange(inputImage, self.color_mask)
 
         # Find center of mass
         center = VisionPNP.findShape(cleanedImage)

@@ -14,10 +14,10 @@
   "head": {
     "type": "A2500-14gc",
     "blackLevel": 0,
-    "gainRaw": 63,
+    "gainRaw": 8,
     "whiteBalance": {
-      "red": 1.0,
-      "blue": 1.0,
+      "red": 1.4,
+      "blue": 1.3,
       "green": 1.0
     },
     "imageSize": 880,
