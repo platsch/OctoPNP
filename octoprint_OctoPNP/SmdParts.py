@@ -53,6 +53,9 @@ class SmdParts():
     def getPartHeight(self, partnr):
         return float(self._et.find("./part[@id='" + str(partnr) + "']/size").get("height"))
 
+    def getPartWidth(self, partnr):
+        return float(self._et.find("./part[@id='" + str(partnr) + "']/size").get("width"))
+
     def getPartShape(self, partnr):
         result = []
         if(self._et.find("./part[@id='" + str(partnr) + "']/shape") is not None):

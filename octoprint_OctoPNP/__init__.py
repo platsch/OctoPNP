@@ -434,6 +434,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         # Create part template
         partShape = self.smdparts.getPartShape(partnr)
         partPads = self.smdparts.getPartPads(partnr)
+        partWidth = self.smdparts.getPartWidth(partnr)
         cv2.imwrite("./template_image.png", self.imgproc.createTemplate(partShape, partPads))
 
         # take picture
@@ -446,7 +447,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
             # get rotation offset
             print("alignPart aufruf")
-            orientation_offset = self.imgproc.getPartOrientation(bedPath, tempPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])), 0)
+            orientation_offset = self.imgproc.getPartOrientation(bedPath, tempPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])), partWidth, 0)
             if not orientation_offset:
                 self._updateUI("ERROR", self.imgproc.getLastErrorMessage())
                 orientation_offset = 0.0
@@ -471,6 +472,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         # Create part template
         partShape = self.smdparts.getPartShape(partnr)
         partPads = self.smdparts.getPartPads(partnr)
+        partWidth = self.smdparts.getPartWidth(partnr)
         cv2.imwrite("./template_image.png", self.imgproc.createTemplate(partShape, partPads))
 
         # take picture to find part offset
@@ -479,7 +481,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         tempPath = "./template_image.png"
         if self._grabImages("BED"):
             print("Placepart aufruf")
-            orientation_offset = self.imgproc.getPartOrientation(bedPath, tempPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])), destination[3])
+            orientation_offset = self.imgproc.getPartOrientation(bedPath, tempPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])), partWidth, destination[3])
             if not orientation_offset:
                 self._updateUI("ERROR", self.imgproc.getLastErrorMessage())
                 orientation_offset = 0.0
