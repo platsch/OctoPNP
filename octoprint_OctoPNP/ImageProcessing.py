@@ -109,7 +109,7 @@ class ImageProcessing:
             self._last_error = "Unable to locate box"
         return result
 
-    def getPartOrientation(self,img_path, template_path, pxPerMM, componentWidth, offset=0):
+    def getPartOrientation(self,img_path, template_path, pxPerMM, partWidth, offset=0):
         self._img_path = img_path
         result = False
 
@@ -118,7 +118,7 @@ class ImageProcessing:
 
         # Find orientation
         bestCandidate = []
-        bestCandidate = VisionPNP.matchTemplate(inputImage, inputTemplate, self.color_mask, componentWidth*pxPerMM)
+        bestCandidate = VisionPNP.matchTemplate(inputImage, inputTemplate, self.color_mask, partWidth*pxPerMM)
         candidateImage = VisionPNP.drawCandidate(inputImage, inputTemplate, bestCandidate)
         print(bestCandidate)
 
