@@ -63,6 +63,7 @@ def createTemplate(xmlShape, xmlPads, resolution=200):
     # draw
     cv2.rectangle(templateImage, p1, p2, (0,0,0), -1)
 
+  templateImage = cv2.copyMakeBorder(templateImage, 5, 5, 5, 5, cv2.BORDER_CONSTANT, None, (255,255,255))
   # Save image
   cv2.imwrite("template-output.png", templateImage)
   # Return image
