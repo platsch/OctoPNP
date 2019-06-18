@@ -45,6 +45,27 @@ M84     ; disable motors
 ; total filament cost = 0.0
 
 ;<object name="VisionPNP_test.stl">
+;<part id="1" name="Tiny1">
+;  <position box="1"/>
+;  <size height="1.87" width="5.38"/>
+;  <shape>
+;    <point x="-2.6" y="-2.6"/>
+;    <point x="-2.6" y="2.6"/>
+;    <point x="2.6" y="2.6"/>
+;    <point x="2.6" y="-2.6"/>
+;  </shape>
+;  <pads>
+;    <pad x1="-2.155" y1="-3.754" x2="-1.655" y2="-2.054"/>
+;    <pad x1="-0.895" y1="-3.754" x2="-0.395" y2="-2.054"/>
+;    <pad x1="0.375" y1="-3.754" x2="0.875" y2="-2.054"/>
+;    <pad x1="1.645" y1="-3.754" x2="2.145" y2="-2.054"/>
+;    <pad x1="-2.155" y1="2.054" x2="-1.655" y2="3.754"/>
+;    <pad x1="-0.885" y1="2.054" x2="-0.385" y2="3.754"/>
+;    <pad x1="0.385" y1="2.054" x2="0.885" y2="3.754"/>
+;    <pad x1="1.655" y1="2.054" x2="2.155" y2="3.754"/>
+;  </pads>
+;  <destination x="10" y="10" z="0" orientation="0"/>
+;</part>
 
 ;<part id="2" name="Tiny2">
 ;  <position box="2"/>
