@@ -116,9 +116,14 @@ class ImageProcessing:
         inputImage = cv2.imread(img_path)
         inputTemplate = cv2.imread(template_path)
 
+        # Debugging
+        # print("pxPerMM: ", pxPerMM)
+        # print("partWidth: ", partWidth)
+        # print("pixel part Width: ", int(partWidth*pxPerMM))
+
         # Find orientation
         bestCandidate = []
-        bestCandidate = VisionPNP.matchTemplate(inputImage, inputTemplate, self.color_mask, partWidth*pxPerMM)
+        bestCandidate = VisionPNP.matchTemplate(inputImage, inputTemplate, self.color_mask, int(partWidth*pxPerMM))
         candidateImage = VisionPNP.drawCandidate(inputImage, inputTemplate, bestCandidate)
         print(bestCandidate)
 
@@ -243,6 +248,7 @@ class ImageProcessing:
           p2 = self._toPixelPoint(resolution, maximum, (pad[2], pad[3]))
           # draw
           cv2.rectangle(templateImage, p1, p2, (0,0,0), -1)
+      templateImage = cv2.copyMakeBorder(templateImage, 5, 5, 5, 5, cv2.BORDER_CONSTANT, None, (255,255,255))
       return templateImage
 
 #==============================================================================

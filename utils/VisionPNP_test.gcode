@@ -11,7 +11,6 @@ G28 ; home all axes
 G1 Z5 F5000 ; lift nozzle
 
 ;Automatically place parts
-M361 P1
 M361 P2
 M361 P3
 M361 P4
@@ -47,31 +46,9 @@ M84     ; disable motors
 
 ;<object name="VisionPNP_test.stl">
 
-;<part id="1" name="Tiny1">
-;  <position box="1"/>
-;  <size height="2.16" width="5.35"/>
-;  <shape>
-;    <point x="-2.6" y="-2.6"/>
-;    <point x="-2.6" y="2.6"/>
-;    <point x="2.6" y="2.6"/>
-;    <point x="2.6" y="-2.6"/>
-;  </shape>
-;  <pads>
-;    <pad x1="-2.155" y1="-3.754" x2="-1.655" y2="-2.054"/>
-;    <pad x1="-0.895" y1="-3.754" x2="-0.395" y2="-2.054"/>
-;    <pad x1="0.375" y1="-3.754" x2="0.875" y2="-2.054"/>
-;    <pad x1="1.645" y1="-3.754" x2="2.145" y2="-2.054"/>
-;    <pad x1="-2.155" y1="2.054" x2="-1.655" y2="3.754"/>
-;    <pad x1="-0.885" y1="2.054" x2="-0.385" y2="3.754"/>
-;    <pad x1="0.385" y1="2.054" x2="0.885" y2="3.754"/>
-;    <pad x1="1.655" y1="2.054" x2="2.155" y2="3.754"/>
-;  </pads>
-;  <destination x="10" y="10" z="0" orientation="0"/>
-;</part>
-
 ;<part id="2" name="Tiny2">
 ;  <position box="2"/>
-;  <size height="2.16" width="5.35"/>
+;  <size height="1.87" width="5.38"/>
 ;  <shape>
 ;    <point x="-2.6" y="-2.6"/>
 ;    <point x="-2.6" y="2.6"/>
@@ -93,7 +70,7 @@ M84     ; disable motors
 
 ;<part id="3" name="Tiny3">
 ;  <position box="3"/>
-;  <size height="2.16" width="5.35"/>
+;  <size height="1.87" width="5.38"/>
 ;  <shape>
 ;    <point x="-2.6" y="-2.6"/>
 ;    <point x="-2.6" y="2.6"/>
@@ -115,7 +92,7 @@ M84     ; disable motors
 
 ;<part id="4" name="Tiny4">
 ;  <position box="4"/>
-;  <size height="2.16" width="5.35"/>
+;  <size height="1.87" width="5.38"/>
 ;  <shape>
 ;    <point x="-2.6" y="-2.6"/>
 ;    <point x="-2.6" y="2.6"/>
@@ -137,7 +114,7 @@ M84     ; disable motors
 
 ;<part id="5" name="Tiny5">
 ;  <position box="5"/>
-;  <size height="2.16" width="5.35"/>
+;  <size height="1.87" width="5.38"/>
 ;  <shape>
 ;    <point x="-2.6" y="-2.6"/>
 ;    <point x="-2.6" y="2.6"/>
@@ -159,7 +136,7 @@ M84     ; disable motors
 
 ;<part id="6" name="Tiny6">
 ;  <position box="6"/>
-;  <size height="2.16" width="5.35"/>
+;  <size height="1.87" width="5.38"/>
 ;  <shape>
 ;    <point x="-2.6" y="-2.6"/>
 ;    <point x="-2.6" y="2.6"/>
@@ -181,7 +158,7 @@ M84     ; disable motors
 
 ;<part id="7" name="Tiny7">
 ;  <position box="7"/>
-;  <size height="2.16" width="5.35"/>
+;  <size height="1.87" width="5.38"/>
 ;  <shape>
 ;    <point x="-2.6" y="-2.6"/>
 ;    <point x="-2.6" y="2.6"/>
@@ -203,7 +180,7 @@ M84     ; disable motors
 
 ;<part id="8" name="R1">
 ;  <position box="8"/>
-;  <size height="0.5"/>
+;  <size height="0.5" width="3.08"/>
 ;  <shape>
 ;    <point x="-1.6891" y="-0.8763"/>
 ;    <point x="-1.6891" y="0.8763"/>
@@ -219,7 +196,7 @@ M84     ; disable motors
 
 ;<part id="9" name="R2">
 ;  <position box="9"/>
-;  <size height="0.5"/>
+;  <size height="0.5" width="3.08"/>
 ;  <shape>
 ;    <point x="-1.6891" y="-0.8763"/>
 ;    <point x="-1.6891" y="0.8763"/>
@@ -235,7 +212,7 @@ M84     ; disable motors
 
 ;<part id="10" name="R3">
 ;  <position box="10"/>
-;  <size height="0.5"/>
+;  <size height="0.5" width="3.08"/>
 ;  <shape>
 ;    <point x="-1.6891" y="-0.8763"/>
 ;    <point x="-1.6891" y="0.8763"/>
@@ -251,7 +228,7 @@ M84     ; disable motors
 
 ;<part id="11" name="R4">
 ;  <position box="11"/>
-;  <size height="0.5"/>
+;  <size height="0.5" width="3.08"/>
 ;  <shape>
 ;    <point x="-1.6891" y="-0.8763"/>
 ;    <point x="-1.6891" y="0.8763"/>
@@ -267,7 +244,7 @@ M84     ; disable motors
 
 ;<part id="12" name="R5">
 ;  <position box="12"/>
-;  <size height="0.5"/>
+;  <size height="0.5" width="3.08"/>
 ;  <shape>
 ;    <point x="-1.6891" y="-0.8763"/>
 ;    <point x="-1.6891" y="0.8763"/>
@@ -283,7 +260,7 @@ M84     ; disable motors
 
 ;<part id="13" name="R6">
 ;  <position box="13"/>
-;  <size height="0.5"/>
+;  <size height="0.5" width="3.08"/>
 ;  <shape>
 ;    <point x="-1.6891" y="-0.8763"/>
 ;    <point x="-1.6891" y="0.8763"/>
@@ -299,7 +276,7 @@ M84     ; disable motors
 
 ;<part id="14" name="R7">
 ;  <position box="14"/>
-;  <size height="0.5"/>
+;  <size height="0.5" width="3.08"/>
 ;  <shape>
 ;    <point x="-1.6891" y="-0.8763"/>
 ;    <point x="-1.6891" y="0.8763"/>
@@ -315,7 +292,7 @@ M84     ; disable motors
 
 ;<part id="15" name="LED1">
 ;  <position box="15"/>
-;  <size height="1"/>
+;  <size height="1" width="3.1"/>
 ;  <shape>
 ;    <point x="-1.55" y="-0.75"/>
 ;    <point x="-1.55" y="0.75"/>
@@ -331,7 +308,7 @@ M84     ; disable motors
 
 ;<part id="16" name="LED2">
 ;  <position box="16"/>
-;  <size height="1"/>
+;  <size height="1" width="3.1"/>
 ;  <shape>
 ;    <point x="-1.55" y="-0.75"/>
 ;    <point x="-1.55" y="0.75"/>
@@ -347,7 +324,7 @@ M84     ; disable motors
 
 ;<part id="17" name="LED3">
 ;  <position box="17"/>
-;  <size height="1"/>
+;  <size height="1" width="3.1"/>
 ;  <shape>
 ;    <point x="-1.55" y="-0.75"/>
 ;    <point x="-1.55" y="0.75"/>
@@ -363,7 +340,7 @@ M84     ; disable motors
 
 ;<part id="18" name="LED4">
 ;  <position box="18"/>
-;  <size height="1"/>
+;  <size height="1" width="3.1"/>
 ;  <shape>
 ;    <point x="-1.55" y="-0.75"/>
 ;    <point x="-1.55" y="0.75"/>
@@ -379,7 +356,7 @@ M84     ; disable motors
 
 ;<part id="19" name="LED5">
 ;  <position box="19"/>
-;  <size height="1"/>
+;  <size height="1" width="3.1"/>
 ;  <shape>
 ;    <point x="-1.55" y="-0.75"/>
 ;    <point x="-1.55" y="0.75"/>
@@ -395,7 +372,7 @@ M84     ; disable motors
 
 ;<part id="20" name="LED6">
 ;  <position box="20"/>
-;  <size height="1"/>
+;  <size height="1" width="3.1"/>
 ;  <shape>
 ;    <point x="-1.55" y="-0.75"/>
 ;    <point x="-1.55" y="0.75"/>
@@ -411,7 +388,7 @@ M84     ; disable motors
 
 ;<part id="21" name="LED7">
 ;  <position box="21"/>
-;  <size height="1"/>
+;  <size height="1" width="3.1"/>
 ;  <shape>
 ;    <point x="-1.55" y="-0.75"/>
 ;    <point x="-1.55" y="0.75"/>
