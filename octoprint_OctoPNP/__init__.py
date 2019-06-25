@@ -486,8 +486,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 self._updateUI("ERROR", self.imgproc.getLastErrorMessage())
                 orientation_offset = 0.0
 
-            # displacement = self.imgproc.getPartPosition(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])))
-            displacement = [displacementX, displacementY]
+            displacement = self.imgproc.getPartPosition(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])))
+            # displacement = [displacementX, displacementY]
             if not displacement:
                 self._updateUI("ERROR", self.imgproc.getLastErrorMessage())
                 displacement = [0, 0]
