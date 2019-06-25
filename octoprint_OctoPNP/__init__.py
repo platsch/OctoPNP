@@ -447,7 +447,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
             # get rotation offset
             print("alignPart aufruf")
-            orientation_offset = self.imgproc.getPartOrientation(bedPath, tempPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])), partWidth, 0)
+            _, _, orientation_offset = self.imgproc.matchTemplate(bedPath, tempPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])), partWidth, 0)
             if not orientation_offset:
                 self._updateUI("ERROR", self.imgproc.getLastErrorMessage())
                 orientation_offset = 0.0
@@ -481,12 +481,13 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         tempPath = "./template_image.png"
         if self._grabImages("BED"):
             print("Placepart aufruf")
-            orientation_offset = self.imgproc.getPartOrientation(bedPath, tempPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])), partWidth, destination[3])
+            displacementX, displacementY, orientation_offset = self.imgproc.matchTemplate(bedPath, tempPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])), partWidth, destination[3])
             if not orientation_offset:
                 self._updateUI("ERROR", self.imgproc.getLastErrorMessage())
                 orientation_offset = 0.0
 
-            displacement = self.imgproc.getPartPosition(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])))
+            # displacement = self.imgproc.getPartPosition(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])))
+            displacement = [displacementX, displacementY]
             if not displacement:
                 self._updateUI("ERROR", self.imgproc.getLastErrorMessage())
                 displacement = [0, 0]

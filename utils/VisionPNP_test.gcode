@@ -17,7 +17,6 @@ M361 P3
 M361 P4
 M361 P5
 M361 P6
-M361 P7
 M361 P8
 M361 P9
 M361 P10
@@ -178,27 +177,6 @@ M84     ; disable motors
 ;  <destination x="60" y="10" z="0" orientation="225"/>
 ;</part>
 
-;<part id="7" name="Tiny7">
-;  <position box="7"/>
-;  <size height="1.87" width="5.38"/>
-;  <shape>
-;    <point x="-2.6" y="-2.6"/>
-;    <point x="-2.6" y="2.6"/>
-;    <point x="2.6" y="2.6"/>
-;    <point x="2.6" y="-2.6"/>
-;  </shape>
-;  <pads>
-;    <pad x1="-2.155" y1="-4.0" x2="-1.655" y2="-2.054"/>
-;    <pad x1="-0.895" y1="-4.0" x2="-0.395" y2="-2.054"/>
-;    <pad x1="0.375" y1="-4.0" x2="0.875" y2="-2.054"/>
-;    <pad x1="1.645" y1="-4.0" x2="2.145" y2="-2.054"/>
-;    <pad x1="-2.155" y1="2.054" x2="-1.655" y2="4.0"/>
-;    <pad x1="-0.885" y1="2.054" x2="-0.385" y2="4.0"/>
-;    <pad x1="0.385" y1="2.054" x2="0.885" y2="4.0"/>
-;    <pad x1="1.655" y1="2.054" x2="2.155" y2="4.0"/>
-;  </pads>
-;  <destination x="70" y="10" z="0" orientation="270"/>
-;</part>
 
 ;<part id="8" name="R1">
 ;  <position box="8"/>
@@ -317,12 +295,8 @@ M84     ; disable motors
 ;  <size height="1.05" width="3.17"/>
 ;  <shape>
 ;    <point x="-1.585" y="-0.8"/>
-;    <point x="0.015" y="-0.8"/>
-;    <point x="0.015" y="-0.27"/>
-;    <point x="-1.185" y="-0.27"/>
-;    <point x="-1.185" y="0.26"/>
-;    <point x="0.015" y="0.26"/>
-;    <point x="0.015" y="0.8"/>
+;    <point x="1.585" y="-0.8"/>
+;    <point x="1.585" y="0.8"/>
 ;    <point x="-1.585" y="0.8"/>
 ;  </shape>
 ;  <pads>
@@ -337,12 +311,8 @@ M84     ; disable motors
 ;  <size height="1.05" width="3.17"/>
 ;  <shape>
 ;    <point x="-1.585" y="-0.8"/>
-;    <point x="0.015" y="-0.8"/>
-;    <point x="0.015" y="-0.27"/>
-;    <point x="-1.185" y="-0.27"/>
-;    <point x="-1.185" y="0.26"/>
-;    <point x="0.015" y="0.26"/>
-;    <point x="0.015" y="0.8"/>
+;    <point x="1.585" y="-0.8"/>
+;    <point x="1.585" y="0.8"/>
 ;    <point x="-1.585" y="0.8"/>
 ;  </shape>
 ;  <pads>
@@ -357,12 +327,8 @@ M84     ; disable motors
 ;  <size height="1.05" width="3.17"/>
 ;  <shape>
 ;    <point x="-1.585" y="-0.8"/>
-;    <point x="0.015" y="-0.8"/>
-;    <point x="0.015" y="-0.27"/>
-;    <point x="-1.185" y="-0.27"/>
-;    <point x="-1.185" y="0.26"/>
-;    <point x="0.015" y="0.26"/>
-;    <point x="0.015" y="0.8"/>
+;    <point x="1.585" y="-0.8"/>
+;    <point x="1.585" y="0.8"/>
 ;    <point x="-1.585" y="0.8"/>
 ;  </shape>
 ;  <pads>
@@ -377,12 +343,8 @@ M84     ; disable motors
 ;  <size height="1.05" width="3.17"/>
 ;  <shape>
 ;    <point x="-1.585" y="-0.8"/>
-;    <point x="0.015" y="-0.8"/>
-;    <point x="0.015" y="-0.27"/>
-;    <point x="-1.185" y="-0.27"/>
-;    <point x="-1.185" y="0.26"/>
-;    <point x="0.015" y="0.26"/>
-;    <point x="0.015" y="0.8"/>
+;    <point x="1.585" y="-0.8"/>
+;    <point x="1.585" y="0.8"/>
 ;    <point x="-1.585" y="0.8"/>
 ;  </shape>
 ;  <pads>
@@ -397,12 +359,8 @@ M84     ; disable motors
 ;  <size height="1.05" width="3.17"/>
 ;  <shape>
 ;    <point x="-1.585" y="-0.8"/>
-;    <point x="0.015" y="-0.8"/>
-;    <point x="0.015" y="-0.27"/>
-;    <point x="-1.185" y="-0.27"/>
-;    <point x="-1.185" y="0.26"/>
-;    <point x="0.015" y="0.26"/>
-;    <point x="0.015" y="0.8"/>
+;    <point x="1.585" y="-0.8"/>
+;    <point x="1.585" y="0.8"/>
 ;    <point x="-1.585" y="0.8"/>
 ;  </shape>
 ;  <pads>
@@ -417,12 +375,8 @@ M84     ; disable motors
 ;  <size height="1.05" width="3.17"/>
 ;  <shape>
 ;    <point x="-1.585" y="-0.8"/>
-;    <point x="0.015" y="-0.8"/>
-;    <point x="0.015" y="-0.27"/>
-;    <point x="-1.185" y="-0.27"/>
-;    <point x="-1.185" y="0.26"/>
-;    <point x="0.015" y="0.26"/>
-;    <point x="0.015" y="0.8"/>
+;    <point x="1.585" y="-0.8"/>
+;    <point x="1.585" y="0.8"/>
 ;    <point x="-1.585" y="0.8"/>
 ;  </shape>
 ;  <pads>
@@ -437,12 +391,8 @@ M84     ; disable motors
 ;  <size height="1.05" width="3.17"/>
 ;  <shape>
 ;    <point x="-1.585" y="-0.8"/>
-;    <point x="0.015" y="-0.8"/>
-;    <point x="0.015" y="-0.27"/>
-;    <point x="-1.185" y="-0.27"/>
-;    <point x="-1.185" y="0.26"/>
-;    <point x="0.015" y="0.26"/>
-;    <point x="0.015" y="0.8"/>
+;    <point x="1.585" y="-0.8"/>
+;    <point x="1.585" y="0.8"/>
 ;    <point x="-1.585" y="0.8"/>
 ;  </shape>
 ;  <pads>

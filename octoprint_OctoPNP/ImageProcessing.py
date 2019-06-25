@@ -98,10 +98,10 @@ class ImageProcessing:
                 cv2.circle(inputImage,(int(position[0] + left_x), int(position[1] + upper_y)), 4, (0,0,255), -1)
                 filename="/finalcm_"+os.path.basename(self._img_path)
                 finalcm_path=os.path.dirname(self._img_path)+filename
-                cv2.imwrite(finalcm_path,croppedImage)
+                cv2.imwrite(finalcm_path,inputImage)
                 self._last_saved_image_path = finalcm_path
 
-                if self._interactive: cv2.imshow("Part in box: ",croppedImage)
+                if self._interactive: cv2.imshow("Part in box: ",inputImage)
                 if self._interactive: cv2.waitKey(0)
             else:
                 self._last_error = "Unable to find part in box"
@@ -109,7 +109,7 @@ class ImageProcessing:
             self._last_error = "Unable to locate box"
         return result
 
-    def getPartOrientation(self,img_path, template_path, pxPerMM, partWidth, offset=0):
+    def matchTemplate(self,img_path, template_path, pxPerMM, partWidth, offset=0):
         self._img_path = img_path
         result = False
 
@@ -117,9 +117,9 @@ class ImageProcessing:
         inputTemplate = cv2.imread(template_path)
 
         # Debugging
-        # print("pxPerMM: ", pxPerMM)
-        # print("partWidth: ", partWidth)
-        # print("pixel part Width: ", int(partWidth*pxPerMM))
+        print("pxPerMM: ", pxPerMM)
+        print("partWidth: ", partWidth)
+        print("pixel part Width: ", int(partWidth*pxPerMM))
 
         # Find orientation
         bestCandidate = []
@@ -128,24 +128,29 @@ class ImageProcessing:
         print(bestCandidate)
 
         orientation = bestCandidate[3]
+        cm_x = bestCandidate[0]
+        cm_y = bestCandidate[1]
+        res_x = inputImage.shape[1]
+        res_y = inputImage.shape[0]
+
         del bestCandidate
 
-        if(orientation != False):
-            orientation = orientation * (180 / math.pi)
-            # compute rotation offset
-            rotation = orientation + offset
-            # normalize to positive PI range
-            if rotation < 0:
-                rotation = (rotation % -180) + 180
+        # get displacement
+        displacement_x=(cm_x-res_x/2)/pxPerMM
+        displacement_y=((res_y-cm_y)-res_y/2)/pxPerMM
 
-            rotation = rotation % 90
-            result = -rotation if rotation < 45 else 90-rotation
+        orientation = orientation * (180 / math.pi)
+        # compute rotation offset
+        rotation = orientation + offset
+        # normalize to positive PI range
+        if rotation < 0:
+            rotation = (rotation % -180) + 180
 
-            if self._debug: print "Part deviation measured by bed camera: " + str(result)
-        else:
-            if self._debug: print "Unable to locate part for finding the orientation"
-            self._last_error = "Unable to locate part for finding the orientation"
-            result = False
+        rotation = rotation % 90
+        finalRotation = -rotation if rotation < 45 else 90-rotation
+        result = [displacement_x, -displacement_y, finalRotation]
+
+        if self._debug: print "Part deviation measured by bed camera: " + str(result)
 
         if self._interactive: cv2.imshow("contours",candidateImage)
         if self._interactive: cv2.waitKey(0)
