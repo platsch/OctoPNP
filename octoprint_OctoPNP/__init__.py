@@ -366,6 +366,27 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         self._printer.commands(cmd)
         self._printer.commands("G1 Z" + str(camera_offset[2]) + " F" + str(self.FEEDRATE)) # lower printhead
 
+    def _moveCameraToPlacedPart(self, partnr):
+        # switch to primary extruder, since the head camera is relative to this extruder and the offset to PNP nozzle might not be known (firmware offset)
+        self._printer.commands("T0")
+        # move camera to part position
+        partPos = self.getPartDestination(partnr) # get box position on tray
+        camera_offset = [partPos[0]-float(self._settings.get(["camera", "head", "x"])), partPos[1]-float(self._settings.get(["camera", "head", "y"])), float(self._settings.get(["camera", "head", "z"])) + partPos[2]]
+        cmd = "G1 X" + str(camera_offset[0]) + " Y" + str(camera_offset[1]) + " F" + str(self.FEEDRATE)
+        self._logger.info("Move camera to: " + cmd)
+        self._printer.commands("G91") # relative positioning
+        self._printer.commands("G1 Z5 F" + str(self.FEEDRATE)) # lift printhead
+        self._printer.commands("G90") # absolute positioning
+        self._printer.commands(cmd)
+        self._printer.commands("G1 Z" + str(camera_offset[2]) + " F" + str(self.FEEDRATE)) # lower printhead
+
+    def _takePictureOfPlacedParts(self):
+        placedParts = self.getPartIds()
+        for part in placedParts:
+            self._moveCameraToPlacedPart(part)
+            if self._grabImages("HEAD"):
+                imagePath = self._settings.get(["camera", camera.lower(), "path"])
+                self._saveDebugImage(imagePath)
 
     def _pickPart(self, partnr):
         # wait n seconds to make sure cameras are ready
