@@ -11,6 +11,7 @@ G28 ; home all axes
 G1 Z5 F5000 ; lift nozzle
 
 ;Automatically place parts
+
 M361 P1
 M361 P2
 M361 P3
@@ -31,6 +32,7 @@ M361 P18
 M361 P19
 M361 P20
 M361 P21
+M666
 
 M107
 ; Filament-specific end gcode
