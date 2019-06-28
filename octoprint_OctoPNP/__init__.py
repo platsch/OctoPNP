@@ -73,6 +73,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
     FEEDRATE = 4000.000
 
     smdparts = SmdParts()
+    placedParts = []
 
     def __init__(self):
         self._state = self.STATE_NONE
@@ -137,7 +138,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                     "binary_thresh": 150,
                     "grabScriptPath": ""
                 },
-                "image_logging": False,
+                "image_logging": True,
                 "color_range": 0
             }
         }
@@ -255,31 +256,24 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 self._logger.info( "ERROR, received M361 command while placing part: " + str(self._currentPart))
 
         if "M666" in cmd:
-            self._updateUI("OPERATION", "pick")
-            self._logger.info( "Documenting placed parts")
-            self._takePictureOfPlacedParts()
+            self.placedParts = self.smdparts.getPartIds()
+            # switch to primary extruder, since the head camera is relative to this extruder and the offset to PNP nozzle might not be known (firmware offset)
+            self._printer.commands("T0")
+            self._takePictureOfPlacedParts("")
+            return (None,) # suppress command
 
-    def _moveCameraToPlacedPart(self, partnr):
-        # switch to primary extruder, since the head camera is relative to this extruder and the offset to PNP nozzle might not be known (firmware offset)
-        self._printer.commands("T0")
-        # move camera to part position
-        partPos = self.smdparts.getPartDestination(partnr) # get box position on tray
-        camera_offset = [partPos[0]-float(self._settings.get(["camera", "head", "x"])), partPos[1]-float(self._settings.get(["camera", "head", "y"])), float(self._settings.get(["camera", "head", "z"])) + partPos[2]]
-        cmd = "G1 X" + str(camera_offset[0]) + " Y" + str(camera_offset[1]) + " F" + str(self.FEEDRATE)
-        self._logger.info("Move camera to: " + cmd)
-        self._printer.commands("G91") # relative positioning
-        self._printer.commands("G1 Z5 F" + str(self.FEEDRATE)) # lift printhead
-        self._printer.commands("G90") # absolute positioning
-        self._printer.commands(cmd)
-        self._printer.commands("G1 Z" + str(camera_offset[2]) + " F" + str(self.FEEDRATE)) # lower printhead
+    def _takePictureOfPlacedParts(self, payload):
+        print(payload)
+        adjust_focus = False
+        if payload == "":
+            adjust_focus = True
+        if payload != "":
+            self._saveDebugImage(payload)
+        if len(self.placedParts) > 0:
+            partID = self.placedParts.pop(0)
+            partPos = self.smdparts.getPartDestination(partID)
+            self._helper_get_head_camera_image_xy(partPos[0], partPos[1], self._takePictureOfPlacedParts, adjust_focus)
 
-    def _takePictureOfPlacedParts(self):
-        placedParts = self.smdparts.getPartIds()
-        for part in placedParts:
-            self._moveCameraToPlacedPart(part)
-            if self._grabImages("HEAD"):
-                imagePath = self._settings.get(["camera", camera.lower(), "path"])
-                self._saveDebugImage(imagePath)
 
 
     """
@@ -419,7 +413,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 self._updateUI("HEADIMAGE", self.imgproc.getLastSavedImagePath())
 
                 # Log image for debugging and documentation
-                if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(headPath)
+                if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(self.imgproc.getLastSavedImagePath())
         else:
             cm_x=cm_y=0
             self._updateUI("ERROR", "Camera not ready")
@@ -482,7 +476,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
             self._updateUI("BEDIMAGE", self.imgproc.getLastSavedImagePath())
 
             # Log image for debugging and documentation
-            if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(bedPath)
+            if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(self.imgproc.getLastSavedImagePath())
         else:
             self._updateUI("ERROR", "Camera not ready")
 
@@ -513,8 +507,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 self._updateUI("ERROR", self.imgproc.getLastErrorMessage())
                 orientation_offset = 0.0
 
-            displacement = self.imgproc.getPartPosition(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])))
-            # displacement = [displacementX, displacementY]
+            # displacement = self.imgproc.getPartPosition(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])))
+            displacement = [displacementX, displacementY]
             if not displacement:
                 self._updateUI("ERROR", self.imgproc.getLastErrorMessage())
                 displacement = [0, 0]

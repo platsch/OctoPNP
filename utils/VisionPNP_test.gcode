@@ -12,27 +12,28 @@ G1 Z5 F5000 ; lift nozzle
 
 ;Automatically place parts
 
-M361 P1
 M361 P2
 M361 P3
 M361 P4
 M361 P5
 M361 P6
-M361 P8
+M361 P7
 M361 P9
 M361 P10
 M361 P11
 M361 P12
 M361 P13
 M361 P14
-M361 P15
 M361 P16
 M361 P17
 M361 P18
 M361 P19
 M361 P20
 M361 P21
+G1 X100 Y50 F4000
+G1 Z1
 M666
+G28
 
 M107
 ; Filament-specific end gcode
@@ -47,27 +48,6 @@ M84     ; disable motors
 ; total filament cost = 0.0
 
 ;<object name="VisionPNP_test.stl">
-;<part id="1" name="Tiny1">
-;  <position box="1"/>
-;  <size height="1.87" width="5.38"/>
-;  <shape>
-;    <point x="-2.6" y="-2.6"/>
-;    <point x="-2.6" y="2.6"/>
-;    <point x="2.6" y="2.6"/>
-;    <point x="2.6" y="-2.6"/>
-;  </shape>
-;  <pads>
-;    <pad x1="-2.155" y1="-4.0" x2="-1.655" y2="-2.054"/>
-;    <pad x1="-0.895" y1="-4.0" x2="-0.395" y2="-2.054"/>
-;    <pad x1="0.375" y1="-4.0" x2="0.875" y2="-2.054"/>
-;    <pad x1="1.645" y1="-4.0" x2="2.145" y2="-2.054"/>
-;    <pad x1="-2.155" y1="2.054" x2="-1.655" y2="4.0"/>
-;    <pad x1="-0.885" y1="2.054" x2="-0.385" y2="4.0"/>
-;    <pad x1="0.385" y1="2.054" x2="0.885" y2="4.0"/>
-;    <pad x1="1.655" y1="2.054" x2="2.155" y2="4.0"/>
-;  </pads>
-;  <destination x="10" y="10" z="0" orientation="0"/>
-;</part>
 
 ;<part id="2" name="Tiny2">
 ;  <position box="2"/>
@@ -179,21 +159,26 @@ M84     ; disable motors
 ;  <destination x="60" y="10" z="0" orientation="225"/>
 ;</part>
 
-
-;<part id="8" name="R1">
-;  <position box="8"/>
-;  <size height="0.52" width="3.07"/>
+;<part id="7" name="Tiny7">
+;  <position box="7"/>
+;  <size height="1.87" width="5.38"/>
 ;  <shape>
-;    <point x="-1.535" y="-0.77"/>
-;    <point x="-1.535" y="0.77"/>
-;    <point x="1.535" y="0.77"/>
-;    <point x="1.535" y="-0.77"/>
+;    <point x="-2.6" y="-2.6"/>
+;    <point x="-2.6" y="2.6"/>
+;    <point x="2.6" y="2.6"/>
+;    <point x="2.6" y="-2.6"/>
 ;  </shape>
 ;  <pads>
-;    <pad x1="1.535" y1="-0.77" x2="1.535" y2="0.77"/>
-;    <pad x1="-1.535" y1="-0.77" x2="-1.535" y2="0.77"/>
+;    <pad x1="-2.155" y1="-4.0" x2="-1.655" y2="-2.054"/>
+;    <pad x1="-0.895" y1="-4.0" x2="-0.395" y2="-2.054"/>
+;    <pad x1="0.375" y1="-4.0" x2="0.875" y2="-2.054"/>
+;    <pad x1="1.645" y1="-4.0" x2="2.145" y2="-2.054"/>
+;    <pad x1="-2.155" y1="2.054" x2="-1.655" y2="4.0"/>
+;    <pad x1="-0.885" y1="2.054" x2="-0.385" y2="4.0"/>
+;    <pad x1="0.385" y1="2.054" x2="0.885" y2="4.0"/>
+;    <pad x1="1.655" y1="2.054" x2="2.155" y2="4.0"/>
 ;  </pads>
-;  <destination x="10" y="20" z="0" orientation="0"/>
+;  <destination x="70" y="10" z="0" orientation="270"/>
 ;</part>
 
 ;<part id="9" name="R2">
@@ -290,22 +275,6 @@ M84     ; disable motors
 ;    <pad x1="-1.535" y1="-0.77" x2="-1.535" y2="0.77"/>
 ;  </pads>
 ;  <destination x="70" y="20" z="0" orientation="270"/>
-;</part>
-
-;<part id="15" name="LED1">
-;  <position box="15"/>
-;  <size height="1.05" width="3.17"/>
-;  <shape>
-;    <point x="-1.585" y="-0.8"/>
-;    <point x="1.585" y="-0.8"/>
-;    <point x="1.585" y="0.8"/>
-;    <point x="-1.585" y="0.8"/>
-;  </shape>
-;  <pads>
-;    <pad x1="0.785" y1="-0.8" x2="1.585" y2="0.8"/>
-;    <pad x1="-1.585" y1="-0.8" x2="-1.185" y2="0.8"/>
-;  </pads>
-;  <destination x="10" y="30" z="0" orientation="0"/>
 ;</part>
 
 ;<part id="16" name="LED2">
