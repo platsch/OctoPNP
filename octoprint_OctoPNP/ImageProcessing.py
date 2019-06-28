@@ -95,7 +95,7 @@ class ImageProcessing:
                 print(result)
 
                 # Generate result image and return
-                cv2.circle(inputImage,(int(position[0] + left_x), int(position[1] + upper_y)), 4, (0,0,255), -1)
+                cv2.circle(inputImage,(int(position[0] + left_x), int(position[1] + upper_y)), 8, (0,0,255), -1)
                 filename="/finalcm_"+os.path.basename(self._img_path)
                 finalcm_path=os.path.dirname(self._img_path)+filename
                 cv2.imwrite(finalcm_path,inputImage)
