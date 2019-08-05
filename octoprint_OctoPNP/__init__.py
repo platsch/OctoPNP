@@ -136,7 +136,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                     "binary_thresh": 150,
                     "grabScriptPath": ""
                 },
-                "image_logging": False
+                "image_logging": True
             }
         }
 
@@ -335,6 +335,25 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
             # suppress the magic command (M365)
             return (None,)
 
+        if "M666" in cmd:
+            self.placedParts = self.smdparts.getPartIds()
+            # switch to primary extruder, since the head camera is relative to this extruder and the offset to PNP nozzle might not be known (firmware offset)
+            self._printer.commands("T0")
+            self._takePictureOfPlacedParts("")
+            return (None,) # suppress command
+
+    def _takePictureOfPlacedParts(self, payload):
+        print(payload)
+        adjust_focus = False
+        if payload == "":
+            adjust_focus = True
+        if payload != "":
+            self._saveDebugImage(payload)
+        if len(self.placedParts) > 0:
+            partID = self.placedParts.pop(0)
+            partPos = self.smdparts.getPartDestination(partID)
+            self._helper_get_head_camera_image_xy(partPos[0], partPos[1], self._takePictureOfPlacedParts, adjust_focus)
+
 
     def _moveCameraToPart(self, partnr):
         # switch to primary extruder, since the head camera is relative to this extruder and the offset to PNP nozzle might not be known (firmware offset)
@@ -376,7 +395,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 self._updateUI("HEADIMAGE", self.imgproc.getLastSavedImagePath())
 
                 # Log image for debugging and documentation
-                if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(headPath)
+                self._saveDebugImage(self.imgproc.getLastSavedImagePath())
         else:
             cm_x=cm_y=0
             self._updateUI("ERROR", "Camera not ready")
@@ -429,9 +448,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 orientation_offset = 0.0
             # update UI
             self._updateUI("BEDIMAGE", self.imgproc.getLastSavedImagePath())
-
-            # Log image for debugging and documentation
-            if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(bedPath)
+            self._saveDebugImage(self.imgproc.getLastSavedImagePath())
         else:
             self._updateUI("ERROR", "Camera not ready")
 
@@ -462,7 +479,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
             #update UI
             self._updateUI("BEDIMAGE", self.imgproc.getLastSavedImagePath())
-			
+
             # Log image for debugging and documentation
             if self._settings.get(["camera", "image_logging"]):
                 self._saveDebugImage(bedPath)
