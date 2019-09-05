@@ -280,6 +280,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 self._printer.commands("G4 P1")
                 self._printer.commands("M400")
 
+                # still having trouble with images taken before alignment was fully executed...
+                self._printer.commands("G4 S2")
+
                 for i in range(10):
                     self._printer.commands("G4 P1")
 
@@ -437,7 +440,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
         #rotate object
         self._printer.commands("G92 E0")
-        self._printer.commands("G1 E" + str(destination[3]-orientation_offset) + " F" + str(self.FEEDRATE))
+        self._printer.commands("G1 E" + str(destination[3]+orientation_offset) + " F" + str(self.FEEDRATE))
 
     def _placePart(self, partnr):
         displacement = [0, 0]
@@ -476,7 +479,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
             self._updateUI("INFO", "Incorrect alignment, correcting offset of " + str(-orientation_offset) + "°")
             self._logger.info("Incorrect alignment, correcting offset of " + str(-orientation_offset) + "°")
             self._printer.commands("G92 E0")
-            self._printer.commands("G1 E" + str(-orientation_offset) + " F" + str(self.FEEDRATE))
+            self._printer.commands("G1 E" + str(orientation_offset) + " F" + str(self.FEEDRATE))
             # wait a second to execute the rotation
             time.sleep(2)
             # take another image for UI
