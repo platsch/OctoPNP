@@ -13,7 +13,66 @@ It currently requires the following hardware extensions:
 
 # Installation
 ## Prerequirements
-To achieve higher compatibility and modularity, OctoPNP doesn't acces the cameras directly. Every time an image is required, OctoPNP executes a user defined script which must be adapted for every installation according to the deployed camera setup. OctoPNP expects a set of correctly cropped and rotated images after executing the script. Filenames and path for images and script must be set in the settings dialog.
+To achieve higher compatibility and modularity, OctoPNP doesn't acces the
+cameras directly. Every time an image is required, OctoPNP executes a user
+defined script which must be adapted for every installation according to the
+deployed camera setup. OctoPNP expects a set of correctly cropped and rotated
+images after executing the script. Filenames and path for images and script must
+be set in the settings dialog.
+
+### Json C++ by nlohmann
+To ease camera configuration, without the need of rebuilding the c++ camera grab
+script located in OctoPNP/octoprint_OctoPNP/cameras/pylon/grab.cpp,
+[nlohmann::json](https://github.com/nlohmann/json) is used to dynamically load
+json configurations on every camera call. The library is header only and
+released under the MIT license model. To install nlohmann:json simply download
+the header file and place it in the include folder. The camera configuration
+file can be found in
+OctoPNP/octoprint_OctoPNP/cameras/pylon/inc/camera_config.json .
+
+### VisionPNP for image processing
+#### opencv2
+Clone and build the latest source of OpenCV. Just follow the [official
+installation tutorial]("https://docs.opencv.org/master/index.html") regarding
+your operating system.
+The module has been tested with OpenCV versions >= 3.2.0.
+
+Make sure that you build OpenCV for the appropriate Python version.
+You can check this in the cmake configuration output.
+
+#### pybind11
+Run a pip install for either python 2 or 3:
+```
+python -m pip install pybind11
+```
+or
+```
+python3 -m pip install pybind11
+```
+Apply sudo or --user if necessary.
+
+#### How to install
+Just execute from within the project directory (including setup.py).
+```
+python -m pip install -e . --user
+```
+for python 2.7 or
+```
+python3 -m pip install -e . --user
+```
+for python >= 3.0.
+Once the installation is complete make sure the module is recognized by python:
+```
+python -m pip list
+```
+or try to import it from the shell:
+```
+python
+import VisionPNP
+```
+
+For further information of how to use VisionPNP, please consult the [VisionPNP
+README](https://github.com/platsch/OctoPNP/blob/ba-thesis-kolwa/VisionPNP/README.md)
 
 ## Installing the package
 The plugin itself can be installed as any regular python package:

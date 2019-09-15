@@ -1,0 +1,6 @@
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${VisionPNP_SOURCE_DIR}/bin)
+find_package( OpenCV REQUIRED )
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+include_directories( ${VisionPNP_SOURCE_DIR}/include )
+add_executable( VisionPNP image.cpp color.cpp main.cpp )
+target_link_libraries( VisionPNP ${OpenCV_LIBS} )
