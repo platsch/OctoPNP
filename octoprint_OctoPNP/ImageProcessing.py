@@ -61,6 +61,12 @@ class ImageProcessing:
             upper_y = int(min(rotated_box[1][1],rotated_box[2][1]))
             lower_y = int(max(rotated_box[0][1],rotated_box[3][1]))
 
+            # workaround for bounding boxes that are bigger then the image
+            if(left_x < 0): left_x = 0
+            if(upper_y < 0): upper_y = 0
+            if(right_x < 0): right_x = img.shape[1]
+            if(lower_y < 0): lower_y = img.shape[0]
+
             #Crop image
             img_crop=img[upper_y:lower_y, left_x:right_x]
 
@@ -124,7 +130,7 @@ class ImageProcessing:
             cv2.drawContours(img,[box],0,(0,0,255),2)
 
             # compute rotation offset
-            rotation = rect[2] + offset
+            rotation = rect[2] - offset
             # normalize to positive PI range
             if rotation < 0:
                 rotation = (rotation % -180) + 180
