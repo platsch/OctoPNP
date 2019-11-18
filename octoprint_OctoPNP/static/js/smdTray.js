@@ -96,13 +96,13 @@ function smdTray(cols, rows, boxSize, canvas) {
 					ctx.lineWidth = 1;
 					ctx.fillStyle = color;
 					if(points.length > 0) {
-						ctx.moveTo(points[0][0]*scale+col_offset+canvasBoxSize/2, points[0][1]*scale+row_offset+canvasBoxSize/2);
+						ctx.moveTo(points[0][0]*scale+col_offset+canvasBoxSize/2, -points[0][1]*scale+row_offset+canvasBoxSize/2);
 						for(var i=0; i < points.length; i++) {
-							ctx.lineTo(points[i][0]*scale+col_offset+canvasBoxSize/2, points[i][1]*scale+row_offset+canvasBoxSize/2);
+							ctx.lineTo(points[i][0]*scale+col_offset+canvasBoxSize/2, -points[i][1]*scale+row_offset+canvasBoxSize/2);
 						}
 						//close loop
-						ctx.lineTo(points[0][0]*scale+col_offset+canvasBoxSize/2, points[0][1]*scale+row_offset+canvasBoxSize/2);
-						ctx.lineTo(points[1][0]*scale+col_offset+canvasBoxSize/2, points[1][1]*scale+row_offset+canvasBoxSize/2);
+						ctx.lineTo(points[0][0]*scale+col_offset+canvasBoxSize/2, -points[0][1]*scale+row_offset+canvasBoxSize/2);
+						ctx.lineTo(points[1][0]*scale+col_offset+canvasBoxSize/2, -points[1][1]*scale+row_offset+canvasBoxSize/2);
 						ctx.fill();
 					}
 				}
@@ -114,7 +114,7 @@ function smdTray(cols, rows, boxSize, canvas) {
 					ctx.beginPath();
 					ctx.fillStyle = "#999999";
 					for(var i=0; i < pads.length; i++) {
-						ctx.fillRect(pads[i][0]*scale+col_offset+canvasBoxSize/2, pads[i][1]*scale+row_offset+canvasBoxSize/2, (pads[i][2]-pads[i][0])*scale, (pads[i][3]-pads[i][1])*scale);
+						ctx.fillRect(pads[i][0]*scale+col_offset+canvasBoxSize/2, -pads[i][1]*scale+row_offset+canvasBoxSize/2, (pads[i][2]-pads[i][0])*scale, -(pads[i][3]-pads[i][1])*scale);
 					}
 				}
             }
