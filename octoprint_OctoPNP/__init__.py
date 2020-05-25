@@ -18,7 +18,7 @@
     Main author: Florens Wasserfall <wasserfall@kalanka.de>
 """
 
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 
 import octoprint.plugin
@@ -36,6 +36,7 @@ from .ImageProcessing import ImageProcessing
 
 
 __plugin_name__ = "OctoPNP"
+__plugin_pythoncompat__ = ">=2.7,<4"
 
 #instantiate plugin object and register hook for gcode injection
 def __plugin_load__():
