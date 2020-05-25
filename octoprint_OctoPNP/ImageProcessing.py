@@ -138,10 +138,10 @@ class ImageProcessing:
             rotation = rotation % 90
             result = -rotation if rotation < 45 else 90-rotation
 
-            if self._debug: print "Part deviation measured by bed camera: " + str(result)
+            if self._debug: print("Part deviation measured by bed camera: " + str(result))
         else:
-            if self._debug: print "Unable to locate part for finding the orientation"
             self._last_error = "Unable to locate part for finding the orientation"
+            if self._debug: print(self._last_error)
             result = False
 
         if self._interactive: cv2.imshow("contours",img)
@@ -183,8 +183,8 @@ class ImageProcessing:
             displacement_y=((res_y-cm_y)-res_y/2)/pxPerMM
             result = [displacement_x, -displacement_y]
         else:
-            if self._debug: print "Unable to locate part for correcting the position"
             self._last_error = "Unable to locate part for correcting the position"
+            if self._debug: print(self._last_error)
             result = False
 
         # write image for UI
