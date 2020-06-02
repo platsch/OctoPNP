@@ -442,12 +442,12 @@ $(function() {
 
 
         // The following functions provide "infrastructure" to access and modify eeprom values
-        //self.onStartup = function() {
-            /*$('#settings_plugin_autocalibration_link a').on('show', function(e) {
+        self.onStartup = function() {
+            $('#settings_plugin_OctoPNP_link a').on('show', function(e) {
                 if (self.isConnected() && !self.isRepetierFirmware())
                     self._requestFirmwareInfo();
-            });*/
-        //}
+            });
+        }
 
         self.fromHistoryData = function(data) {
             _.each(data.logs, function(line) {
