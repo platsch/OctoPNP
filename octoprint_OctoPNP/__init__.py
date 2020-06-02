@@ -179,7 +179,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         if event == "FileSelected":
             self._currentPart = None
             xml = "";
-            f = open(payload.get("file"), 'r')
+            gcode_path = self._file_manager.path_on_disk(payload.get("origin"), payload.get("path"))
+            f = open(gcode_path, 'r')
             for line in f:
                 expression = re.search("<.*>", line)
                 if expression:
@@ -193,7 +194,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 sane, msg = self.smdparts.load(xml)
                 if sane:
                     #TODO: validate part informations against tray
-                    self._logger.info("Extracted information on %d parts from gcode file %s", self.smdparts.getPartCount(), payload.get("file"))
+                    self._logger.info("Extracted information on %d parts from gcode file %s", self.smdparts.getPartCount(), payload.get("name"))
                     self._updateUI("FILE", "")
                 else:
                     self._logger.info("XML parsing error: " + msg)
