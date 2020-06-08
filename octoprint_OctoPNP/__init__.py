@@ -165,8 +165,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 if self._grabImages(camera):
                     imagePath = self._settings.get(["camera", camera.lower(), "path"])
                     try:
-                        f = open(imagePath,"r")
-                        result = flask.jsonify(src="data:image/" + os.path.splitext(imagePath)[1] + ";base64,"+base64.b64encode(bytes(f.read())))
+                        f = open(imagePath,"rb")
+                        result = flask.jsonify(src="data:image/" + os.path.splitext(imagePath)[1] + ";base64,"+str(base64.b64encode(bytes(f.read())), "utf-8"))
                     except IOError:
                         result = flask.jsonify(error="Unable to open Image after fetching. Image path: " + imagePath)
                 else:
@@ -625,9 +625,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
             )
         elif event is "HEADIMAGE" or event is "BEDIMAGE":
             # open image and convert to base64
-            f = open(parameter,"r")
+            f = open(parameter,"rb")
             data = dict(
-                src = "data:image/" + os.path.splitext(parameter)[1] + ";base64,"+base64.b64encode(bytes(f.read()))
+                src = "data:image/" + os.path.splitext(parameter)[1] + ";base64,"+str(base64.b64encode(bytes(f.read())), "utf-8"))
             )
 
         message = dict(
