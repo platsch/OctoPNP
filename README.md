@@ -15,6 +15,18 @@ It currently requires the following hardware extensions:
 ## Prerequirements
 To achieve higher compatibility and modularity, OctoPNP doesn't acces the cameras directly. Every time an image is required, OctoPNP executes a user defined script which must be adapted for every installation according to the deployed camera setup. OctoPNP expects a set of correctly cropped and rotated images after executing the script. Filenames and path for images and script must be set in the settings dialog.
 
+## OpenCV on embedded hardware (Raspberry Pi)
+OctoPNP requires `numpy`and `OpenCV`, both are listed in the `requirements.txt` and should be automatically resolved via pip during installation.
+However, on many embedded systems, including the RasPi, opencv-python is not available.
+To solve this:
+* Remove (or comment) the `opencv-python` line in `requirements.txt`
+* Manually install OpenCV on your system ([official tutorial](https://docs.opencv.org/master/d7/d9f/tutorial_linux_install.html)). This should build OpenCV packages for Python 2 and 3 if both versions are installed on the system.
+* If OctoPrint is installed in a virtual environment (as recommended), at least in some cases the OpenCV library must be linked (or copied) into the venv like this:
+```
+ln -s /usr/local/lib/python3.6/dist-packages/cv2/python-3.6/cv2.cpython-36m-arm-linux-gnueabihf.so ~/OctoPrint/venv3/lib/python3.6/site-packages/
+```
+
+
 ## Installing the package
 The plugin itself can be installed as any regular python package:
 `pip install https://github.com/platsch/OctoPNP/archive/master.zip`
