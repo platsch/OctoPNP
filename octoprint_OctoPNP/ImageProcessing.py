@@ -283,7 +283,7 @@ class ImageProcessing:
         if(mask_corners):
             circle_mask = np.zeros((h, w), np.uint8)
             circle_mask[:, :] = 255
-            cv2.circle(circle_mask,(w/2, h/2), min(w/2, h/2), 0, -1)
+            cv2.circle(circle_mask,(int(w/2), int(h/2)), min(int(w/2), int(h/2)), 0, -1)
             mask = cv2.bitwise_or(mask,circle_mask)
         # invert mask to get white objects on black background
         #inverse_mask = 255 - mask
