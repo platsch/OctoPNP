@@ -224,7 +224,7 @@ class ImageProcessing:
 
         # depending on the OpenCV Version findContours returns 2 or 3 objects...
         #contours, hierarchy = cv2.findContours(binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, (0, 0));
-        contours = cv2.findContours(binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, offset=(0, 0))[1]
+        contours = cv2.findContours(binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, offset=(0, 0))[0]
 
 
         #cv2.drawContours(img, contours, -1, (0,255,0), 3) # draw basic contours
