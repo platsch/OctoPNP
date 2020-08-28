@@ -179,7 +179,28 @@
                                 <div class="span4">{{ _('Grab-script-path') }}</div>
                                 <div class="span7">
                                     <div class="input-append">
-                                        <input type="text" class="input-xlarge" data-bind="value: settings.plugins.OctoPNP.camera.head.grabScriptPath">
+                                        <input type="text" class="input-xlarge" data-bind="value: settings.plugins.OctoPNP.camera.head.grab_script_path">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row-fluid">
+                        <div class="span12">
+                            <div class="row-fluid">
+                                <div class="span1"></div>
+                                <div class="span11">If images can be directly fetched from camera via http (e.g. via mjpg_streamer), OctoPNP can provide a live preview during calibration. Works with static images only! (for mjpg_streamer: use snapshot mode! example: http://localhost:8080/?action=snapshot</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row-fluid">
+                        <div class="span12">
+                            <div class="row-fluid">
+                                <div class="span1"></div>
+                                <div class="span4">{{ _('Http-path') }}</div>
+                                <div class="span7">
+                                    <div class="input-append">
+                                        <input type="text" class="input-xlarge" data-bind="value: settings.plugins.OctoPNP.camera.head.http_path">
                                     </div>
                                 </div>
                             </div>
@@ -282,7 +303,20 @@
                                 <div class="span4">{{ _('Grab-script-path') }}</div>
                                 <div class="span7">
                                     <div class="input-append">
-                                        <input type="text" class="input-xlarge" data-bind="value: settings.plugins.OctoPNP.camera.bed.grabScriptPath">
+                                        <input type="text" class="input-xlarge" data-bind="value: settings.plugins.OctoPNP.camera.bed.grab_script_path">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row-fluid">
+                        <div class="span12">
+                            <div class="row-fluid">
+                                <div class="span1"></div>
+                                <div class="span4">{{ _('Http-path') }}</div>
+                                <div class="span7">
+                                    <div class="input-append">
+                                        <input type="text" class="input-xlarge" data-bind="value: settings.plugins.OctoPNP.camera.bed.http_path">
                                     </div>
                                 </div>
                             </div>
@@ -291,6 +325,8 @@
                 </div>
             </div>
         </div>
+
+
         <!-- Nozzle settings -->
         <div class="accordion-group">
             <div class="accordion-heading">
@@ -376,7 +412,7 @@
                                 This is an experimental "calibration wizard".
                             </div>
                             <div id="webcam_container" tabindex="0" data-bind="event: { keydown: onKeyDown, mouseover: onMouseOver, mouseout: onMouseOut, focus: onFocus }">
-                                <canvas id="headCanvas" width="400" height="400"></canvas>
+                                <canvas id="headCanvas" width="410" height="410"></canvas>
                             
                                 <div class="keycontrol_overlay" data-bind="visible: showKeycontrols">
 
@@ -402,7 +438,7 @@
                             </div>
                         </div>
                         <div class="span4">
-			    <button data-bind="click: homeXY, enable: isConnected">{{ _('Home X Y') }}</button><br>
+                            <button data-bind="click: homeXY, enable: isConnected">{{ _('Home X Y') }}</button><br>
                             <h4>Object pos. on printbed</h4>
                             <div class="form-group">
                                 <span>X&nbsp;</span><input id="objectPosX" type="number" step="0.01" class="input-mini text-right" data-bind="value: objectPositionX"></input>

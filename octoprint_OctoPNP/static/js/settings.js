@@ -33,6 +33,8 @@ $(function() {
         self.showKeycontrols = ko.observable(true);
         self.keycontrolHelpActive = ko.observable(false);
 
+        self.videoStreamActive = ko.observable(false);
+
         // helpers for eeprom access
         self.firmwareRegEx = /FIRMWARE_NAME:([^\s]+)/i;
         self.repetierRegEx = /Repetier_([^\s]*)/i;
@@ -47,7 +49,7 @@ $(function() {
         self.onBeforeBinding = function() {
             self.settings = self.settings.settings;
         };
-        
+
         // Home X Y
         self.homeXY = function() {
 
@@ -55,6 +57,21 @@ $(function() {
             self.control.sendCustomCommand({command: "T0"});
             self.control.sendCustomCommand({command: "G28 X Y"});
         };
+
+        self.startVideo = function(url) {
+            self.videoStreamActive(true);
+            self.videoTimer = setInterval(function(){ self._drawImage(url, true); }, 100);
+        };
+
+        self.stopVideo = function() {
+            clearInterval(self.videoTimer);
+            self.videoStreamActive(false);
+        };
+
+        // stop potential video stream when settings dialog is closed
+        self.onSettingsHidden = function() {
+            self.stopVideo();
+        }
         
         // Calibrate offset between primary extruder and head-camera
         self.headCameraOffset = function() {
@@ -65,6 +82,12 @@ $(function() {
             // delete if pnp offset in eeprom
             self.statusPnpNozzleOffset(false);
             
+            // should we start live preview?
+            self.stopVideo();
+            if(self.settings.plugins.OctoPNP.camera.head.http_path().length > 0) {
+                self.startVideo(self.settings.plugins.OctoPNP.camera.head.http_path());
+            }
+
             // Load eeprom for extruder calibation
             self.loadEeprom();
 
@@ -85,7 +108,9 @@ $(function() {
             self.keycontrolPossible(true);
 
             //trigger immage fetching
-            setTimeout(function() {self._getImage('HEAD');}, 8000);
+            if(!self.videoStreamActive()) {
+                setTimeout(function() {self._getImage('HEAD');}, 8000);
+            }
         };
 
         self.saveHeadCameraOffset = function() {
@@ -96,6 +121,9 @@ $(function() {
             //deactivate Keycontrol
             self.keycontrolPossible(false);
             self.statusHeadCameraOffset(false);
+
+            // stop potential live video preview
+            self.stopVideo();
         };
 
 
@@ -127,6 +155,9 @@ $(function() {
 
             // deactivate Keycontrol
             self.keycontrolPossible(false);
+
+            // stop potential live video preview
+            self.stopVideo();
         };
 
         // Move Ex to bed camera.
@@ -138,7 +169,13 @@ $(function() {
             // delete if pnp offset in eeprom
             self.statusPnpNozzleOffset(false);
 
-            // Switch to VacNozzle extruder
+            // should we start live preview?
+            self.stopVideo();
+            if(self.settings.plugins.OctoPNP.camera.bed.http_path().length > 0) {
+                self.startVideo(self.settings.plugins.OctoPNP.camera.bed.http_path());
+            }
+
+            // Switch to selected extruder
             self.control.sendCustomCommand({command: "G1 X100 Y150 F3000"});
             self.control.sendCustomCommand({command: "T" + self.selectedBedExtruder().toString()});
 
@@ -155,7 +192,9 @@ $(function() {
             self.keycontrolPossible(true);
 
             //trigger immage fetching
-            setTimeout(function() {self._getImage('BED');}, 8000);
+            if(!self.videoStreamActive()) {
+                setTimeout(function() {self._getImage('BED');}, 8000);
+            }
         };
         
         self.saveExtruderHeadCameraOffset = function() {
@@ -164,6 +203,9 @@ $(function() {
             
             // deactivate Button
             self.statusHeadCameraOffset(false);
+
+            // stop potential live video preview
+            self.stopVideo();
         };
         
         
@@ -177,6 +219,9 @@ $(function() {
             
             // deactivate Button
             self.statusBedCameraOffset(false);
+
+            // stop potential live video preview
+            self.stopVideo();
         };
 
         
@@ -186,13 +231,15 @@ $(function() {
             self.settings.plugins.OctoPNP.camera.bed.y(parseFloat(self.settings.plugins.OctoPNP.camera.bed.y())+self.offsetCorrectionY());
 
             //deactivate Keycontrol
-            
             self.keycontrolPossible(false);
             self.statusBedCameraOffset(false);
+
+            // stop potential live video preview
+            self.stopVideo();
         };
         
         
-        // delete if pnp offset in eeprom
+        // This should only be used if the PnP nozzle offset it not handled by the printer firmware
         // Move Vacuum bed camera to Nozzle.
         self.pnpNozzleOffset = function() {
             //deactivate other processes
@@ -201,6 +248,12 @@ $(function() {
             self.statusBedCameraOffset(false);
             // delete if pnp offset in eeprom
             self.statusPnpNozzleOffset(true);
+
+            // should we start live preview?
+            self.stopVideo();
+            if(self.settings.plugins.OctoPNP.camera.bed.http_path().length > 0) {
+                self.startVideo(self.settings.plugins.OctoPNP.camera.bed.http_path());
+            }
 
             // Move before toolchange
             //reset axis
@@ -221,7 +274,9 @@ $(function() {
             self.keycontrolPossible(true);
 
             //trigger immage fetching
-            setTimeout(function() {self._getImage('BED');}, 8000);
+            if(!self.videoStreamActive()) {
+                setTimeout(function() {self._getImage('BED');}, 8000);
+            }
         };
         
         // delete if pnp offset in eeprom
@@ -233,6 +288,9 @@ $(function() {
             //deactivate Keycontrol
             self.keycontrolPossible(false);
             self.statusPnpNozzleOffset(false);
+
+            // stop potential live video preview
+            self.stopVideo();
         };
         
         // calibrate tray position relative to primary extruder
@@ -244,11 +302,17 @@ $(function() {
             // delete if pnp offset in eeprom
             self.statusPnpNozzleOffset(false);
 
+            // should we start live preview?
+            self.stopVideo();
+            if(self.settings.plugins.OctoPNP.camera.head.http_path().length > 0) {
+                self.startVideo(self.settings.plugins.OctoPNP.camera.head.http_path());
+            }
+
             // Switch to primary extruder
             self.control.sendCustomCommand({command: "G1 X100 Y150 F3000"});
             self.control.sendCustomCommand({command: "T0"});
 
-            //computer corner position
+            //compute corner position
             var cornerOffsetX = 0.0;
             var cornerOffsetY = 0.0;
             switch (corner) {
@@ -279,9 +343,6 @@ $(function() {
             var x = parseFloat(self.settings.plugins.OctoPNP.tray.x()) + cornerOffsetX - parseFloat(self.settings.plugins.OctoPNP.camera.head.x());
             var y = parseFloat(self.settings.plugins.OctoPNP.tray.y()) + cornerOffsetY - parseFloat(self.settings.plugins.OctoPNP.camera.head.y());
             var z = parseFloat(self.settings.plugins.OctoPNP.tray.z()) + parseFloat(self.settings.plugins.OctoPNP.camera.head.z());
-            console.log(self.settings.plugins.OctoPNP.tray.z());
-            console.log(self.settings.plugins.OctoPNP.camera.head.z());
-            console.log(z);
             self.control.sendCustomCommand({command: "G1 X" + x + " Y" + y + " Z" + z + " F3000"});
 
             //reset offset correction values
@@ -292,7 +353,9 @@ $(function() {
             self.keycontrolPossible(true);
 
             //trigger immage fetching
-            setTimeout(function() {self._getImage('HEAD');}, 8000);
+            if(!self.videoStreamActive()) {
+                setTimeout(function() {self._getImage('HEAD');}, 8000);
+            }
         };
 
         self.saveTrayPosition = function() {
@@ -303,6 +366,9 @@ $(function() {
             //deactivate Keycontrol
             self.keycontrolPossible(false);
             self.statusTrayPosition(false);
+
+            // stop potential live video preview
+            self.stopVideo();
         };
 
 
@@ -325,10 +391,9 @@ $(function() {
             });
         };
 
-        self._drawImage = function(img) {
+        self._drawImage = function(img, break_cache = false) {
             var ctx=self._headCanvas.getContext("2d");  
             var localimg = new Image();
-            localimg.src = img;
             localimg.onload = function () {
                 var w = localimg.width;
                 var h = localimg.height;
@@ -343,15 +408,19 @@ $(function() {
                 ctx.fillRect(0, ((h*scale)/2)-0.5, w*scale, 1);
                 ctx.fillRect(((w*scale)/2)-0.5, 0, 1, h*scale);
             };
+            if(break_cache) {
+                img = img + "?" + new Date().getTime();
+            }
+            localimg.src = img;
         };
 
         self.onFocus = function (data, event) {
-            if (!self.keycontrolPossible) return;
+            if (!self.keycontrolPossible()) return;
             self.keycontrolActive(true);
         };
 
         self.onMouseOver = function (data, event) {
-            if (!self.keycontrolPossible) return;
+            if (!self.keycontrolPossible()) return;
             $("#webcam_container").focus();
             self.keycontrolActive(true);
         };
@@ -431,7 +500,7 @@ $(function() {
                     event.preventDefault();
                     return false;
             }
-            if(refreshImage) {
+            if(refreshImage && !self.videoStreamActive()) {
                 if(self.statusBedCameraOffset() || self.statusPnpNozzleOffset()) {
                     setTimeout(function() {self._getImage('BED');}, 300);
                 }else{

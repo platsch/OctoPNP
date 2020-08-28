@@ -123,7 +123,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                     },
                     "path": "",
                     "binary_thresh": 150,
-                    "grabScriptPath": ""
+                    "grab_script_path": "",
+                    "http_path" : ""
                 },
                 "bed": {
                     "x": 0,
@@ -135,7 +136,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                     },
                     "path": "",
                     "binary_thresh": 150,
-                    "grabScriptPath": ""
+                    "grab_script_path": "",
+                    "http_path" : ""
                 },
                 "image_logging": False
             }
@@ -561,9 +563,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         result = True
         grabScript = "";
         if(camera == "HEAD"):
-            grabScript = self._settings.get(["camera", "head", "grabScriptPath"])
+            grabScript = self._settings.get(["camera", "head", "grab_script_path"])
         if(camera == "BED"):
-            grabScript = self._settings.get(["camera", "bed", "grabScriptPath"])
+            grabScript = self._settings.get(["camera", "bed", "grab_script_path"])
         #os.path.dirname(os.path.realpath(__file__)) + "/cameras/grab.sh"
         try:
             if call([grabScript]) != 0:
