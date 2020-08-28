@@ -18,7 +18,7 @@
     Main author: Florens Wasserfall <wasserfall@kalanka.de>
 """
 
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 
 import octoprint.plugin
@@ -36,6 +36,7 @@ from .ImageProcessing import ImageProcessing
 
 
 __plugin_name__ = "OctoPNP"
+__plugin_pythoncompat__ = ">=2.7,<4"
 
 #instantiate plugin object and register hook for gcode injection
 def __plugin_load__():
@@ -164,8 +165,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 if self._grabImages(camera):
                     imagePath = self._settings.get(["camera", camera.lower(), "path"])
                     try:
-                        f = open(imagePath,"r")
-                        result = flask.jsonify(src="data:image/" + os.path.splitext(imagePath)[1] + ";base64,"+base64.b64encode(bytes(f.read())))
+                        f = open(imagePath,"rb")
+                        result = flask.jsonify(src="data:image/" + os.path.splitext(imagePath)[1] + ";base64,"+str(base64.b64encode(bytes(f.read())), "utf-8"))
                     except IOError:
                         result = flask.jsonify(error="Unable to open Image after fetching. Image path: " + imagePath)
                 else:
@@ -178,7 +179,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         if event == "FileSelected":
             self._currentPart = None
             xml = "";
-            f = open(payload.get("file"), 'r')
+            gcode_path = self._file_manager.path_on_disk(payload.get("origin"), payload.get("path"))
+            f = open(gcode_path, 'r')
             for line in f:
                 expression = re.search("<.*>", line)
                 if expression:
@@ -192,7 +194,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 sane, msg = self.smdparts.load(xml)
                 if sane:
                     #TODO: validate part informations against tray
-                    self._logger.info("Extracted information on %d parts from gcode file %s", self.smdparts.getPartCount(), payload.get("file"))
+                    self._logger.info("Extracted information on %d parts from gcode file %s", self.smdparts.getPartCount(), payload.get("name"))
                     self._updateUI("FILE", "")
                 else:
                     self._logger.info("XML parsing error: " + msg)
@@ -513,7 +515,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
     # get the position of the box (center of the box) containing part x relative to the [0,0] corner of the tray
     def _getTrayPosFromPartNr(self, partnr):
         partPos = self.smdparts.getPartPosition(partnr)
-        row = (partPos-1)/int(self._settings.get(["tray", "columns"]))+1
+        row = int((partPos-1)/int(self._settings.get(["tray", "columns"]))+1)
         col = ((partPos-1)%int(self._settings.get(["tray", "columns"])))+1
         self._logger.info("Selected object: %d. Position: box %d, row %d, col %d", partnr, partPos, row, col)
 
@@ -623,9 +625,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
             )
         elif event is "HEADIMAGE" or event is "BEDIMAGE":
             # open image and convert to base64
-            f = open(parameter,"r")
+            f = open(parameter,"rb")
             data = dict(
-                src = "data:image/" + os.path.splitext(parameter)[1] + ";base64,"+base64.b64encode(bytes(f.read()))
+                src = "data:image/" + os.path.splitext(parameter)[1] + ";base64,"+str(base64.b64encode(bytes(f.read())), "utf-8")
             )
 
         message = dict(

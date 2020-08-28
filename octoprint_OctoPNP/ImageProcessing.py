@@ -138,10 +138,10 @@ class ImageProcessing:
             rotation = rotation % 90
             result = -rotation if rotation < 45 else 90-rotation
 
-            if self._debug: print "Part deviation measured by bed camera: " + str(result)
+            if self._debug: print("Part deviation measured by bed camera: " + str(result))
         else:
-            if self._debug: print "Unable to locate part for finding the orientation"
             self._last_error = "Unable to locate part for finding the orientation"
+            if self._debug: print(self._last_error)
             result = False
 
         if self._interactive: cv2.imshow("contours",img)
@@ -183,8 +183,8 @@ class ImageProcessing:
             displacement_y=((res_y-cm_y)-res_y/2)/pxPerMM
             result = [displacement_x, -displacement_y]
         else:
-            if self._debug: print "Unable to locate part for correcting the position"
             self._last_error = "Unable to locate part for correcting the position"
+            if self._debug: print(self._last_error)
             result = False
 
         # write image for UI
@@ -224,7 +224,7 @@ class ImageProcessing:
 
         # depending on the OpenCV Version findContours returns 2 or 3 objects...
         #contours, hierarchy = cv2.findContours(binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, (0, 0));
-        contours = cv2.findContours(binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, offset=(0, 0))[1]
+        contours = cv2.findContours(binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, offset=(0, 0))[0]
 
 
         #cv2.drawContours(img, contours, -1, (0,255,0), 3) # draw basic contours
@@ -283,7 +283,7 @@ class ImageProcessing:
         if(mask_corners):
             circle_mask = np.zeros((h, w), np.uint8)
             circle_mask[:, :] = 255
-            cv2.circle(circle_mask,(w/2, h/2), min(w/2, h/2), 0, -1)
+            cv2.circle(circle_mask,(int(w/2), int(h/2)), min(int(w/2), int(h/2)), 0, -1)
             mask = cv2.bitwise_or(mask,circle_mask)
         # invert mask to get white objects on black background
         #inverse_mask = 255 - mask
