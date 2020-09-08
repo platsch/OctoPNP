@@ -18,6 +18,9 @@ $(function() {
         self.selectedHeadExtruder = ko.observable(0);
         self.selectedBedExtruder = ko.observable(1);
 
+        self.extruderOffsetX = ko.observable(0.0);
+        self.extruderOffsetY = ko.observable(0.0);
+
         self.isConnected = ko.computed(function() {
             return self.connection.isOperational() || self.connection.isReady() || self.connection.isPaused();
         });
@@ -35,11 +38,21 @@ $(function() {
 
         self.videoStreamActive = ko.observable(false);
 
-        // helpers for eeprom access
+        // firmware support detection
         self.firmwareRegEx = /FIRMWARE_NAME:([^\s]+)/i;
-        self.repetierRegEx = /Repetier_([^\s]*)/i;
+        self.supportedFirmWares = Object.freeze({
+            repetier: "REPETIER",
+            reprapfirmware: "REPRAPFIRMWARE",
+            notsupported: "NOTSUPPORTED",
+            unknown: "UNKNOWN"
+        });
+
+        self.detectedFirmware = self.supportedFirmWares.unknown;
+        self.detectedFirmwareInfo = ko.observable("<span style=\"color: red\">Firmware type not detected</span>");
+        self.isSupportedFirmware = ko.observable(false);
+
+        // helpers for eeprom access
         self.eepromDataRegEx = /EPR:(\d+) (\d+) ([^\s]+) (.+)/;
-        self.isRepetierFirmware = ko.observable(false);
         self.eepromData = ko.observableArray([]);
 
 
@@ -88,12 +101,13 @@ $(function() {
                 self.startVideo(self.settings.plugins.OctoPNP.camera.head.http_path());
             }
 
-            // Load eeprom for extruder calibation
-            self.loadEeprom();
+            // load offsets for given extruder
+            self.loadOffsets(self.selectedHeadExtruder());
 
-            // Switch to primary extruder
-            self.control.sendCustomCommand({command: "G1 X100 Y150 F3000"});
-            self.control.sendCustomCommand({command: "T0"});
+            // Switch to selected extruder
+            //self.control.sendCustomCommand({command: "G1 X100 Y150 F3000"});
+            //self.control.sendCustomCommand({command: "T0"});
+            self.control.sendCustomCommand({command: "T" + self.selectedHeadExtruder().toString()});
 
             //move camera to object
             var x = self.objectPositionX() - parseFloat(self.settings.plugins.OctoPNP.camera.head.x());
@@ -107,7 +121,7 @@ $(function() {
             //activate Keycontrol
             self.keycontrolPossible(true);
 
-            //trigger immage fetching
+            //trigger image fetching
             if(!self.videoStreamActive()) {
                 setTimeout(function() {self._getImage('HEAD');}, 8000);
             }
@@ -121,40 +135,6 @@ $(function() {
             //deactivate Keycontrol
             self.keycontrolPossible(false);
             self.statusHeadCameraOffset(false);
-
-            // stop potential live video preview
-            self.stopVideo();
-        };
-
-
-        self.saveExtruderOffset = function(ex) {
-            // Steps to save values:
-            // get current Extuder EEPROM starting with E1
-            ex = parseInt(ex)+1;
-            ex = ex.toString();
-
-            // get current offset for extruder x from eeprom
-            var oldOffsetX = parseFloat(self._getEepromValue("Extr." + ex + " X-offset"));
-            var oldOffsetY = parseFloat(self._getEepromValue("Extr." + ex + " Y-offset"));
-            // get steps per mm for x and y axis
-            var stepsPerMMX = parseFloat(self._getEepromValue("X-axis steps per mm"));
-            var stepsPerMMY = parseFloat(self._getEepromValue("Y-axis steps per mm"));
-            // compute offset steps from offsetCorrection values
-            var offsetX = oldOffsetX + self.offsetCorrectionX() * stepsPerMMX;
-            var offsetY = oldOffsetY + self.offsetCorrectionY() * stepsPerMMY;
-            // save to eeprom
-            self._setEepromValue("Extr." + ex + " X-offset", offsetX);
-            self._setEepromValue("Extr." + ex + " Y-offset", offsetY);
-            //console.log(offsetX);
-            //console.log(offsetY);
-            self.saveEeprom();
-            
-            //reset offset correction values
-            self.offsetCorrectionX(0.0);
-            self.offsetCorrectionY(0.0);
-
-            // deactivate Keycontrol
-            self.keycontrolPossible(false);
 
             // stop potential live video preview
             self.stopVideo();
@@ -175,11 +155,14 @@ $(function() {
                 self.startVideo(self.settings.plugins.OctoPNP.camera.bed.http_path());
             }
 
+            // load offsets for given extruder
+            self.loadOffsets(self.selectedBedExtruder());
+
             // Switch to selected extruder
-            self.control.sendCustomCommand({command: "G1 X100 Y150 F3000"});
+            //self.control.sendCustomCommand({command: "G1 X100 Y150 F3000"});
             self.control.sendCustomCommand({command: "T" + self.selectedBedExtruder().toString()});
 
-            //move camera to object
+            //move tool to camera
             var x = parseFloat(self.settings.plugins.OctoPNP.camera.bed.x());
             var y = parseFloat(self.settings.plugins.OctoPNP.camera.bed.y());
             self.control.sendCustomCommand({command: "G1 X" + x + " Y" + y + " Z" + self.settings.plugins.OctoPNP.camera.bed.z() + " F3000"});
@@ -191,12 +174,25 @@ $(function() {
             //activate Keycontrol
             self.keycontrolPossible(true);
 
-            //trigger immage fetching
+            //trigger image fetching
             if(!self.videoStreamActive()) {
                 setTimeout(function() {self._getImage('BED');}, 8000);
             }
         };
-        
+
+        self.saveBedCameraPosition = function() {
+            //save values
+            self.settings.plugins.OctoPNP.camera.bed.x(parseFloat(self.settings.plugins.OctoPNP.camera.bed.x())+self.offsetCorrectionX());
+            self.settings.plugins.OctoPNP.camera.bed.y(parseFloat(self.settings.plugins.OctoPNP.camera.bed.y())+self.offsetCorrectionY());
+
+            //deactivate Keycontrol
+            self.keycontrolPossible(false);
+            self.statusBedCameraOffset(false);
+
+            // stop potential live video preview
+            self.stopVideo();
+        };
+
         self.saveExtruderHeadCameraOffset = function() {
             // save offset
             self.saveExtruderOffset(self.selectedHeadExtruder());
@@ -224,15 +220,48 @@ $(function() {
             self.stopVideo();
         };
 
-        
-        self.saveBedCameraPosition = function() {
-            //save values
-            self.settings.plugins.OctoPNP.camera.bed.x(parseFloat(self.settings.plugins.OctoPNP.camera.bed.x())+self.offsetCorrectionX());
-            self.settings.plugins.OctoPNP.camera.bed.y(parseFloat(self.settings.plugins.OctoPNP.camera.bed.y())+self.offsetCorrectionY());
+        self.saveExtruderOffset = function(ex) {
+            switch (self.detectedFirmware) {
+                case self.supportedFirmWares.repetier:
+                    // Steps to save values:
+                    // get current Extuder EEPROM starting with E1
+                    ex = parseInt(ex)+1;
+                    ex = ex.toString();
 
-            //deactivate Keycontrol
+                    // get current offset for extruder x from eeprom
+                    var oldOffsetX = parseFloat(self._getEepromValue("Extr." + ex + " X-offset"));
+                    var oldOffsetY = parseFloat(self._getEepromValue("Extr." + ex + " Y-offset"));
+                    // get steps per mm for x and y axis
+                    var stepsPerMMX = parseFloat(self._getEepromValue("X-axis steps per mm"));
+                    var stepsPerMMY = parseFloat(self._getEepromValue("Y-axis steps per mm"));
+                    // compute offset steps from offsetCorrection values
+                    var offsetX = oldOffsetX + self.offsetCorrectionX() * stepsPerMMX;
+                    var offsetY = oldOffsetY + self.offsetCorrectionY() * stepsPerMMY;
+                    // save to eeprom
+                    self._setEepromValue("Extr." + ex + " X-offset", offsetX);
+                    self._setEepromValue("Extr." + ex + " Y-offset", offsetY);
+                    //console.log(offsetX);
+                    //console.log(offsetY);
+                    self.saveEeprom();
+                    break;
+                case self.supportedFirmWares.reprapfirmware:
+                    var offsetX = self.extruderOffsetX() + self.offsetCorrectionX();
+                    var offsetY = self.extruderOffsetY() + self.offsetCorrectionY();
+                    self.control.sendCustomCommand({command: "G10 P" + ex.toString() + " X" + offsetX.toString() + " Y" + offsetY.toString()});
+                    // warning: untested! this command maybe requires an explicit Z-value!
+                    break;
+                default:
+                    return false;
+            }
+
+            //reset offset correction values
+            self.offsetCorrectionX(0.0);
+            self.offsetCorrectionY(0.0);
+            self.extruderOffsetX(0.0);
+            self.extruderOffsetY(0.0);
+
+            // deactivate Keycontrol
             self.keycontrolPossible(false);
-            self.statusBedCameraOffset(false);
 
             // stop potential live video preview
             self.stopVideo();
@@ -510,62 +539,126 @@ $(function() {
         };
 
 
-        // The following functions provide "infrastructure" to access and modify eeprom values
+        // The following functions provide "infrastructure" to detect the printer's firmware type and to access and modify eeprom values
         self.onStartup = function() {
             $('#settings_plugin_OctoPNP_link a').on('show', function(e) {
-                if (self.isConnected() && !self.isRepetierFirmware())
-                    self._requestFirmwareInfo();
-            });
-        }
+                if(!self.isConnected())
+                    self.detectedFirmwareInfo("<span style=\"color: red\">Printer not connected! Calibration requires a connection!</span>");
 
-        self.fromHistoryData = function(data) {
-            _.each(data.logs, function(line) {
-                var match = self.firmwareRegEx.exec(line);
-                if (match != null) {
-                    if (self.repetierRegEx.exec(match[0]))
-                        self.isRepetierFirmware(true);
+                if (self.isConnected() && self.detectedFirmware == self.supportedFirmWares.unknown) {
+                    self.isSupportedFirmware(false);
+                    self._requestFirmwareInfo();
                 }
             });
-        };
-
-        self.fromCurrentData = function(data) {
-            if (!self.isRepetierFirmware()) {
-                _.each(data.logs, function (line) {
-                    var match = self.firmwareRegEx.exec(line);
-                    if (match) {
-                        if (self.repetierRegEx.exec(match[0]))
-                            self.isRepetierFirmware(true);
-                    }
-                });
-            }
-            else
-            {
-                _.each(data.logs, function (line) {
-                    var match = self.eepromDataRegEx.exec(line);
-                    if (match) {
-                        self.eepromData.push({
-                            dataType: match[1],
-                            position: match[2],
-                            origValue: match[3],
-                            value: match[3],
-                            description: match[4]
-                        });
-                    }
-                });
-            }
-        };
+        }
 
         self.onEventConnected = function() {
             self._requestFirmwareInfo();
         }
 
         self.onEventDisconnected = function() {
-            self.isRepetierFirmware(false);
+            self.detectedFirmware = self.supportedFirmWares.unknown;
+            self.isSupportedFirmware(false);
+            self.detectedFirmwareInfo("<span style=\"color: red\">Printer not connected! Calibration requires a connection!</span>");
         };
 
-        self.loadEeprom = function() {
-            self.eepromData([]);
-            self._requestEepromData();
+        self._requestFirmwareInfo = function() {
+            // update UI to unknown firmware information
+            self.detectedFirmware = self.supportedFirmWares.unknown;
+            self.isSupportedFirmware(false);
+            self.detectedFirmwareInfo("<span style=\"color: red\">Firmware type not detected</span>");
+
+            // request firmware info from printer
+            self.control.sendCustomCommand({ command: "M115" });
+        };
+
+        self.fromHistoryData = function(data) {
+            _.each(data.logs, function(line) {
+                var match = self.firmwareRegEx.exec(line);
+                if (match != null) {
+                    self._detectFirmwareInfo(line);
+                }
+            });
+        };
+
+        self.fromCurrentData = function(data) {
+            switch (self.detectedFirmware) {
+                case self.supportedFirmWares.unknown:
+                    _.each(data.logs, function (line) {
+                        var match = self.firmwareRegEx.exec(line);
+                        if (match) {
+                            self._detectFirmwareInfo(line);
+                        }
+                    });
+                    break;
+                case self.supportedFirmWares.repetier:
+                    _.each(data.logs, function (line) {
+                        var match = (new RegExp(/EPR:(\d+) (\d+) ([^\s]+) (.+)/)).exec(line);
+                        if (match) {
+                            self.eepromData.push({
+                                dataType: match[1],
+                                position: match[2],
+                                origValue: match[3],
+                                value: match[3],
+                                description: match[4]
+                            });
+                        }
+                    });
+                    break;
+                case self.supportedFirmWares.reprapfirmware:
+                    _.each(data.logs, function (line) {
+                        // THIS IST NOT THE CORRECT REGEXP! Not implemented yet!!!
+                        var match = (new RegExp(/EPR:(\d+) (\d+) ([^\s]+) (.+)/)).exec(line);
+                        if (match) {
+                            //self.extruderOffsetX(value);
+                            //self.extruderOffsetY(value);
+                        }
+                    });
+                    break;
+                default:
+                    return false;
+            }
+        };
+
+        self._detectFirmwareInfo = function(line) {
+            var match;
+
+            match = (new RegExp(/Virtual\sMarlin([^\s]*)/i)).exec(line);
+            if (match) {
+                self.detectedFirmwareInfo("<span style=\"color: orange\">Connected to Octoprints virtual printer! Use for testing only!</span>");
+                self.detectedFirmware = self.supportedFirmWares.notsupported;
+                self.isSupportedFirmware(false);
+            }
+
+            match = (new RegExp(/Repetier_([^\s]*)/i)).exec(line);
+            if (match) {
+                self.detectedFirmwareInfo("<span style=\"color: green\">Connected to Repetier Firmware</span>");
+                self.detectedFirmware = self.supportedFirmWares.repetier;
+                self.isSupportedFirmware(true);
+            }
+
+            match = (new RegExp(/RepRapFirmware([^\s]*)/i)).exec(line);
+            if (match) {
+                self.detectedFirmwareInfo("<span style=\"color: green\">Connected to RepRapFirmware</span>");
+                self.detectedFirmware = self.supportedFirmWares.reprapfirmware;
+                self.isSupportedFirmware(true);
+            }
+        };
+
+        self.loadOffsets = function(extruder) {
+            self.extruderOffsetX(0.0);
+            self.extruderOffsetY(0.0);
+            switch (self.detectedFirmware) {
+                case self.supportedFirmWares.repetier:
+                    self.eepromData([]);
+                    self.control.sendCustomCommand({ command: "M205" });
+                    break;
+                case self.supportedFirmWares.reprapfirmware:
+                    self.control.sendCustomCommand({command: "G10 P" + extruder.toString()});
+                    break;
+                default:
+                    return false;
+            }
         };
 
         self.saveEeprom = function()  {
@@ -599,13 +692,6 @@ $(function() {
             });
         }
 
-        self._requestFirmwareInfo = function() {
-            self.control.sendCustomCommand({ command: "M115" });
-        };
-
-        self._requestEepromData = function() {
-            self.control.sendCustomCommand({ command: "M205" });
-        }
         self._requestSaveDataToEeprom = function(data_type, position, value) {
             var cmd = "M206 T" + data_type + " P" + position;
             if (data_type == 3) {
