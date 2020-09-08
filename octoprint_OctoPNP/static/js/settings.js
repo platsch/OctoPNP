@@ -493,21 +493,26 @@ $(function() {
                     break;
                 case 49: // number 1
                 case 97: // numpad 1
-                    // Distance 0.1
-                    self.jogDistance(0.1);
+                    // Distance 0.01
+                    self.jogDistance(0.01);
                     break;
                 case 50: // number 2
                 case 98: // numpad 2
-                    // Distance 1
-                    self.jogDistance(1.0);
+                    // Distance 0.1
+                    self.jogDistance(0.1);
                     break;
                 case 51: // number 3
                 case 99: // numpad 3
-                    // Distance 10
-                    self.jogDistance(10.0);
+                    // Distance 1
+                    self.jogDistance(1.0);
                     break;
                 case 52: // number 4
                 case 100: // numpad 4
+                    // Distance 10
+                    self.jogDistance(10.0);
+                    break;
+                case 53: // number 5
+                case 101: // numpad 5
                     // Distance 100
                     self.jogDistance(100.0);
                     break;
