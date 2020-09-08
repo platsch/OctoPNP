@@ -115,7 +115,8 @@ For setups with all tools mounted to a single carriage offsets should generally 
 ## Cameras
 ### Position
 The camera position is relative to the primary nozzle for the head camera (this camera is mounted somewhere next to the extruder at the X-axis and follows the printheads movements). The bed camera is mounted to the printers frame, the camera position is absolute and again relative to the primary extruder.
-* `Focus distance` defines the printbead Z-position for the optimal focus point. 
+* `Focus distance` defines the printbead Z-position for the optimal focus point.
+* `Focus axis` sets the name of the axis to move the camera. Default is `Z` for a camera mounted to the printbed. RepRapFirmware supports `ABCUV` and `W` to address additional axis. Leave blank if the camera is entirely static and the printhead cannot be moved with respect to the camera in the vertical dimension.
 * The `px/mm` value is used by the image processing to measure offsets and only required for the bed camera, since the head camera utilizes the known box size for on demand calibration.
 * The `binarization threshold` is used by the image processing to seperate object and background. The value depends on the camera and illumination, currently there is no good calibration method.
 * `Image path` and `grab script path` denote the locations of script and preprocessed images as described in the Prerequirements section.
