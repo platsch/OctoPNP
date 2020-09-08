@@ -14,6 +14,7 @@ It currently requires the following hardware extensions:
 # Installation
 ## Prerequirements
 To achieve higher compatibility and modularity, OctoPNP doesn't acces the cameras directly. Every time an image is required, OctoPNP executes a user defined script which must be adapted for every installation according to the deployed camera setup. OctoPNP expects a set of correctly cropped and rotated images after executing the script. Filenames and path for images and script must be set in the settings dialog.
+The calibration feature supports direct camera access via http requests to generate a live view e.g. via mjpg_streamer.
 
 ## OpenCV on embedded hardware (Raspberry Pi)
 OctoPNP requires `numpy`and `OpenCV`, both are listed in the `requirements.txt` and should be automatically resolved via pip during installation.
@@ -108,12 +109,14 @@ The offset for the vacuum nozzle must be handled by OctoPNP or by the firmware.
 The camera position is relative to the primary nozzle for the head camera (this camera is mounted somewhere next to the extruder at the X-axis and follows the printheads movements). The bed camera is mounted to the printers frame, the camera position is absolute and again relative to the primary extruder.
 * `Focus distance` defines the printbead Z-position for the optimal focus point. 
 * The `px/mm` value is used by the image processing to measure offsets and only required for the bed camera, since the head camera utilizes the known box size for on demand calibration.
-* `Image path` and `grab script path` denote the locations of script and preprocessed images as described in the Prerequirements section.
 * The `binarization threshold` is used by the image processing to seperate object and background. The value depends on the camera and illumination, currently there is no good calibration method.
+* `Image path` and `grab script path` denote the locations of script and preprocessed images as described in the Prerequirements section.
+* `http-path` can be used if the camera provides an http interface (e.g. with mjpg_streamer). This is only used to generate a live view during calibration, not for actual pick and place operations. Leave empty to use the script base method for calibration. Note that for technical reasons only still-images can be used, mjpg streams or other video formats are not supported!
+
 ### Image acquisition
 The `cameras` folder contains simple scripts to fetch single images from
 * any camera which can be accessed with an http get command (http)
-* Baser industrial cameras supporting the pylon framework (pylon, tested with Pilot and Ace models)
+* Basler industrial cameras supporting the pylon framework (pylon, tested with Pilot and Ace models)
 
 ## Calibration wizard
 The calibration "wizard" is an experimental set of tools to quickly achieve several calibration tasks with high precision.
