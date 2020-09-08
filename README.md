@@ -96,14 +96,22 @@ The tray-position is set in relation to the primary extruder (usually the plasti
 ![octopnp_settings_tray_small](https://cloud.githubusercontent.com/assets/4190756/12114966/9a0747d2-b3ae-11e5-93e0-79d14a2ee632.png)
 
 ## Extruders / Nozzles
-The minimal setup requires 3 nozzles:
+The minimal setup typically requires 3 nozzles / tools:
 * The plastic extruder to print the object (primary extruder)
 * An Extruder for liquids to print the conductive wires
 * A vacuum nozzle to grip SMD-parts
 
-The offset is always relative to the primary extruder. Offsets can be handled by the slicer, by OctoPNP or by the printer firmware. 
-The offset for the liquid extruder must be handled by the slicer or by the firmware, OctoPNP is not aware of this extruder. Firmware offset is encouraged to avoid frequent G-code generation, since for most setups the offset has to be re-calibrated at least after every refill of the extruder. OctoPNP provides the calibration tool to quickly correct the firmware offset.
+Offsets between tools can be handled by the slicer, by OctoPNP or by the printer firmware.
+Having the firmware manage all offsets is generally highly encouraged to avoid frequent G-code generation, since for most setups the offset has to be re-calibrated at least after every refill of the extruder.
+The offset for the liquid extruder must be handled by the slicer or by the firmware, OctoPNP is not aware of this extruder.
 The offset for the vacuum nozzle must be handled by OctoPNP or by the firmware.
+OctoPNP provides a calibration tool to quickly correct the firmware offsets.
+
+For toolchanger setups all offsets should generally be measured in relation to a fixed point at the toolhead. This way, once a tool is mounted, the bed camera and tray positions are automatically in the correct frame. If the head camera is mounted to the toolhead instead of being an individual tool, all images should probably be taken with no tool attached (extruder T-1).
+
+For setups with all tools mounted to a single carriage offsets should generally be measured in relation to the first extruder (T0).
+
+
 ## Cameras
 ### Position
 The camera position is relative to the primary nozzle for the head camera (this camera is mounted somewhere next to the extruder at the X-axis and follows the printheads movements). The bed camera is mounted to the printers frame, the camera position is absolute and again relative to the primary extruder.
