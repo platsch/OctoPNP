@@ -165,7 +165,11 @@ $(function() {
             //move tool to camera
             var x = parseFloat(self.settings.plugins.OctoPNP.camera.bed.x());
             var y = parseFloat(self.settings.plugins.OctoPNP.camera.bed.y());
-            self.control.sendCustomCommand({command: "G1 X" + x + " Y" + y + " Z" + self.settings.plugins.OctoPNP.camera.bed.z() + " F3000"});
+            self.control.sendCustomCommand({command: "G1 X" + x + " Y" + y + " F3000"});
+            if(self.settings.plugins.OctoPNP.camera.bed.focus_axis().length > 0) {
+                var z = parseFloat(self.settings.plugins.OctoPNP.camera.bed.z());
+                self.control.sendCustomCommand({command: "G1 " + self.settings.plugins.OctoPNP.camera.bed.focus_axis() + z});
+            }
 
             //reset offset correction values
             self.offsetCorrectionX(0.0);

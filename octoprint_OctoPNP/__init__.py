@@ -130,6 +130,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                     "x": 0,
                     "y": 0,
                     "z": 0,
+                    "focus_axis" : "Z",
                     "pxPerMM": {
                         "x": 50.0,
                         "y": 50.0
@@ -413,7 +414,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                        float(self._settings.get(["camera", "bed", "z"]))+self.smdparts.getPartHeight(partnr)]
 
         self._printer.commands("G1 X" + str(vacuum_dest[0]) + " Y" + str(vacuum_dest[1]) + " F"  + str(self.FEEDRATE))
-        self._printer.commands("G1 Z" + str(vacuum_dest[2]) + " F"  + str(self.FEEDRATE))
+        camera_axis = str(self._settings.get(["camera", "bed", "focus_axis"]))
+        if(len(camera_axis) > 0):
+            self._printer.commands("G1 " + camera_axis + str(vacuum_dest[2]) + " F"  + str(self.FEEDRATE))
         self._logger.info("Moving to bed camera: %s", cmd)
 
     def _alignPart(self, partnr):
