@@ -292,12 +292,16 @@ $(function() {
             //reset axis
             self.control.sendCustomCommand({command: "G1 X100 Y150 F3000"});
             // Switch to VacNozzle extruder
-            self.control.sendCustomCommand({command: "T" + self.settings.plugins.OctoPNP.vacnozzle.extruder_nr().toString()});
+            self.control.sendCustomCommand({command: "T" + self.settings.plugins.OctoPNP.vacnozzle.tool_nr().toString()});
             
             //move camera to object
             var x = parseFloat(self.settings.plugins.OctoPNP.camera.bed.x()) - parseFloat(self.settings.plugins.OctoPNP.vacnozzle.x());
             var y = parseFloat(self.settings.plugins.OctoPNP.camera.bed.y()) - parseFloat(self.settings.plugins.OctoPNP.vacnozzle.y());
-            self.control.sendCustomCommand({command: "G1 X" + x + " Y" + y + " Z" + self.settings.plugins.OctoPNP.camera.bed.z() + " F3000"});
+            self.control.sendCustomCommand({command: "G1 X" + x + " Y" + y + " F3000"});
+            if(self.settings.plugins.OctoPNP.camera.bed.focus_axis().length > 0) {
+                var z = parseFloat(self.settings.plugins.OctoPNP.camera.bed.z());
+                self.control.sendCustomCommand({command: "G1 " + self.settings.plugins.OctoPNP.camera.bed.focus_axis() + z});
+            }
             
             //reset offset correction values
             self.offsetCorrectionX(0.0);
@@ -341,9 +345,9 @@ $(function() {
                 self.startVideo(self.settings.plugins.OctoPNP.camera.head.http_path());
             }
 
-            // Switch to primary extruder
+            // Switch to head camera tool
             self.control.sendCustomCommand({command: "G1 X100 Y150 F3000"});
-            self.control.sendCustomCommand({command: "T0"});
+            self.control.sendCustomCommand({command: "T" + self.settings.plugins.OctoPNP.camera.head.tool_nr().toString()});
 
             //compute corner position
             var cornerOffsetX = 0.0;
@@ -376,7 +380,8 @@ $(function() {
             var x = parseFloat(self.settings.plugins.OctoPNP.tray.x()) + cornerOffsetX - parseFloat(self.settings.plugins.OctoPNP.camera.head.x());
             var y = parseFloat(self.settings.plugins.OctoPNP.tray.y()) + cornerOffsetY - parseFloat(self.settings.plugins.OctoPNP.camera.head.y());
             var z = parseFloat(self.settings.plugins.OctoPNP.tray.z()) + parseFloat(self.settings.plugins.OctoPNP.camera.head.z());
-            self.control.sendCustomCommand({command: "G1 X" + x + " Y" + y + " Z" + z + " F3000"});
+            self.control.sendCustomCommand({command: "G1 " + self.settings.plugins.OctoPNP.tray.axis() + z + " F3000"});
+            self.control.sendCustomCommand({command: "G1 X" + x + " Y" + y + " F3000"});
 
             //reset offset correction values
             self.offsetCorrectionX(0.0);

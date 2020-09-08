@@ -91,12 +91,11 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
     def get_settings_defaults(self):
         return {
-            #"publicHost": None,
-            #"publicPort": None,
             "tray": {
                 "x": 0,
                 "y": 0,
                 "z": 0,
+                "axis": "Z",
                 "rows" : 5,
                 "columns": 5,
                 "boxsize": 10,
@@ -106,7 +105,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 "x": 0,
                 "y": 0,
                 "z_pressure": 0,
-                "extruder_nr": 2,
+                "tool_nr": 2,
                 "grip_vacuum_gcode": "M340 P0 S1200",
                 "release_vacuum_gcode": "M340 P0 S1500",
                 "lower_nozzle_gcode": "",
@@ -117,6 +116,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                     "x": 0,
                     "y": 0,
                     "z": 0,
+                    "tool_nr": 0,
                     "pxPerMM": {
                         "x": 50.0,
                         "y": 50.0
@@ -345,8 +345,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
     def _moveCameraToPart(self, partnr):
-        # switch to primary extruder, since the head camera is relative to this extruder and the offset to PNP nozzle might not be known (firmware offset)
-        self._printer.commands("T0")
+        # switch to camera tool
+        self._printer.commands("T" + str(self._settings.get(["camera", "head", "tool_nr"])))
         # move camera to part position
         tray_offset = self._getTrayPosFromPartNr(partnr) # get box position on tray
         camera_offset = [tray_offset[0]-float(self._settings.get(["camera", "head", "x"])), tray_offset[1]-float(self._settings.get(["camera", "head", "y"])), float(self._settings.get(["camera", "head", "z"])) + tray_offset[2]]
@@ -354,9 +354,11 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         self._logger.info("Move camera to: " + cmd)
         self._printer.commands("G91") # relative positioning
         self._printer.commands("G1 Z5 F" + str(self.FEEDRATE)) # lift printhead
+        if(self._settings.get(["tray", "axis"]) != "Z"):
+            self._printer.commands("G1 " + self._settings.get(["tray", "axis"]) + str(camera_offset[2]+5)) # lower tray
         self._printer.commands("G90") # absolute positioning
         self._printer.commands(cmd)
-        self._printer.commands("G1 Z" + str(camera_offset[2]) + " F" + str(self.FEEDRATE)) # lower printhead
+        self._printer.commands("G1 " + self._settings.get(["tray", "axis"]) + str(camera_offset[2]) + " F" + str(self.FEEDRATE)) # move tray to camera
 
 
     def _pickPart(self, partnr):
@@ -395,18 +397,21 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         vacuum_dest = [tray_offset[0]+part_offset[0]-float(self._settings.get(["vacnozzle", "x"])),\
                          tray_offset[1]+part_offset[1]-float(self._settings.get(["vacnozzle", "y"])),\
                          tray_offset[2]+self.smdparts.getPartHeight(partnr)-float(self._settings.get(["vacnozzle", "z_pressure"]))]
+        tray_axis = str(self._settings.get(["tray", "axis"]))
 
         # move vac nozzle to part and pick
-        self._printer.commands("T" + str(self._settings.get(["vacnozzle", "extruder_nr"])))
-        cmd = "G1 X" + str(vacuum_dest[0]) + " Y" + str(vacuum_dest[1]) + " F" + str(self.FEEDRATE)
-        self._printer.commands(cmd)
-        self._printer.commands("G1 Z" + str(vacuum_dest[2]+10))
+        self._printer.commands("T" + str(self._settings.get(["vacnozzle", "tool_nr"])))
+        if(tray_axis != "Z"):
+            self._printer.commands("G1 " + tray_axis + str(vacuum_dest[2]+5))
+        self._printer.commands("G1 X" + str(vacuum_dest[0]) + " Y" + str(vacuum_dest[1]) + " F" + str(self.FEEDRATE))
+        if(tray_axis == "Z"):
+            self._printer.commands("G1 Z" + str(vacuum_dest[2]+10))
         self._releaseVacuum()
         self._lowerVacuumNozzle()
-        self._printer.commands("G1 Z" + str(vacuum_dest[2]) + "F1000")
+        self._printer.commands("G1 " + tray_axis + str(vacuum_dest[2]) + " F1000")
         self._gripVacuum()
         self._printer.commands("G4 S1")
-        self._printer.commands("G1 Z" + str(vacuum_dest[2]+5) + "F1000")
+        self._printer.commands("G1 " + tray_axis + str(vacuum_dest[2]+5) + " F1000")
 
         # move to bed camera
         vacuum_dest = [float(self._settings.get(["camera", "bed", "x"]))-float(self._settings.get(["vacnozzle", "x"])),\
@@ -417,7 +422,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         camera_axis = str(self._settings.get(["camera", "bed", "focus_axis"]))
         if(len(camera_axis) > 0):
             self._printer.commands("G1 " + camera_axis + str(vacuum_dest[2]) + " F"  + str(self.FEEDRATE))
-        self._logger.info("Moving to bed camera: %s", cmd)
+        self._logger.info("Moving to bed camera")
 
     def _alignPart(self, partnr):
         orientation_offset = 0
