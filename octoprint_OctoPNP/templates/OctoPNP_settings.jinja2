@@ -486,14 +486,14 @@
                             <button data-bind="click: headCameraOffset, enable: isConnected">{{ _('Camera to object') }}</button><br>
                             E: <input type="number" step="1" class="input-mini text-right" data-bind="value: selectedHeadExtruder">
                             <button data-bind="click: saveHeadCameraOffset, enable: statusHeadCameraOffset">{{ _('Save camera offset') }}</button>
-                            <button data-bind="click: saveExtruderHeadCameraOffset, enable: (statusHeadCameraOffset() && isSupportedFirmware())">{{ _('Save extruder offset') }}</button>
+                            <button data-bind="click: saveExtruderHeadCameraOffset, enable: (statusHeadCameraOffset() && isSupportedFirmware() && (selectedHeadExtruder >= 0))">{{ _('Save extruder offset') }}</button>
                             <br><br>
                             
                             <h4>Ex <-> BedCamera</h4>
                             <button data-bind="click: bedCameraPosition, enable: isConnected">{{ _('Extruder to Camera') }}</button><br>
                             E: <input type="number" step="1" class="input-mini text-right" data-bind="value: selectedBedExtruder">
                             <button data-bind="click: saveBedCameraPosition, enable: statusBedCameraOffset">{{ _('Save camera offset') }}</button>
-                            <button data-bind="click: saveExtruderBedCameraOffset, enable: (statusBedCameraOffset() && isSupportedFirmware())">{{ _('Save extruder offset') }}</button>
+                            <button data-bind="click: saveExtruderBedCameraOffset, enable: (statusBedCameraOffset() && isSupportedFirmware() && (selectedBedExtruder >= 0))">{{ _('Save extruder offset') }}</button>
                             <br><br>
 
                             <h4>BedCamera <-> PNPNozzle</h4>
