@@ -39,7 +39,7 @@ $(function() {
         self.videoStreamActive = ko.observable(false);
 
         // firmware support detection
-        self.firmwareRegEx = /FIRMWARE_NAME:([^\s]+)/i;
+        self.firmwareRegEx = /FIRMWARE_NAME:/i;
         self.supportedFirmWares = Object.freeze({
             repetier: "REPETIER",
             reprapfirmware: "REPRAPFIRMWARE",
