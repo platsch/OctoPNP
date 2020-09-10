@@ -252,7 +252,8 @@ $(function() {
                     var offsetX = self.extruderOffsetX() + self.offsetCorrectionX();
                     var offsetY = self.extruderOffsetY() + self.offsetCorrectionY();
                     self.control.sendCustomCommand({command: "G10 P" + ex.toString() + " X" + offsetX.toString() + " Y" + offsetY.toString()});
-                    // warning: untested! this command maybe requires an explicit Z-value!
+                    // save updated offsets to SD card to make the change permanent
+                    self.control.sendCustomCommand("M500 P10");
                     break;
                 default:
                     return false;
@@ -621,11 +622,13 @@ $(function() {
                     break;
                 case self.supportedFirmWares.reprapfirmware:
                     _.each(data.logs, function (line) {
-                        // THIS IST NOT THE CORRECT REGEXP! Not implemented yet!!!
-                        var match = (new RegExp(/EPR:(\d+) (\d+) ([^\s]+) (.+)/)).exec(line);
+                        // The printer should report something like this:
+                        // "Tool 0 offsets: X-9.00 Y39.00 Z-4.85 [..]"
+                        var match = (new RegExp(/Tool (\d+).*?X(-*\d+\.\d+).*?Y(-*\d+\.\d+)/i).exec(line);
                         if (match) {
-                            //self.extruderOffsetX(value);
-                            //self.extruderOffsetY(value);
+                            if ((self.statusHeadCameraOffset() && match[1] == self.selectedHeadExtruder()) || (self.statusBedCameraOffset() && match[1] == self.selectedBedExtruder()))
+                            self.extruderOffsetX(match[2]);
+                            self.extruderOffsetY(match[3]);
                         }
                     });
                     break;
@@ -668,7 +671,9 @@ $(function() {
                     self.control.sendCustomCommand({ command: "M205" });
                     break;
                 case self.supportedFirmWares.reprapfirmware:
-                    self.control.sendCustomCommand({command: "G10 P" + extruder.toString()});
+                    if(extruder >= 0) {
+                        self.control.sendCustomCommand({command: "G10 P" + extruder.toString()});
+                    }
                     break;
                 default:
                     return false;
