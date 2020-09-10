@@ -628,8 +628,8 @@ $(function() {
                         var match = (new RegExp(/Tool (\d+).*?X(-*\d+\.\d+).*?Y(-*\d+\.\d+)/i).exec(line));
                         if (match) {
                             if ((self.statusHeadCameraOffset() && match[1] == self.selectedHeadExtruder()) || (self.statusBedCameraOffset() && match[1] == self.selectedBedExtruder()))
-                            self.extruderOffsetX(match[2]);
-                            self.extruderOffsetY(match[3]);
+                            self.extruderOffsetX(parseFloat(match[2]));
+                            self.extruderOffsetY(parseFloat(match[3]));
                         }
                     });
                     break;
