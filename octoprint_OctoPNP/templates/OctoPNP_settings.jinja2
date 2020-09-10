@@ -361,7 +361,7 @@
         </div>
 
 
-        <!-- Nozzle settings -->
+        <!-- Vacuum tool settings -->
         <div class="accordion-group">
             <div class="accordion-heading">
                 <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#nozzle-settings"><h4>{{ _('Vacuum Nozzle') }}</h4></a>
@@ -369,9 +369,10 @@
             <div id="nozzle-settings" class="accordion-body collapse">
                 <div class="accordion-inner">
                     <div class="row-fluid">
-                        <div class="span4"><h4>{{ _('Nozzle Offset') }}</h4></div>
+                        <label class="control-label" for="vacnozzle.use_offsets">{{ _(' ') }}</label>
+                        <input id="vacnozzle.use_offsets" type="checkbox" data-bind="checked: settings.plugins.OctoPNP.vacnozzle.use_offsets"> <span>Use OctoPNP offsets (if disabled, firmware offsets are used)</span>
                     </div>
-                    <div class="row-fluid">
+                    <div class="row-fluid" data-bind="visible: settings.plugins.OctoPNP.vacnozzle.use_offsets">
                         <label class="control-label" for="vacnozzle.x">{{ _('X') }}</label>
                         <div class="controls">
                             <div class="input-append">
@@ -380,7 +381,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row-fluid">
+                    <div class="row-fluid" data-bind="visible: settings.plugins.OctoPNP.vacnozzle.use_offsets">
                         <label class="control-label" for="vacnozzle.y">{{ _('Y') }}</label>
                         <div class="controls">
                             <div class="input-append">
@@ -493,9 +494,11 @@
                             <button data-bind="click: saveExtruderBedCameraOffset, enable: (statusBedCameraOffset() && isSupportedFirmware() && (selectedBedExtruder() >= 0))">{{ _('Save tool offset') }}</button>
                             <br><br>
 
-                            <h4>BedCamera <-> PNPNozzle</h4>
-                            <button data-bind="click: pnpNozzleOffset, enable: isConnected">{{ _('PNPNozzle to Camera') }}</button>
-                            <button data-bind="click: savePnpNozzleOffset, enable: statusPnpNozzleOffset">{{ _('Save nozzle offset') }}</button>
+                            <div  data-bind="visible: settings.plugins.OctoPNP.vacnozzle.use_offsets">
+                                <h4>BedCamera <-> PNPNozzle</h4>
+                                <button data-bind="click: pnpNozzleOffset, enable: isConnected">{{ _('PNPNozzle to Camera') }}</button>
+                                <button data-bind="click: savePnpNozzleOffset, enable: statusPnpNozzleOffset">{{ _('Save nozzle offset') }}</button>
+                            </div>
                             
                             <h4>Tray position</h4>
                             <button data-bind="click: function() { $root.trayPosition('TL') }, enable: isConnected">{{ _('TL') }}</button>

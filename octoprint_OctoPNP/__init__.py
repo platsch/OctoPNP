@@ -102,6 +102,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 "rimsize": 1.0
             },
             "vacnozzle": {
+                "use_offsets": False,
                 "x": 0,
                 "y": 0,
                 "z_pressure": 0,
@@ -394,9 +395,15 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         self._logger.info("PART OFFSET:" + str(part_offset))
 
         tray_offset = self._getTrayPosFromPartNr(partnr)
-        vacuum_dest = [tray_offset[0]+part_offset[0]-float(self._settings.get(["vacnozzle", "x"])),\
-                         tray_offset[1]+part_offset[1]-float(self._settings.get(["vacnozzle", "y"])),\
+        vacuum_dest = [tray_offset[0]+part_offset[0],\
+                         tray_offset[1]+part_offset[1],\
                          tray_offset[2]+self.smdparts.getPartHeight(partnr)-float(self._settings.get(["vacnozzle", "z_pressure"]))]
+
+        # only apply X/Y offsets if not handled by the firmware
+        if(self._settings.get(["vacnozzle", "use_offsets"])):
+            vacuum_dest[0] -= float(self._settings.get(["vacnozzle", "x"]))
+            vacuum_dest[1] -= float(self._settings.get(["vacnozzle", "y"]))
+
         tray_axis = str(self._settings.get(["tray", "axis"]))
 
         # move vac nozzle to part and pick
@@ -414,9 +421,16 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         self._printer.commands("G1 " + tray_axis + str(vacuum_dest[2]+5) + " F1000")
 
         # move to bed camera
-        vacuum_dest = [float(self._settings.get(["camera", "bed", "x"]))-float(self._settings.get(["vacnozzle", "x"])),\
-                       float(self._settings.get(["camera", "bed", "y"]))-float(self._settings.get(["vacnozzle", "y"])),\
+        vacuum_dest = [float(self._settings.get(["camera", "bed", "x"])),\
+                       float(self._settings.get(["camera", "bed", "y"])),\
                        float(self._settings.get(["camera", "bed", "z"]))+self.smdparts.getPartHeight(partnr)]
+
+        # only apply X/Y offsets if not handled by the firmware
+        if(self._settings.get(["vacnozzle", "use_offsets"])):
+            vacuum_dest[0] -= float(self._settings.get(["vacnozzle", "x"]))
+            vacuum_dest[1] -= float(self._settings.get(["vacnozzle", "y"]))
+
+        tray_axis = str(self._settings.get(["tray", "axis"]))
 
         self._printer.commands("G1 X" + str(vacuum_dest[0]) + " Y" + str(vacuum_dest[1]) + " F"  + str(self.FEEDRATE))
         camera_axis = str(self._settings.get(["camera", "bed", "focus_axis"]))
@@ -508,9 +522,17 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
         # move to destination
         dest_z = destination[2]+self.smdparts.getPartHeight(partnr)-float(self._settings.get(["vacnozzle", "z_pressure"]))
-        cmd = "G1 X" + str(destination[0]-float(self._settings.get(["vacnozzle", "x"]))+displacement[0]) \
-              + " Y" + str(destination[1]-float(self._settings.get(["vacnozzle", "y"]))+displacement[1]) \
-              + " F" + str(self.FEEDRATE)
+
+       # only apply X/Y offsets if not handled by the firmware
+        if(self._settings.get(["vacnozzle", "use_offsets"])):
+            cmd = "G1 X" + str(destination[0]-float(self._settings.get(["vacnozzle", "x"]))+displacement[0]) \
+                + " Y" + str(destination[1]-float(self._settings.get(["vacnozzle", "y"]))+displacement[1]) \
+                + " F" + str(self.FEEDRATE)
+        else:
+            cmd = "G1 X" + str(destination[0]+displacement[0]) \
+                + " Y" + str(destination[1]+displacement[1]) \
+                + " F" + str(self.FEEDRATE)
+
         self._logger.info("object destination: " + cmd)
         self._printer.commands("G1 Z" + str(dest_z+10) + " F" + str(self.FEEDRATE)) # lift printhead
         self._printer.commands(cmd)
