@@ -15,8 +15,8 @@ $(function() {
         self.offsetCorrectionY = ko.observable(0.0);
         self.jogDistance = ko.observable(1.0);
 
-        self.selectedHeadExtruder = ko.observable(0);
-        self.selectedBedExtruder = ko.observable(1);
+        self.selectedHeadExtruder = ko.observable(-1);
+        self.selectedBedExtruder = ko.observable(-1);
 
         self.extruderOffsetX = ko.observable(0.0);
         self.extruderOffsetY = ko.observable(0.0);
@@ -61,14 +61,6 @@ $(function() {
         // have been retrieved from the OctoPrint backend and thus the SettingsViewModel been properly populated.
         self.onBeforeBinding = function() {
             self.settings = self.settings.settings;
-        };
-
-        // Home X Y
-        self.homeXY = function() {
-
-            OctoPrint.control.sendGcode("G1 X100 Y150 F3000");
-            OctoPrint.control.sendGcode("T0");
-            OctoPrint.control.sendGcode("G28 X Y");
         };
 
         self.startVideo = function(url) {

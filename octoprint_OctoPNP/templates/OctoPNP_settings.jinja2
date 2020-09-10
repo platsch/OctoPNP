@@ -210,7 +210,7 @@
                         <div class="span12">
                             <div class="row-fluid">
                                 <div class="span1"></div>
-                                <div class="span11">If images can be directly fetched from camera via http (e.g. via mjpg_streamer), OctoPNP can provide a live preview during calibration. Works with static images only! (for mjpg_streamer: use snapshot mode! example: http://localhost:8080/?action=snapshot</div>
+                                <div class="span11">If images can be directly fetched from camera via http (e.g. via mjpg_streamer), OctoPNP can provide a live preview during calibration. Works with static images only! (for mjpg_streamer: use snapshot mode! example: /webcam/?action=snapshot</div>
                             </div>
                         </div>
                     </div>
@@ -474,26 +474,23 @@
                             </div>
                         </div>
                         <div class="span4">
-                            <button data-bind="click: homeXY, enable: isConnected">{{ _('Home X Y') }}</button><br>
-                            <h4>Object pos. on printbed</h4>
+                            <h4>Ex <-> HeadCamera</h4>
+                            <button data-bind="click: headCameraOffset, enable: isConnected">{{ _('Camera to object') }}</button><br>
+                            <h6>Object pos. on printbed:</h6>
                             <div class="form-group">
                                 <span>X&nbsp;</span><input id="objectPosX" type="number" step="0.01" class="input-mini text-right" data-bind="value: objectPositionX"></input>
                                 <span>Y&nbsp;</span><input id="objectPosY" type="number" step="0.01" class="input-mini text-right" data-bind="value: objectPositionY"></input>
-                            </div> 
-                            <br><br>
-
-                            <h4>Ex <-> HeadCamera</h4>
-                            <button data-bind="click: headCameraOffset, enable: isConnected">{{ _('Camera to object') }}</button><br>
-                            E: <input type="number" step="1" class="input-mini text-right" data-bind="value: selectedHeadExtruder">
+                            </div>
+                            Tool E: <input type="number" step="1" class="input-mini text-right" data-bind="value: selectedHeadExtruder">
                             <button data-bind="click: saveHeadCameraOffset, enable: statusHeadCameraOffset">{{ _('Save camera offset') }}</button>
-                            <button data-bind="click: saveExtruderHeadCameraOffset, enable: (statusHeadCameraOffset() && isSupportedFirmware() && (selectedHeadExtruder() >= 0))">{{ _('Save extruder offset') }}</button>
+                            <button data-bind="click: saveExtruderHeadCameraOffset, enable: (statusHeadCameraOffset() && isSupportedFirmware() && (selectedHeadExtruder() >= 0))">{{ _('Save tool offset') }}</button>
                             <br><br>
                             
                             <h4>Ex <-> BedCamera</h4>
                             <button data-bind="click: bedCameraPosition, enable: isConnected">{{ _('Extruder to Camera') }}</button><br>
-                            E: <input type="number" step="1" class="input-mini text-right" data-bind="value: selectedBedExtruder">
+                            Tool E: <input type="number" step="1" class="input-mini text-right" data-bind="value: selectedBedExtruder">
                             <button data-bind="click: saveBedCameraPosition, enable: statusBedCameraOffset">{{ _('Save camera offset') }}</button>
-                            <button data-bind="click: saveExtruderBedCameraOffset, enable: (statusBedCameraOffset() && isSupportedFirmware() && (selectedBedExtruder() >= 0))">{{ _('Save extruder offset') }}</button>
+                            <button data-bind="click: saveExtruderBedCameraOffset, enable: (statusBedCameraOffset() && isSupportedFirmware() && (selectedBedExtruder() >= 0))">{{ _('Save tool offset') }}</button>
                             <br><br>
 
                             <h4>BedCamera <-> PNPNozzle</h4>
