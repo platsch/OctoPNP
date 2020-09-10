@@ -66,9 +66,9 @@ $(function() {
         // Home X Y
         self.homeXY = function() {
 
-            self.control.sendCustomCommand({command: "G1 X100 Y150 F3000"});
-            self.control.sendCustomCommand({command: "T0"});
-            self.control.sendCustomCommand({command: "G28 X Y"});
+            OctoPrint.control.sendGcode("G1 X100 Y150 F3000");
+            OctoPrint.control.sendGcode("T0");
+            OctoPrint.control.sendGcode("G28 X Y");
         };
 
         self.startVideo = function(url) {
@@ -104,15 +104,15 @@ $(function() {
             // load offsets for given extruder
             self.loadOffsets(self.selectedHeadExtruder());
 
-            // Switch to selected extruder
-            //self.control.sendCustomCommand({command: "G1 X100 Y150 F3000"});
-            //self.control.sendCustomCommand({command: "T0"});
-            self.control.sendCustomCommand({command: "T" + self.selectedHeadExtruder().toString()});
+            // move to safe area
+            OctoPrint.control.sendGcode("G1 X100 Y150 F3000");
+            // switch to selected extruder
+            OctoPrint.control.sendGcode("T" + self.selectedHeadExtruder().toString());
 
             //move camera to object
             var x = self.objectPositionX() - parseFloat(self.settings.plugins.OctoPNP.camera.head.x());
             var y = self.objectPositionY() - parseFloat(self.settings.plugins.OctoPNP.camera.head.y());
-            self.control.sendCustomCommand({command: "G1 X" + x + " Y" + y + " Z" + self.settings.plugins.OctoPNP.camera.head.z() + " F3000"});
+            OctoPrint.control.sendGcode("G1 X" + x + " Y" + y + " Z" + self.settings.plugins.OctoPNP.camera.head.z() + " F3000");
 
             //reset offset correction values
             self.offsetCorrectionX(0.0);
@@ -158,17 +158,18 @@ $(function() {
             // load offsets for given extruder
             self.loadOffsets(self.selectedBedExtruder());
 
+            // move to a safe area to avoid collisions
+            OctoPrint.control.sendGcode("G1 X100 Y150 F3000");
             // Switch to selected extruder
-            //self.control.sendCustomCommand({command: "G1 X100 Y150 F3000"});
-            self.control.sendCustomCommand({command: "T" + self.selectedBedExtruder().toString()});
+            OctoPrint.control.sendGcode("T" + self.selectedBedExtruder().toString());
 
             //move tool to camera
             var x = parseFloat(self.settings.plugins.OctoPNP.camera.bed.x());
             var y = parseFloat(self.settings.plugins.OctoPNP.camera.bed.y());
-            self.control.sendCustomCommand({command: "G1 X" + x + " Y" + y + " F3000"});
+            OctoPrint.control.sendGcode("G1 X" + x + " Y" + y + " F3000");
             if(self.settings.plugins.OctoPNP.camera.bed.focus_axis().length > 0) {
                 var z = parseFloat(self.settings.plugins.OctoPNP.camera.bed.z());
-                self.control.sendCustomCommand({command: "G1 " + self.settings.plugins.OctoPNP.camera.bed.focus_axis() + z});
+                OctoPrint.control.sendGcode("G1 " + self.settings.plugins.OctoPNP.camera.bed.focus_axis() + z);
             }
 
             //reset offset correction values
@@ -251,9 +252,9 @@ $(function() {
                 case self.supportedFirmWares.reprapfirmware:
                     var offsetX = self.extruderOffsetX() + self.offsetCorrectionX();
                     var offsetY = self.extruderOffsetY() + self.offsetCorrectionY();
-                    self.control.sendCustomCommand({command: "G10 P" + ex.toString() + " X" + offsetX.toString() + " Y" + offsetY.toString()});
+                    OctoPrint.control.sendGcode("G10 P" + ex.toString() + " X" + offsetX.toString() + " Y" + offsetY.toString());
                     // save updated offsets to SD card to make the change permanent
-                    self.control.sendCustomCommand("M500 P10");
+                    OctoPrint.control.sendGcode("M500 P10");
                     break;
                 default:
                     return false;
@@ -291,17 +292,17 @@ $(function() {
 
             // Move before toolchange
             //reset axis
-            self.control.sendCustomCommand({command: "G1 X100 Y150 F3000"});
+            OctoPrint.control.sendGcode("G1 X100 Y150 F3000");
             // Switch to VacNozzle extruder
-            self.control.sendCustomCommand({command: "T" + self.settings.plugins.OctoPNP.vacnozzle.tool_nr().toString()});
+            OctoPrint.control.sendGcode("T" + self.settings.plugins.OctoPNP.vacnozzle.tool_nr().toString());
             
             //move camera to object
             var x = parseFloat(self.settings.plugins.OctoPNP.camera.bed.x()) - parseFloat(self.settings.plugins.OctoPNP.vacnozzle.x());
             var y = parseFloat(self.settings.plugins.OctoPNP.camera.bed.y()) - parseFloat(self.settings.plugins.OctoPNP.vacnozzle.y());
-            self.control.sendCustomCommand({command: "G1 X" + x + " Y" + y + " F3000"});
+            OctoPrint.control.sendGcode("G1 X" + x + " Y" + y + " F3000");
             if(self.settings.plugins.OctoPNP.camera.bed.focus_axis().length > 0) {
                 var z = parseFloat(self.settings.plugins.OctoPNP.camera.bed.z());
-                self.control.sendCustomCommand({command: "G1 " + self.settings.plugins.OctoPNP.camera.bed.focus_axis() + z});
+                OctoPrint.control.sendGcode("G1 " + self.settings.plugins.OctoPNP.camera.bed.focus_axis() + z);
             }
             
             //reset offset correction values
@@ -347,8 +348,8 @@ $(function() {
             }
 
             // Switch to head camera tool
-            self.control.sendCustomCommand({command: "G1 X100 Y150 F3000"});
-            self.control.sendCustomCommand({command: "T" + self.settings.plugins.OctoPNP.camera.head.tool_nr().toString()});
+            OctoPrint.control.sendGcode("G1 X100 Y150 F3000");
+            OctoPrint.control.sendGcode("T" + self.settings.plugins.OctoPNP.camera.head.tool_nr().toString());
 
             //compute corner position
             var cornerOffsetX = 0.0;
@@ -381,8 +382,8 @@ $(function() {
             var x = parseFloat(self.settings.plugins.OctoPNP.tray.x()) + cornerOffsetX - parseFloat(self.settings.plugins.OctoPNP.camera.head.x());
             var y = parseFloat(self.settings.plugins.OctoPNP.tray.y()) + cornerOffsetY - parseFloat(self.settings.plugins.OctoPNP.camera.head.y());
             var z = parseFloat(self.settings.plugins.OctoPNP.tray.z()) + parseFloat(self.settings.plugins.OctoPNP.camera.head.z());
-            self.control.sendCustomCommand({command: "G1 " + self.settings.plugins.OctoPNP.tray.axis() + z + " F3000"});
-            self.control.sendCustomCommand({command: "G1 X" + x + " Y" + y + " F3000"});
+            OctoPrint.control.sendGcode("G1 " + self.settings.plugins.OctoPNP.tray.axis() + z + " F3000");
+            OctoPrint.control.sendGcode("G1 X" + x + " Y" + y + " F3000");
 
             //reset offset correction values
             self.offsetCorrectionX(0.0);
@@ -584,7 +585,7 @@ $(function() {
             self.detectedFirmwareInfo("<span style=\"color: red\">Firmware type not detected</span>");
 
             // request firmware info from printer
-            self.control.sendCustomCommand({ command: "M115" });
+            OctoPrint.control.sendGcode("M115" );
         };
 
         self.fromHistoryData = function(data) {
@@ -668,11 +669,11 @@ $(function() {
             switch (self.detectedFirmware) {
                 case self.supportedFirmWares.repetier:
                     self.eepromData([]);
-                    self.control.sendCustomCommand({ command: "M205" });
+                    OctoPrint.control.sendGcode("M205");
                     break;
                 case self.supportedFirmWares.reprapfirmware:
                     if(extruder >= 0) {
-                        self.control.sendCustomCommand({command: "G10 P" + extruder.toString()});
+                        OctoPrint.control.sendGcode("G10 P" + extruder.toString());
                     }
                     break;
                 default:
