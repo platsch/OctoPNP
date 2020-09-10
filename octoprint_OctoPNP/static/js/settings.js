@@ -624,7 +624,7 @@ $(function() {
                     _.each(data.logs, function (line) {
                         // The printer should report something like this:
                         // "Tool 0 offsets: X-9.00 Y39.00 Z-4.85 [..]"
-                        var match = (new RegExp(/Tool (\d+).*?X(-*\d+\.\d+).*?Y(-*\d+\.\d+)/i).exec(line);
+                        var match = (new RegExp(/Tool (\d+).*?X(-*\d+\.\d+).*?Y(-*\d+\.\d+)/i).exec(line));
                         if (match) {
                             if ((self.statusHeadCameraOffset() && match[1] == self.selectedHeadExtruder()) || (self.statusBedCameraOffset() && match[1] == self.selectedBedExtruder()))
                             self.extruderOffsetX(match[2]);
