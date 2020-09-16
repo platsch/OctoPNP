@@ -28,7 +28,7 @@ $(function() {
         // have been retrieved from the OctoPrint backend and thus the SettingsViewModel been properly populated.
         self.onBeforeBinding = function() {
             self.traySettings = self.settings.settings.plugins.OctoPNP.tray;
-            _smdTray = new smdTray(self.traySettings.columns(), self.traySettings.rows(), self.traySettings.boxsize(), _smdTrayCanvas);
+            _smdTray = new smdTray(self.parts, self.traySettings.columns(), self.traySettings.rows(), self.traySettings.boxsize(), _smdTrayCanvas);
             _smdTrayCanvas.addEventListener("click", self.onSmdTrayClick, false); //"click, dblclick"
             _smdTrayCanvas.addEventListener("dblclick", self.onSmdTrayDblclick, false); //"click, dblclick"
         }
@@ -69,6 +69,13 @@ $(function() {
 
             self.parts.push(item);
             self.parts.sort(function (a, b) {return a.id < b.id ? -1 : 1;});
+
+            // update mapping in plugin backend
+            mapping = {};
+            for(var i=0; i < self.parts().length; i++) {
+                mapping[self.parts()[i].id] = {"row": self.parts()[i].row, "col": self.parts()[i].col}
+            }
+            self._pushTrayAssignments(mapping);
         }
 
         // catch mouseclicks at the tray for interactive part handling
@@ -93,7 +100,7 @@ $(function() {
         }
 
 
-
+        // receive updates from plugin backend
          self.onDataUpdaterPluginMessage = function(plugin, data) {
             if(plugin == "OctoPNP") {
                 if(data.event == "FILE") {
@@ -110,21 +117,23 @@ $(function() {
                             }
                         }
 
-                        //initialize the tray
-                        _smdTray.erase();
-
-						//extract part information
+                        //extract part information
                         if( data.data.hasOwnProperty("parts") ) {
-							var parts = data.data.parts;
-							for(var i=0; i < parts.length; i++) {
-								_smdTray.addPart(parts[i]); // legacy
-
-                                // row and col assigment must happen befor pushing to array, as KO won't get notifications when values inside an object change
-                                parts[i].col = -1;
-                                parts[i].row = -1;
+                            var parts = data.data.parts;
+                            for(var i=0; i < parts.length; i++) {
+                                // this is a completely absurd and weird workaround.
+                                // for reasons beyond my comprehension, the "row" field in parts dict is
+                                // set to undefined by knockout when pushing to the self.parts array.
+                                // Changing the field name to anything but "row" solves the problem.
+                                // I wanted to keep the name, so the value of row is stored and then updated after pushing to the array.
+                                var row = parts[i].row;
                                 self.parts.push(parts[i]);
-							}
-						}
+                                self.parts()[i].row = row;
+                            }
+                            if(self.traySettings.type() == "BOX") {
+                                _smdTray.render();
+                            }
+                        }
                     }else{
                         self.stateString("No SMD part in this file!");
                     }
@@ -147,8 +156,26 @@ $(function() {
                 else if(data.event == "BEDIMAGE") {
                     document.getElementById('bedCameraImage').setAttribute( 'src', data.data.src );
                 }
-                //self.debugvar("Plugin = OctoPNP");
             }
+        };
+
+        self._pushTrayAssignments = function(mapping, callback) {
+            $.ajax({
+                url: PLUGIN_BASEURL + "OctoPNP/tray_assignments?mapping=" + JSON.stringify(mapping),
+                type: "GET",
+                dataType: "json",
+                contentType: "application/json; charset=UTF-8",
+                //data: JSON.stringify(mapping),
+                success: function(response) {
+                    if(response.hasOwnProperty("src")) {
+                        self._drawImage(response.src);
+                    }
+                    if(response.hasOwnProperty("error")) {
+                        alert(response.error);
+                    }
+                    if (callback) callback();
+                }
+            });
         };
     }
 

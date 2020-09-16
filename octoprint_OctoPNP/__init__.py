@@ -23,6 +23,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import octoprint.plugin
 import flask
+import json
 import re
 from subprocess import call
 import os
@@ -82,12 +83,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         # store callback to send result of an image capture request back to caller
         self._helper_callback = None
 
-
     def on_after_startup(self):
         self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), int(self._settings.get(["camera", "bed", "binary_thresh"])), int(self._settings.get(["camera", "head", "binary_thresh"])))
         #used for communication to UI
         self._pluginManager = octoprint.plugin.plugin_manager()
-
 
     def get_settings_defaults(self):
         return {
@@ -178,6 +177,17 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 else:
                     result = flask.jsonify(error="Unable to fetch image. Check octoprint log for details.")
         return flask.make_response(result, 200)
+
+
+    # Flask endpoint for the GUI to update component tray assignments
+    @octoprint.plugin.BlueprintPlugin.route("/tray_assignments", methods=["GET"])
+    def updateTrayAssignments(self):
+        if "mapping" in flask.request.values:
+            mapping = flask.request.values["mapping"]
+            mapping = json.loads(mapping)
+            for part in mapping:
+                self.smdparts.setPartPosition(int(part), int(mapping[part]["row"]), int(mapping[part]["col"]))
+        return flask.make_response("", 200)
 
     # Use the on_event hook to extract XML data every time a new file has been loaded by the user
     def on_event(self, event, payload):
@@ -548,10 +558,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
     # get the position of the box (center of the box) containing part x relative to the [0,0] corner of the tray
     def _getTrayPosFromPartNr(self, partnr):
-        partPos = self.smdparts.getPartPosition(partnr)
-        row = int((partPos-1)/int(self._settings.get(["tray", "columns"]))+1)
-        col = ((partPos-1)%int(self._settings.get(["tray", "columns"])))+1
-        self._logger.info("Selected object: %d. Position: box %d, row %d, col %d", partnr, partPos, row, col)
+        partPos = self.smdparts.getPartPosition(int(partnr))
+        row = partPos["row"]
+        col = partPos["col"]
+        self._logger.info("Selected object: %d. Position: row %d, col %d", partnr, row, col)
 
         boxsize = float(self._settings.get(["tray", "boxsize"]))
         rimsize = float(self._settings.get(["tray", "rimsize"]))
@@ -628,12 +638,20 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 # compile part information
                 partIds = self.smdparts.getPartIds()
                 partArray = []
+                partPos = 1
                 for partId in partIds:
+                    # assign components to tray boxes.
+                    if(self._settings.get(["tray", "type"]) == "BOX"):
+                        row = int((partPos-1)/int(self._settings.get(["tray", "columns"]))+1)
+                        col = ((partPos-1)%int(self._settings.get(["tray", "columns"])))+1
+                        self.smdparts.setPartPosition(partId, row, col)
+                        partPos += 1
                     partArray.append(
                         dict(
                             id = partId,
                             name = self.smdparts.getPartName(partId),
-                            partPosition = self.smdparts.getPartPosition(partId),
+                            row = self.smdparts.getPartPosition(partId)["row"],
+                            col = self.smdparts.getPartPosition(partId)["col"],
                             shape = self.smdparts.getPartShape(partId),
                             pads = self.smdparts.getPartPads(partId)
                         )

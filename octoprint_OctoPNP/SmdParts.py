@@ -11,6 +11,7 @@ class SmdParts():
 
     def __init__(self):
         self._et = None
+        self._positions = {}
         pass
 
     def load(self, xmlstring):
@@ -18,6 +19,12 @@ class SmdParts():
         sane, msg = self._sanitize()
         if not sane:
             self.unload()
+        else:
+            # init col and row dict with -1 to indicate no position assigned yet
+            self._positions = {}
+            ids = self.getPartIds()
+            for id in ids:
+                self._positions[id] = {"row": -1, "col": -1}
         return sane, msg
 
     def unload(self):
@@ -43,9 +50,21 @@ class SmdParts():
             result.append(int(elem.get("id")))
         return result
 
-    #return the nr of the box this part is supposed to be in
+    # set position of this part on tray. Returns true if this part exists, false otherwise
+    def setPartPosition(self, partnr, row, col):
+        result = False
+        if partnr in self._positions:
+            result = True
+            self._positions[partnr]["row"] = row
+            self._positions[partnr]["col"] = col
+        return result
+
+    # return a dict with row and col of the box this part is supposed to be in
     def getPartPosition(self, partnr):
-        return int(self._et.find("./part[@id='" + str(partnr) + "']/position").get("box"))
+        result = {"row": -1, "col": -1}
+        if partnr in self._positions:
+            result = self._positions[partnr]
+        return result
 
     def getPartName(self, partnr):
         return self._et.find("./part[@id='" + str(partnr) + "']").get("name")

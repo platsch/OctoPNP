@@ -1,27 +1,18 @@
-function smdTray(cols, rows, boxSize, canvas) {
+function smdTray(partlist, cols, rows, boxSize, canvas) {
 	var self = this;
 
 	var _cols = cols;
     var _rows= rows;
     var _trayBoxSize = boxSize;
     var _trayCanvas = canvas;
-    var _parts = {};
+    var _parts = partlist;
 
-    self.erase = function() {
-        _parts = {};
+
+    self.render = function() {
         _drawTray();
-    }
-
-    self.addPart = function(part) {
-        // sanitiy checks!?
-        // add part to dict
-        _parts[part.id] = part;
-
-        _parts[part.id].row = parseInt(((part.partPosition-1) / _cols)) + 1;
-        _parts[part.id].col = (part.partPosition-1) % _cols+1;
-
-        // and draw to canvas
-        _drawPart(part.id, "black");
+        for (var i in _parts()) {
+            _drawPart(_parts()[i].id, "black");
+        }
     }
 
     self.selectPart = function(x, y) {
@@ -29,9 +20,7 @@ function smdTray(cols, rows, boxSize, canvas) {
         col = Math.floor(x/(canvasBoxSize+1)) + 1;
         row = Math.floor(((_rows*canvasBoxSize)-y)/(canvasBoxSize-1)) + 1;
 
-        for (var id in _parts) {
-            _drawPart(id, "black");
-        }
+        self.render();
 
         var partId = _getPartId(col, row);
         if(partId) {
@@ -68,7 +57,13 @@ function smdTray(cols, rows, boxSize, canvas) {
 	
 	//draw a part into a tray box
     function _drawPart(partID, color) {
-        part = _parts[partID];
+        // find part with partID in array
+        var part;
+        for (var i in _parts()) {
+            if(_parts()[i].id == partID) {
+                part = _parts()[i];
+            }
+        }
 
 		//clear old box
 		var canvasBoxSize = _getCanvasBoxSize();
@@ -154,9 +149,9 @@ function smdTray(cols, rows, boxSize, canvas) {
     // select partId from col/row
     function _getPartId(col, row) {
         var result = false;
-        for (var id in _parts) {
-            if((_parts[id].col == col) && (_parts[id].row == row)) {
-                result = id;
+        for (var i in _parts()) {
+            if((_parts()[i].col == col) && (_parts()[i].row == row)) {
+                result = _parts()[i].id;
                 break;
             }
         }
