@@ -156,7 +156,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
     def get_assets(self):
         return dict(
             js=["js/OctoPNP.js",
-                "js/smdTray.js",
+                "js/boxTray.js",
                 "js/settings.js"]
         )
 

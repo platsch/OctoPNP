@@ -1,4 +1,4 @@
-function smdTray(partlist, cols, rows, boxSize, canvas) {
+function boxTray(partlist, cols, rows, boxSize, canvas) {
 	var self = this;
 
 	var _cols = cols;

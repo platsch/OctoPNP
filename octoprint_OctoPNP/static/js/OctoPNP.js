@@ -9,8 +9,8 @@ $(function() {
         self.parts = ko.observableArray([]); // list of parts in the current file, includes tray assignments);
         self.trayfeeder_rows = ko.observableArray([]); // list of available trayfeeder rows
 
-        var _smdTray = {};
-        var _smdTrayCanvas = document.getElementById('trayCanvas');
+        var _boxTray = {};
+        var _trayCanvas = document.getElementById('trayCanvas');
 
         self.stateString = ko.observable("No file loaded");
         self.currentOperation = ko.observable("");
@@ -28,9 +28,9 @@ $(function() {
         // have been retrieved from the OctoPrint backend and thus the SettingsViewModel been properly populated.
         self.onBeforeBinding = function() {
             self.traySettings = self.settings.settings.plugins.OctoPNP.tray;
-            _smdTray = new smdTray(self.parts, self.traySettings.columns(), self.traySettings.rows(), self.traySettings.boxsize(), _smdTrayCanvas);
-            _smdTrayCanvas.addEventListener("click", self.onSmdTrayClick, false); //"click, dblclick"
-            _smdTrayCanvas.addEventListener("dblclick", self.onSmdTrayDblclick, false); //"click, dblclick"
+            _boxTray = new boxTray(self.parts, self.traySettings.columns(), self.traySettings.rows(), self.traySettings.boxsize(), _trayCanvas);
+            _trayCanvas.addEventListener("click", self.onSmdTrayClick, false); //"click, dblclick"
+            _trayCanvas.addEventListener("dblclick", self.onSmdTrayDblclick, false); //"click, dblclick"
         }
 
         self.toggleAssignComponentsDialog = function() {
@@ -80,10 +80,10 @@ $(function() {
 
         // catch mouseclicks at the tray for interactive part handling
         self.onSmdTrayClick = function(event) {
-            var rect = _smdTrayCanvas.getBoundingClientRect();
+            var rect = _trayCanvas.getBoundingClientRect();
             var x = Math.floor(event.clientX - rect.left);
             var y = Math.floor(event.clientY - rect.top);
-            return _smdTray.selectPart(x, y);
+            return _boxTray.selectPart(x, y);
         }
 
         self.onSmdTrayDblclick = function(event) {
@@ -131,7 +131,7 @@ $(function() {
                                 self.parts()[i].row = row;
                             }
                             if(self.traySettings.type() == "BOX") {
-                                _smdTray.render();
+                                _boxTray.render();
                             }
                         }
                     }else{
