@@ -8,6 +8,11 @@ $(function() {
 
         self._headCanvas = document.getElementById('headCanvas');
 
+        self.tray_available_types = ko.observable([
+            {key: "BOX", name: "Box"},
+            {key: "FEEDER", name: "Belt feeder"},
+        ]);
+
         self.objectPositionX = ko.observable(100.0);
         self.objectPositionY = ko.observable(100.0);
 
@@ -62,6 +67,15 @@ $(function() {
         self.onBeforeBinding = function() {
             self.settings = self.settings.settings;
         };
+
+        // add new row to tray feeder configuration
+        self.trayFeederAddRow = function() {
+            self.settings.plugins.OctoPNP.tray.feederconfiguration.push({ "width": 8, "spacing": 5.0, "rotation": 0 });
+        }
+        // remove this row from tray feeder configuration
+        self.trayFeederRemoveRow = function() {
+            self.settings.plugins.OctoPNP.tray.feederconfiguration.remove(this);
+        }
 
         self.startVideo = function(url) {
             self.videoStreamActive(true);

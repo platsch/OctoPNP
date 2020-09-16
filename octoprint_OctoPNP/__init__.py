@@ -92,6 +92,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
     def get_settings_defaults(self):
         return {
             "tray": {
+                "type": "BOX", # possible alternatives: FEEDER
                 "x": 0,
                 "y": 0,
                 "z": 0,
@@ -99,7 +100,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 "rows" : 5,
                 "columns": 5,
                 "boxsize": 10,
-                "rimsize": 1.0
+                "rimsize": 1.0,
+                "feederconfiguration": [ {"width": 8.0, "spacing": 5.0, "rotation": 0},  {"width": 12.0, "spacing": 8.0, "rotation": 90} ]
             },
             "vacnozzle": {
                 "use_offsets": False,
