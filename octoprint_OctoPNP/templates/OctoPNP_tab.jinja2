@@ -1,48 +1,51 @@
+<h1>{{ _('State') }}</h1>
 <div class="row-fluid">
     <div class="span6">
-		<h1>State</h1>
-		{{ _('PNP State') }}: <strong data-bind="text: stateString"></strong><br>
-		{{ _('Current operation') }}: <strong data-bind="text: currentOperation"></strong><br>
-		{{ _('DEBUG') }}: <strong data-bind="text: debugvar"></strong><br>
-	</div>
+        {{ _('PNP State') }}: <strong data-bind="text: stateString"></strong><br>
+        {{ _('Current operation') }}: <strong data-bind="text: currentOperation"></strong><br>
+        {{ _('DEBUG') }}: <strong data-bind="text: debugvar"></strong><br>
+    </div>
 </div>
 
+<div  data-bind="visible: traySettings.type() == 'FEEDER'">
+     <a href="javascript:void(0)" data-bind="click: toggleAssignComponentsDialog"><h1>{{ _('Component-Tray Assignments') }}</h1></a>
+</div>
+<div data-bind="visible: assignComponentsDialog() && (traySettings.type() == 'FEEDER')">
+    <table id="feeder_assignment" class="table table-bordered table-hover" style="">
+        <tbody><tr>
+            <th>Component ID</th>
+            <th>Name</th>
+            <th>Tray Row</th>
+            <th>Tray Col</th>
+        </tr></tbody>
+        <tbody>
+            <!-- ko foreach: parts -->
+            <tr>
+                <td data-bind="text: $data.id, style: { color: $data.row < 0 ? 'red' : 'green' }"></td>
+                <td data-bind="text: $data.name, style: { color: $data.row < 0 ? 'red' : 'green' }"></td>
+                <td>
+                    <select style="width: 100px" data-bind="value: $data.row, options: $root.trayfeeder_rows, optionsText: 'name', optionsValue: 'value', event: { change: $root.trayFeederChange }">
+                    </select>
+                </td>
+                <td data-bind="text: $data.col"></td>
+            </tr>
+            <!-- /ko -->
+        </tbody>
+    </table>
+</div>
 
+<h1>{{ _('Tray') }}</h1>
+<div class="row-fluid">
+    <canvas id="trayCanvas" width="580" height="300"></canvas>
+</div>
 
-
-<br>
-<div class="accordion" id="camera-accordion">
-    <div class="accordion-group">
-
-        <div class="accordion-heading">
-            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#tray"><h5>Tray</h5></a>
-        </div>
-        <div id="tray" class="accordion-body collapse in">
-            <div class="accordion-inner">
-				<div class="row-fluid">
-				    <div class="span12">
-				    	<canvas id="trayCanvas" width="500" height="250"></canvas>
-				    </div>
-				</div>
-			</div>
-		</div>
-
-        <div class="accordion-heading">
-            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#camera-images"><h5>Camera images</h5></a>
-        </div>
-        <div id="camera-images" class="accordion-body collapse in">
-            <div class="accordion-inner">
-				<div class="row-fluid">
-				    <div class="span6">
-				    	<h1>Head camera</h1>
-				    	<img src="" id="headCameraImage">
-				    </div>
-				    <div class="span6">
-				    	<h1>Bed camera</h1>
-				    	<img src="" id="bedCameraImage">
-				    </div>
-				</div>
-			</div>
-		</div>
-	</div>
-</div>	
+<div class="row-fluid">
+    <div class="span6">
+        <h1>Head camera</h1>
+        <img src="" id="headCameraImage">
+    </div>
+    <div class="span6">
+        <h1>Bed camera</h1>
+        <img src="" id="bedCameraImage">
+    </div>
+</div>

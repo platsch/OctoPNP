@@ -6,12 +6,18 @@ $(function() {
         self.control = parameters[1];
         self.connection = parameters[2];
 
+        self.parts = ko.observableArray([]); // list of parts in the current file, includes tray assignments);
+        self.trayfeeder_rows = ko.observableArray([]); // list of available trayfeeder rows
+
         var _smdTray = {};
         var _smdTrayCanvas = document.getElementById('trayCanvas');
 
         self.stateString = ko.observable("No file loaded");
         self.currentOperation = ko.observable("");
         self.debugvar = ko.observable("");
+
+        self.assignComponentsDialog = ko.observable(false);
+
         //white placeholder images
         document.getElementById('headCameraImage').setAttribute( 'src', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3wMRCQAfAmB4CgAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAAMSURBVAjXY/j//z8ABf4C/tzMWecAAAAASUVORK5CYII=');
         document.getElementById('bedCameraImage').setAttribute( 'src', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3wMRCQAfAmB4CgAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAAMSURBVAjXY/j//z8ABf4C/tzMWecAAAAASUVORK5CYII=');
@@ -25,6 +31,44 @@ $(function() {
             _smdTray = new smdTray(self.traySettings.columns(), self.traySettings.rows(), self.traySettings.boxsize(), _smdTrayCanvas);
             _smdTrayCanvas.addEventListener("click", self.onSmdTrayClick, false); //"click, dblclick"
             _smdTrayCanvas.addEventListener("dblclick", self.onSmdTrayDblclick, false); //"click, dblclick"
+        }
+
+        self.toggleAssignComponentsDialog = function() {
+            self.assignComponentsDialog(!self.assignComponentsDialog());
+        }
+
+        // this is a workaround to notifiy the assignment table about changes inside the objects hold by the observableArray.
+        // It is probably a very bad (computationally expensive) solution, but at some point I just didn't waste any more time on this.
+        self.trayFeederChange = function(item) {
+            self.parts.remove(item);
+
+            // update col
+            if(item.row < 1) {
+                item.col = -1;
+            } else {
+                var cols = [];
+                for(var i=0; i < self.parts().length; i++) {
+                    if(self.parts()[i].row == item.row) {
+                        cols.push(self.parts()[i].col);
+                    }
+                }
+                var col = 1;
+                var done = false;
+                while(!done) {
+                    done = true;
+                    for(var i=0; i < cols.length; i++) {
+                        if(cols[i] == col) {
+                            col++;
+                            done = false;
+                            break;
+                        }
+                    }
+                }
+                item.col = col;
+            }
+
+            self.parts.push(item);
+            self.parts.sort(function (a, b) {return a.id < b.id ? -1 : 1;});
         }
 
         // catch mouseclicks at the tray for interactive part handling
@@ -53,8 +97,19 @@ $(function() {
          self.onDataUpdaterPluginMessage = function(plugin, data) {
             if(plugin == "OctoPNP") {
                 if(data.event == "FILE") {
+                    self.parts([]);  // reset component list
                     if(data.data.hasOwnProperty("partCount")) {
                         self.stateString("Loaded file with " + data.data.partCount + " SMD parts");
+
+                        // init feeder configuration
+                        if(self.traySettings.type() == "FEEDER") {
+                            self.assignComponentsDialog(true); // show feeder assignment dialog
+                            self.trayfeeder_rows([{name: "-1", value: -1}]); // reset
+                            for(var i=1; i < self.traySettings.feederconfiguration().length+1; i++) {
+                                self.trayfeeder_rows.push({name: i.toString(), value: i});
+                            }
+                        }
+
                         //initialize the tray
                         _smdTray.erase();
 
@@ -62,7 +117,12 @@ $(function() {
                         if( data.data.hasOwnProperty("parts") ) {
 							var parts = data.data.parts;
 							for(var i=0; i < parts.length; i++) {
-								_smdTray.addPart(parts[i]);
+								_smdTray.addPart(parts[i]); // legacy
+
+                                // row and col assigment must happen befor pushing to array, as KO won't get notifications when values inside an object change
+                                parts[i].col = -1;
+                                parts[i].row = -1;
+                                self.parts.push(parts[i]);
 							}
 						}
                     }else{
