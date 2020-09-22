@@ -446,6 +446,13 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         tray_axis = str(self._settings.get(["tray", "axis"]))
 
         self._printer.commands("G1 X" + str(vacuum_dest[0]) + " Y" + str(vacuum_dest[1]) + " F"  + str(self.FEEDRATE))
+
+        # find destination at the object
+        destination = self.smdparts.getPartDestination(partnr)
+        #rotate object
+        self._printer.commands("G92 E0")
+        self._printer.commands("G1 E" + str(destination[3] + tray_offset[3]) + " F" + str(self.FEEDRATE))
+
         camera_axis = str(self._settings.get(["camera", "bed", "focus_axis"]))
         if(len(camera_axis) > 0):
             self._printer.commands("G1 " + camera_axis + str(vacuum_dest[2]) + " F"  + str(self.FEEDRATE))
@@ -453,9 +460,6 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
     def _alignPart(self, partnr):
         orientation_offset = 0
-
-        # find destination at the object
-        destination = self.smdparts.getPartDestination(partnr)
 
         # take picture
         self._logger.info("Taking bed align picture NOW")
@@ -479,7 +483,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
         #rotate object
         self._printer.commands("G92 E0")
-        self._printer.commands("G1 E" + str(destination[3]+orientation_offset) + " F" + str(self.FEEDRATE))
+        self._printer.commands("G1 E" + str(orientation_offset) + " F" + str(self.FEEDRATE))
 
     def _placePart(self, partnr):
         displacement = [0, 0]
@@ -566,6 +570,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
         x = 0.0
         y = 0.0
+        rotation = 0.0
 
         if(self._settings.get(["tray", "type"]) == "BOX"):
             boxsize = float(self._settings.get(["tray", "boxsize"]))
@@ -586,8 +591,11 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
             # x pos starts from point marker. Add number of components plus 1/2 component
             x += (col+0.5)  * float(feederconfig[row]["spacing"])
 
+            # rotation of this row
+            rotation = float(feederconfig[row]["rotation"])
 
-        return [x + float(self._settings.get(["tray", "x"])), y + float(self._settings.get(["tray", "y"])), float(self._settings.get(["tray", "z"]))]
+
+        return [x + float(self._settings.get(["tray", "x"])), y + float(self._settings.get(["tray", "y"])), float(self._settings.get(["tray", "z"])), rotation]
 
     def _gripVacuum(self):
         self._printer.commands("M400")
