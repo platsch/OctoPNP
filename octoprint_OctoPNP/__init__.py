@@ -242,8 +242,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
                 self._updateUI("OPERATION", "pick")
 
-                self._logger.info( "Move camera to part: " + str(self._currentPart))
-                self._moveCameraToPart(self._currentPart)
+                if(self._settings.get(["tray", "type"]) == "BOX"):
+                    self._logger.info( "Move camera to part: " + str(self._currentPart))
+                    self._moveCameraToPart(self._currentPart)
 
                 self._printer.commands("M400")
                 self._printer.commands("G4 P1")
@@ -377,36 +378,34 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
 
     def _pickPart(self, partnr):
-        # wait n seconds to make sure cameras are ready
-        #time.sleep(1) # is that necessary?
-
         part_offset = [0, 0]
 
-        self._logger.info("Taking head picture NOW") # Debug output
+        if(self._settings.get(["tray", "type"]) == "BOX"):
+            self._logger.info("Taking head picture NOW") # Debug output
 
-        # take picture
-        if self._grabImages("HEAD"):
-            headPath = self._settings.get(["camera", "head", "path"])
+            # take picture
+            if self._grabImages("HEAD"):
+                headPath = self._settings.get(["camera", "head", "path"])
 
-            #update UI
-            self._updateUI("HEADIMAGE", headPath)
+                #update UI
+                self._updateUI("HEADIMAGE", headPath)
 
-            #extract position information
-            part_offset = self.imgproc.locatePartInBox(headPath, True)
-            if not part_offset:
-                self._updateUI("ERROR", self.imgproc.getLastErrorMessage())
-                part_offset = [0, 0]
+                #extract position information
+                part_offset = self.imgproc.locatePartInBox(headPath, True)
+                if not part_offset:
+                    self._updateUI("ERROR", self.imgproc.getLastErrorMessage())
+                    part_offset = [0, 0]
+                else:
+                    # update UI
+                    self._updateUI("HEADIMAGE", self.imgproc.getLastSavedImagePath())
+
+                    # Log image for debugging and documentation
+                    if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(headPath)
             else:
-                # update UI
-                self._updateUI("HEADIMAGE", self.imgproc.getLastSavedImagePath())
+                cm_x=cm_y=0
+                self._updateUI("ERROR", "Camera not ready")
 
-                # Log image for debugging and documentation
-                if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(headPath)
-        else:
-            cm_x=cm_y=0
-            self._updateUI("ERROR", "Camera not ready")
-
-        self._logger.info("PART OFFSET:" + str(part_offset))
+            self._logger.info("PART OFFSET:" + str(part_offset))
 
         tray_offset = self._getTrayPosFromPartNr(partnr)
         vacuum_dest = [tray_offset[0]+part_offset[0],\
@@ -565,11 +564,30 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         col = partPos["col"]
         self._logger.info("Selected object: %d. Position: row %d, col %d", partnr, row, col)
 
-        boxsize = float(self._settings.get(["tray", "boxsize"]))
-        rimsize = float(self._settings.get(["tray", "rimsize"]))
-        x = (col-1)*boxsize + boxsize/2 + col*rimsize + float(self._settings.get(["tray", "x"]))
-        y = (row-1)*boxsize + boxsize/2 + row*rimsize + float(self._settings.get(["tray", "y"]))
-        return [x, y, float(self._settings.get(["tray", "z"]))]
+        x = 0.0
+        y = 0.0
+
+        if(self._settings.get(["tray", "type"]) == "BOX"):
+            boxsize = float(self._settings.get(["tray", "boxsize"]))
+            rimsize = float(self._settings.get(["tray", "rimsize"]))
+            x = (col-1)*boxsize + boxsize/2 + col*rimsize
+            y = (row-1)*boxsize + boxsize/2 + row*rimsize
+
+        if(self._settings.get(["tray", "type"]) == "FEEDER"):
+            feederconfig = self._settings.get(["tray", "feederconfiguration"])
+            for i in range(1, row+1):
+                y += float(feederconfig[i]["width"])
+            # y should now be the point marker in the correct row
+            # 1.75mm for punch-hole line
+            y -= 1.75
+            # and half of row-width
+            y -= float(feederconfig[row]["width"])
+
+            # x pos starts from point marker. Add number of components plus 1/2 component
+            x += (col+0.5)  * float(feederconfig[row]["spacing"])
+
+
+        return [x + float(self._settings.get(["tray", "x"])), y + float(self._settings.get(["tray", "y"])), float(self._settings.get(["tray", "z"]))]
 
     def _gripVacuum(self):
         self._printer.commands("M400")
