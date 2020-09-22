@@ -7,9 +7,10 @@ $(function() {
         self.connection = parameters[2];
 
         self.parts = ko.observableArray([]); // list of parts in the current file, includes tray assignments);
-        self.trayfeeder_rows = ko.observableArray([]); // list of available trayfeeder rows
+        self.trayfeeder_rows = ko.observableArray([]); // list of available trayfeeder rows for dropdown list in assignment table
 
         var _boxTray = {};
+        var _feederTray = {};
         var _trayCanvas = document.getElementById('trayCanvas');
 
         self.stateString = ko.observable("No file loaded");
@@ -29,6 +30,7 @@ $(function() {
         self.onBeforeBinding = function() {
             self.traySettings = self.settings.settings.plugins.OctoPNP.tray;
             _boxTray = new boxTray(self.parts, self.traySettings.columns(), self.traySettings.rows(), self.traySettings.boxsize(), _trayCanvas);
+            _feederTray = new feederTray(self.parts, self.traySettings.feederconfiguration(), _trayCanvas);
             _trayCanvas.addEventListener("click", self.onSmdTrayClick, false); //"click, dblclick"
             _trayCanvas.addEventListener("dblclick", self.onSmdTrayDblclick, false); //"click, dblclick"
         }
@@ -38,12 +40,12 @@ $(function() {
         }
 
         // this is a workaround to notifiy the assignment table about changes inside the objects hold by the observableArray.
-        // It is probably a very bad (computationally expensive) solution, but at some point I just didn't waste any more time on this.
+        // It is probably a very bad (computationally expensive) solution, but at some point I just didn't want to waste any more time on this.
         self.trayFeederChange = function(item) {
             self.parts.remove(item);
 
             // update col
-            if(item.row < 1) {
+            if(item.row < 0) {
                 item.col = -1;
             } else {
                 var cols = [];
@@ -52,7 +54,7 @@ $(function() {
                         cols.push(self.parts()[i].col);
                     }
                 }
-                var col = 1;
+                var col = 0;
                 var done = false;
                 while(!done) {
                     done = true;
@@ -76,6 +78,8 @@ $(function() {
                 mapping[self.parts()[i].id] = {"row": self.parts()[i].row, "col": self.parts()[i].col}
             }
             self._pushTrayAssignments(mapping);
+
+            _feederTray.render();
         }
 
         // catch mouseclicks at the tray for interactive part handling
@@ -83,7 +87,14 @@ $(function() {
             var rect = _trayCanvas.getBoundingClientRect();
             var x = Math.floor(event.clientX - rect.left);
             var y = Math.floor(event.clientY - rect.top);
-            return _boxTray.selectPart(x, y);
+            var result = undefined;
+            if(self.traySettings.type() == "BOX") {
+                result = _boxTray.selectPart(x, y);
+            }
+            else if(self.traySettings.type() == "FEEDER") {
+                result = _feederTray.selectPart(x, y);
+            }
+            return result;
         }
 
         self.onSmdTrayDblclick = function(event) {
@@ -112,7 +123,7 @@ $(function() {
                         if(self.traySettings.type() == "FEEDER") {
                             self.assignComponentsDialog(true); // show feeder assignment dialog
                             self.trayfeeder_rows([{name: "-1", value: -1}]); // reset
-                            for(var i=1; i < self.traySettings.feederconfiguration().length+1; i++) {
+                            for(var i=0; i < self.traySettings.feederconfiguration().length; i++) {
                                 self.trayfeeder_rows.push({name: i.toString(), value: i});
                             }
                         }
@@ -132,6 +143,9 @@ $(function() {
                             }
                             if(self.traySettings.type() == "BOX") {
                                 _boxTray.render();
+                            }
+                            else if(self.traySettings.type() == "FEEDER") {
+                                _feederTray.render();
                             }
                         }
                     }else{

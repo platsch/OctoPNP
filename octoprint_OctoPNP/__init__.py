@@ -156,8 +156,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
     def get_assets(self):
         return dict(
             js=["js/OctoPNP.js",
+                "js/settings.js",
                 "js/boxTray.js",
-                "js/settings.js"]
+                "js/feederTray.js",
+                "js/trayUtil.js"]
         )
 
     # Flask endpoint for the GUI to request camera images. Possible request parameters are "BED" and "HEAD".

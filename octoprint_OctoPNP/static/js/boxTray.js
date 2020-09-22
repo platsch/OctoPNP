@@ -11,7 +11,7 @@ function boxTray(partlist, cols, rows, boxSize, canvas) {
     self.render = function() {
         _drawTray();
         for (var i in _parts()) {
-            _drawPart(_parts()[i].id, "black");
+            _drawPart(_parts()[i], "black");
         }
     }
 
@@ -22,11 +22,11 @@ function boxTray(partlist, cols, rows, boxSize, canvas) {
 
         self.render();
 
-        var partId = _getPartId(col, row);
-        if(partId) {
-            _drawPart(partId, "red");
+        var part = _getPartId(col, row);
+        if(part) {
+            _drawPart(part, "red");
         }
-        return partId;
+        return part.id;
     }
 
 
@@ -55,65 +55,17 @@ function boxTray(partlist, cols, rows, boxSize, canvas) {
 	}
 	
 	
-	//draw a part into a tray box
-    function _drawPart(partID, color) {
-        // find part with partID in array
-        var part;
-        for (var i in _parts()) {
-            if(_parts()[i].id == partID) {
-                part = _parts()[i];
-            }
-        }
+    //draw a part into a tray box
+    function _drawPart(part, color) {
+        //clear old box
+        var canvasBoxSize = _getCanvasBoxSize();
+        _drawTrayBox(part.col, part.row, canvasBoxSize);
 
-		//clear old box
-		var canvasBoxSize = _getCanvasBoxSize();
-		_drawTrayBox(part.col, part.row, canvasBoxSize);
-
-		if (_trayCanvas && _trayCanvas.getContext) {
-            var ctx = _trayCanvas.getContext("2d");
-            var scale = canvasBoxSize/_trayBoxSize;
-            if (ctx) {
-                var col_offset = part.col*canvasBoxSize-canvasBoxSize+4;
-                var row_offset = _rows*canvasBoxSize-part.row*canvasBoxSize+4;
-
-                //print part names
-				ctx.font = "10px Verdana";
-				ctx.fillStyle = "#000000";
-				ctx.textBaseline = "top";
-				ctx.fillText(part.name, col_offset, row_offset);
-
-				//draw part shapes
-				if( part.hasOwnProperty("shape") ) {
-					var points = part.shape;
-
-					ctx.beginPath();
-					ctx.strokeStyle = color;
-					ctx.lineWidth = 1;
-					ctx.fillStyle = color;
-					if(points.length > 0) {
-						ctx.moveTo(points[0][0]*scale+col_offset+canvasBoxSize/2, -points[0][1]*scale+row_offset+canvasBoxSize/2);
-						for(var i=0; i < points.length; i++) {
-							ctx.lineTo(points[i][0]*scale+col_offset+canvasBoxSize/2, -points[i][1]*scale+row_offset+canvasBoxSize/2);
-						}
-						//close loop
-						ctx.lineTo(points[0][0]*scale+col_offset+canvasBoxSize/2, -points[0][1]*scale+row_offset+canvasBoxSize/2);
-						ctx.lineTo(points[1][0]*scale+col_offset+canvasBoxSize/2, -points[1][1]*scale+row_offset+canvasBoxSize/2);
-						ctx.fill();
-					}
-				}
-
-				//draw part pads
-				if( part.hasOwnProperty("pads") ) {
-					var pads = part.pads;
-
-					ctx.beginPath();
-					ctx.fillStyle = "#999999";
-					for(var i=0; i < pads.length; i++) {
-						ctx.fillRect(pads[i][0]*scale+col_offset+canvasBoxSize/2, -pads[i][1]*scale+row_offset+canvasBoxSize/2, (pads[i][2]-pads[i][0])*scale, -(pads[i][3]-pads[i][1])*scale);
-					}
-				}
-            }
-        }
+        var scale = canvasBoxSize/_trayBoxSize;
+        var col_offset = part.col*canvasBoxSize-canvasBoxSize+4;
+        var row_offset = _rows*canvasBoxSize-part.row*canvasBoxSize+4;
+        // use function fom trayUtil.js to actually draw the component
+        drawPart(part, _trayCanvas, col_offset+canvasBoxSize/2, row_offset+canvasBoxSize/2, col_offset, row_offset, scale, color, 0);
     }
 
     // draw a single tray box
@@ -151,7 +103,7 @@ function boxTray(partlist, cols, rows, boxSize, canvas) {
         var result = false;
         for (var i in _parts()) {
             if((_parts()[i].col == col) && (_parts()[i].row == row)) {
-                result = _parts()[i].id;
+                result = _parts()[i];
                 break;
             }
         }
