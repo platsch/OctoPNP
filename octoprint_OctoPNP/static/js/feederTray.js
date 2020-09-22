@@ -102,7 +102,8 @@ function feederTray(partlist, trayConfiguration, canvas) {
             for(var row = _trayConfiguration.length - 1; row >= 0; row--) {
                 if(row <= part.row) {
                     x_offset += part.col * parseInt(_trayConfiguration[row].spacing())*scale;
-                    var rotation = Math.PI/180 * parseInt(_trayConfiguration[row].rotation());
+                    // invert rotation value, canvas z-axis and printer z-axis are inverted
+                    var rotation = -Math.PI/180 * parseInt(_trayConfiguration[row].rotation());
                     // use function fom trayUtil.js to actually draw the component
                     drawPart(part, _trayCanvas, x_offset + 0.5 * parseInt(_trayConfiguration[row].spacing()) * scale, y_offset + 0.5 * parseInt(_trayConfiguration[row].width()) * scale, x_offset, y_offset, scale, color, rotation);
                     break;
