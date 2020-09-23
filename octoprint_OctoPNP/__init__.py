@@ -603,7 +603,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
             # 1.75mm for punch-hole line
             y -= 1.75
             # and half of row-width
-            y -= 0.5*float(feederconfig[row]["width"])
+            y -= 0.5*(float(feederconfig[row]["width"])-3.5)
 
             # x pos starts from point marker. Add number of components plus 1/2 component
             x += (col+0.5)  * float(feederconfig[row]["spacing"])
