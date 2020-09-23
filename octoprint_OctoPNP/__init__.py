@@ -510,6 +510,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         # take picture to find part offset
         self._logger.info("Taking bed offset picture NOW")
         bedPath = self._settings.get(["camera", "bed", "path"])
+        orientation_offset = 0.0
         if self._grabImages("BED"):
 
             orientation_offset = self.imgproc.getPartOrientation(bedPath, float(self._settings.get(["camera", "bed", "pxPerMM", "x"])), destination[3])
@@ -602,7 +603,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
             # 1.75mm for punch-hole line
             y -= 1.75
             # and half of row-width
-            y -= float(feederconfig[row]["width"])
+            y -= 0.5*float(feederconfig[row]["width"])
 
             # x pos starts from point marker. Add number of components plus 1/2 component
             x += (col+0.5)  * float(feederconfig[row]["spacing"])
