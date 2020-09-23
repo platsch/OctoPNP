@@ -410,7 +410,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         tray_offset = self._getTrayPosFromPartNr(partnr)
         vacuum_dest = [tray_offset[0]+part_offset[0],\
                          tray_offset[1]+part_offset[1],\
-                         tray_offset[2]+self.smdparts.getPartHeight(partnr)-float(self._settings.get(["vacnozzle", "z_pressure"]))]
+                         tray_offset[2]-float(self._settings.get(["vacnozzle", "z_pressure"]))]
+
+        if(self._settings.get(["tray", "type"]) == "BOX"):
+            vacuum_dest[2] += self.smdparts.getPartHeight(partnr)
 
         # only apply X/Y offsets if not handled by the firmware
         if(self._settings.get(["vacnozzle", "use_offsets"])):
@@ -421,17 +424,29 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
         # move vac nozzle to part and pick
         self._printer.commands("T" + str(self._settings.get(["vacnozzle", "tool_nr"])))
+        self._printer.commands("M400")
+        self._printer.commands("M400")
         if(tray_axis != "Z"):
             self._printer.commands("G1 " + tray_axis + str(vacuum_dest[2]+5))
+            self._printer.commands("M400")
+            self._printer.commands("M400")
         self._printer.commands("G1 X" + str(vacuum_dest[0]) + " Y" + str(vacuum_dest[1]) + " F" + str(self.FEEDRATE))
+        self._printer.commands("M400")
+        self._printer.commands("M400")
         if(tray_axis == "Z"):
             self._printer.commands("G1 Z" + str(vacuum_dest[2]+10))
+            self._printer.commands("M400")
+            self._printer.commands("M400")
         self._releaseVacuum()
         self._lowerVacuumNozzle()
         self._printer.commands("G1 " + tray_axis + str(vacuum_dest[2]) + " F1000")
+        self._printer.commands("M400")
+        self._printer.commands("M400")
         self._gripVacuum()
         self._printer.commands("G4 S1")
         self._printer.commands("G1 " + tray_axis + str(vacuum_dest[2]+5) + " F1000")
+        self._printer.commands("M400")
+        self._printer.commands("M400")
 
         # move to bed camera
         vacuum_dest = [float(self._settings.get(["camera", "bed", "x"])),\
@@ -446,6 +461,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         tray_axis = str(self._settings.get(["tray", "axis"]))
 
         self._printer.commands("G1 X" + str(vacuum_dest[0]) + " Y" + str(vacuum_dest[1]) + " F"  + str(self.FEEDRATE))
+        self._printer.commands("M400")
 
         # find destination at the object
         destination = self.smdparts.getPartDestination(partnr)
