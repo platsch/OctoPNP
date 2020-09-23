@@ -166,8 +166,12 @@ $(function() {
 
             // move to a safe area to avoid collisions
             OctoPrint.control.sendGcode("G1 X100 Y150 F3000");
+            OctoPrint.control.sendGcode("G4 P100");
+            OctoPrint.control.sendGcode("M400");
             // Switch to selected extruder
             OctoPrint.control.sendGcode("T" + self.selectedBedExtruder().toString());
+            OctoPrint.control.sendGcode("G4 P100");
+            OctoPrint.control.sendGcode("M400");
 
             //move tool to camera
             var x = parseFloat(self.settings.plugins.OctoPNP.camera.bed.x());
