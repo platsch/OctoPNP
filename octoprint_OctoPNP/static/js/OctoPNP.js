@@ -29,8 +29,8 @@ $(function() {
         // have been retrieved from the OctoPrint backend and thus the SettingsViewModel been properly populated.
         self.onBeforeBinding = function() {
             self.traySettings = self.settings.settings.plugins.OctoPNP.tray;
-            _boxTray = new boxTray(self.parts, self.traySettings.columns(), self.traySettings.rows(), self.traySettings.boxsize(), _trayCanvas);
-            _feederTray = new feederTray(self.parts, self.traySettings.feederconfiguration(), _trayCanvas);
+            _boxTray = new boxTray(self.parts, self.traySettings.box.columns(), self.traySettings.box.rows(), self.traySettings.box.boxsize(), _trayCanvas);
+            _feederTray = new feederTray(self.parts, self.traySettings.feeder.feederconfiguration(), _trayCanvas);
             _trayCanvas.addEventListener("click", self.onSmdTrayClick, false); //"click, dblclick"
             _trayCanvas.addEventListener("dblclick", self.onSmdTrayDblclick, false); //"click, dblclick"
         }
@@ -123,7 +123,7 @@ $(function() {
                         if(self.traySettings.type() == "FEEDER") {
                             self.assignComponentsDialog(true); // show feeder assignment dialog
                             self.trayfeeder_rows([{name: "-1", value: -1}]); // reset
-                            for(var i=0; i < self.traySettings.feederconfiguration().length; i++) {
+                            for(var i=0; i < self.traySettings.feeder.feederconfiguration().length; i++) {
                                 self.trayfeeder_rows.push({name: i.toString(), value: i});
                             }
                         }

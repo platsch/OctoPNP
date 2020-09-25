@@ -33,31 +33,31 @@
                     </div>
                     <div data-bind="visible: settings.plugins.OctoPNP.tray.type() == 'BOX'">
                         <div class="row-fluid">
-                            <label class="control-label" for="tray.rows">Rows</label>
+                            <label class="control-label" for="tray.box.rows">Rows</label>
                             <div class="controls">
-                                <input id="tray.rows" type="number" step="1" class="input-mini text-right" data-bind="value: settings.plugins.OctoPNP.tray.rows">
+                                <input id="tray.box.rows" type="number" step="1" class="input-mini text-right" data-bind="value: settings.plugins.OctoPNP.tray.box.rows">
                             </div>
                         </div>
                         <div class="row-fluid">
-                            <label class="control-label" for="tray.columns">Columns</label>
+                            <label class="control-label" for="tray.box.columns">Columns</label>
                             <div class="controls">
-                                <input id="tray.columns" type="number" step="1" class="input-mini text-right" data-bind="value: settings.plugins.OctoPNP.tray.columns">
+                                <input id="tray.box.columns" type="number" step="1" class="input-mini text-right" data-bind="value: settings.plugins.OctoPNP.tray.box.columns">
                             </div>
                         </div>
                         <div class="row-fluid">
-                            <label class="control-label" for="tray.boxsize">Box size</label>
+                            <label class="control-label" for="tray.box.boxsize">Box size</label>
                             <div class="controls">
                                 <div class="input-append">
-                                    <input id="tray.boxsize" type="number" step="0.01" class="input-mini text-right" data-bind="value: settings.plugins.OctoPNP.tray.boxsize">
+                                    <input id="tray.box.boxsize" type="number" step="0.01" class="input-mini text-right" data-bind="value: settings.plugins.OctoPNP.tray.box.boxsize">
                                     <span class="add-on">mm</span>
                                 </div>
                             </div>
                         </div>
                         <div class="row-fluid">
-                            <label class="control-label" for="tray.rimsize">Rim size</label>
+                            <label class="control-label" for="tray.box.rimsize">Rim size</label>
                             <div class="controls">
                                  <div class="input-append">
-                                    <input id="tray.rimsize" type="number" step="0.01" class="input-mini text-right" data-bind="value: settings.plugins.OctoPNP.tray.rimsize">
+                                    <input id="tray.box.rimsize" type="number" step="0.01" class="input-mini text-right" data-bind="value: settings.plugins.OctoPNP.tray.box.rimsize">
                                     <span class="add-on">mm</span>
                                  </div>
                             </div>
@@ -74,7 +74,7 @@
                                     <th>Action</th>
                                 </tr></tbody>
                                 <tbody>
-                                    <!-- ko foreach: settings.plugins.OctoPNP.tray.feederconfiguration -->
+                                    <!-- ko foreach: settings.plugins.OctoPNP.tray.feeder.feederconfiguration -->
                                     <tr>
                                         <td data-bind="text: $index"></td>
                                         <td>
@@ -106,6 +106,15 @@
                         <div class="row-fluid">
                             <button data-bind="click: trayFeederAddRow">Add Row</button>
                         </div>
+                        <div class="row-fluid">
+                        <label class="control-label" for="tray.feeder.row_clearance">Clearance between rows</label>
+                        <div class="controls">
+                            <div class="input-append">
+                                <input id="tray.feeder.row_clearance" type="number" step="0.1" class="input-mini text-right" data-bind="value: settings.plugins.OctoPNP.tray.feeder.row_clearance">
+                                <span class="add-on">mm</span>
+                            </div>
+                        </div>
+                    </div>
                     </div>
                     <div class="row-fluid">
                         <div class="span4"><h4>{{ _('Tray position') }}</h4></div>

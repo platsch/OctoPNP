@@ -84,23 +84,30 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         self._helper_callback = None
 
     def on_after_startup(self):
-        self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), int(self._settings.get(["camera", "bed", "binary_thresh"])), int(self._settings.get(["camera", "head", "binary_thresh"])))
+        self.imgproc = ImageProcessing(float(self._settings.get(["tray", "box", "boxsize"])), int(self._settings.get(["camera", "bed", "binary_thresh"])), int(self._settings.get(["camera", "head", "binary_thresh"])))
         #used for communication to UI
         self._pluginManager = octoprint.plugin.plugin_manager()
 
     def get_settings_defaults(self):
         return {
             "tray": {
-                "type": "BOX", # possible alternatives: FEEDER
+                # general settings applying to all tray types
                 "x": 0,
                 "y": 0,
                 "z": 0,
                 "axis": "Z",
-                "rows" : 5,
-                "columns": 5,
-                "boxsize": 10,
-                "rimsize": 1.0,
-                "feederconfiguration": [ {"width": 8.0, "spacing": 5.0, "rotation": 0},  {"width": 12.0, "spacing": 8.0, "rotation": 90} ]
+                "type": "BOX", # possible alternatives: FEEDER
+                # type specific settings
+                "box": {
+                    "rows": 5,
+                    "columns": 5,
+                    "boxsize": 10,
+                    "rimsize": 1.0,
+                },
+                "feeder": {
+                    "row_clearance": 3.0,
+                    "feederconfiguration": [ {"width": 8.0, "spacing": 5.0, "rotation": 0},  {"width": 12.0, "spacing": 8.0, "rotation": 90} ]
+                },
             },
             "vacnozzle": {
                 "use_offsets": False,
@@ -278,7 +285,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 self._logger.info("Pick part " + str(self._currentPart))
 
                 # generate new imageProcessing object with updated settings
-                self.imgproc = ImageProcessing(float(self._settings.get(["tray", "boxsize"])), int(self._settings.get(["camera", "bed", "binary_thresh"])), int(self._settings.get(["camera", "head", "binary_thresh"])))
+                self.imgproc = ImageProcessing(float(self._settings.get(["tray", "box", "boxsize"])), int(self._settings.get(["camera", "bed", "binary_thresh"])), int(self._settings.get(["camera", "head", "binary_thresh"])))
 
                 self._pickPart(self._currentPart)
                 self._printer.commands("M400")
@@ -590,20 +597,19 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         rotation = 0.0
 
         if(self._settings.get(["tray", "type"]) == "BOX"):
-            boxsize = float(self._settings.get(["tray", "boxsize"]))
-            rimsize = float(self._settings.get(["tray", "rimsize"]))
+            boxsize = float(self._settings.get(["tray", "box", "boxsize"]))
+            rimsize = float(self._settings.get(["tray", "box", "rimsize"]))
             x = (col-1)*boxsize + boxsize/2 + col*rimsize
             y = (row-1)*boxsize + boxsize/2 + row*rimsize
 
         if(self._settings.get(["tray", "type"]) == "FEEDER"):
-            feederconfig = self._settings.get(["tray", "feederconfiguration"])
+            feederconfig = self._settings.get(["tray", "feeder", "feederconfiguration"])
             for i in range(1, row+1):
-                y += float(feederconfig[i]["width"])
+                y += float(feederconfig[i]["width"]) + float(self._settings.get(["tray", "feeder", "row_clearance"]))
+
             # y should now be the point marker in the correct row
-            # 1.75mm for punch-hole line
-            y -= 1.75
-            # and half of row-width
-            y -= 0.5*(float(feederconfig[row]["width"])-3.5)
+            # 1.75mm for punch-hole line + measured offset
+            y -= 0.5*(float(feederconfig[row]["width"])) - 0.45
 
             # x pos starts from point marker. Add number of components plus 1/2 component
             x += (col+0.5)  * float(feederconfig[row]["spacing"])
@@ -687,8 +693,8 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 for partId in partIds:
                     # assign components to tray boxes.
                     if(self._settings.get(["tray", "type"]) == "BOX"):
-                        row = int((partPos-1)/int(self._settings.get(["tray", "columns"]))+1)
-                        col = ((partPos-1)%int(self._settings.get(["tray", "columns"])))+1
+                        row = int((partPos-1)/int(self._settings.get(["tray", "box", "columns"]))+1)
+                        col = ((partPos-1)%int(self._settings.get(["tray", "box", "columns"])))+1
                         self.smdparts.setPartPosition(partId, row, col)
                         partPos += 1
                     partArray.append(

@@ -70,11 +70,11 @@ $(function() {
 
         // add new row to tray feeder configuration
         self.trayFeederAddRow = function() {
-            self.settings.plugins.OctoPNP.tray.feederconfiguration.push({ "width": 8, "spacing": 5.0, "rotation": 0 });
+            self.settings.plugins.OctoPNP.tray.feeder.feederconfiguration.push({ "width": 8, "spacing": 4.0, "rotation": 90 });
         }
         // remove this row from tray feeder configuration
         self.trayFeederRemoveRow = function() {
-            self.settings.plugins.OctoPNP.tray.feederconfiguration.remove(this);
+            self.settings.plugins.OctoPNP.tray.feeder.feederconfiguration.remove(this);
         }
 
         self.startVideo = function(url) {
@@ -366,20 +366,20 @@ $(function() {
             var cornerOffsetY = 0.0;
             switch (corner) {
                 case "TL": 
-                    var rows = parseFloat(self.settings.plugins.OctoPNP.tray.rows());
-                    cornerOffsetY = rows*parseFloat(self.settings.plugins.OctoPNP.tray.boxsize()) + (rows+1)*parseFloat(self.settings.plugins.OctoPNP.tray.rimsize());
+                    var rows = parseFloat(self.settings.plugins.OctoPNP.tray.box.rows());
+                    cornerOffsetY = rows*parseFloat(self.settings.plugins.OctoPNP.tray.box.boxsize()) + (rows+1)*parseFloat(self.settings.plugins.OctoPNP.tray.box.rimsize());
                     self.statusTrayPosition(false);
                     break;
                 case "TR": 
-                    var rows = parseFloat(self.settings.plugins.OctoPNP.tray.rows());
-                    var cols = parseFloat(self.settings.plugins.OctoPNP.tray.columns());
-                    cornerOffsetY = rows*parseFloat(self.settings.plugins.OctoPNP.tray.boxsize()) + (rows+1)*parseFloat(self.settings.plugins.OctoPNP.tray.rimsize());
-                    cornerOffsetX = cols*parseFloat(self.settings.plugins.OctoPNP.tray.boxsize()) + (cols+1)*parseFloat(self.settings.plugins.OctoPNP.tray.rimsize());
+                    var rows = parseFloat(self.settings.plugins.OctoPNP.tray.box.rows());
+                    var cols = parseFloat(self.settings.plugins.OctoPNP.tray.box.columns());
+                    cornerOffsetY = rows*parseFloat(self.settings.plugins.OctoPNP.tray.box.boxsize()) + (rows+1)*parseFloat(self.settings.plugins.OctoPNP.tray.box.rimsize());
+                    cornerOffsetX = cols*parseFloat(self.settings.plugins.OctoPNP.tray.box.boxsize()) + (cols+1)*parseFloat(self.settings.plugins.OctoPNP.tray.box.rimsize());
                     self.statusTrayPosition(false);
                     break;
                 case "BR": 
-                    var cols = parseFloat(self.settings.plugins.OctoPNP.tray.columns());
-                    cornerOffsetX = cols*parseFloat(self.settings.plugins.OctoPNP.tray.boxsize()) + (cols+1)*parseFloat(self.settings.plugins.OctoPNP.tray.rimsize());
+                    var cols = parseFloat(self.settings.plugins.OctoPNP.tray.box.columns());
+                    cornerOffsetX = cols*parseFloat(self.settings.plugins.OctoPNP.tray.box.boxsize()) + (cols+1)*parseFloat(self.settings.plugins.OctoPNP.tray.box.rimsize());
                     self.statusTrayPosition(false);
                     break;
                 default:
