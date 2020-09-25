@@ -92,13 +92,13 @@ $(function() {
             self.stopVideo();
         }
         
-        // Calibrate offset between primary extruder and head-camera
+        // Calibrate offset between selected tool and head-camera.
+        // Use T-1 for toolchanger if head camera is attached to the carriage -> no tool offset.
         self.headCameraOffset = function() {
             //deactivate other processes
             self.statusHeadCameraOffset(true);
             self.statusTrayPosition(false);
             self.statusBedCameraOffset(false);
-            // delete if pnp offset in eeprom
             self.statusPnpNozzleOffset(false);
             
             // should we start live preview?
@@ -107,12 +107,12 @@ $(function() {
                 self.startVideo(self.settings.plugins.OctoPNP.camera.head.http_path());
             }
 
-            // load offsets for given extruder
+            // load offsets for given tool
             self.loadOffsets(self.selectedHeadExtruder());
 
             // move to safe area
             OctoPrint.control.sendGcode("G1 X100 Y150 F3000");
-            // switch to selected extruder
+            // switch to selected tool
             OctoPrint.control.sendGcode("T" + self.selectedHeadExtruder().toString());
 
             //move camera to object
@@ -457,6 +457,9 @@ $(function() {
                 ctx.fillStyle = "#000000";
                 ctx.fillRect(0, ((h*scale)/2)-0.5, w*scale, 1);
                 ctx.fillRect(((w*scale)/2)-0.5, 0, 1, h*scale);
+
+                // Avoid memory leak. Not certain if this is implemented correctly, but GC seems to free the memory every now and then.
+                localimg = undefined;
             };
             if(break_cache) {
                 img = img + "?" + new Date().getTime();
