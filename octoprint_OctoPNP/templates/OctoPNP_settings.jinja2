@@ -259,6 +259,32 @@
                         <div class="span12">
                             <div class="row-fluid">
                                 <div class="span1"></div>
+                                <div class="span4">{{ _('Enable illumination G-code') }}</div>
+                                <div class="span7">
+                                    <div class="input-append">
+                                        <input type="text" class="input-xlarge" data-bind="value: settings.plugins.OctoPNP.camera.head.enable_LED_gcode">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row-fluid">
+                        <div class="span12">
+                            <div class="row-fluid">
+                                <div class="span1"></div>
+                                <div class="span4">{{ _('Disable illumination G-code') }}</div>
+                                <div class="span7">
+                                    <div class="input-append">
+                                        <input type="text" class="input-xlarge" data-bind="value: settings.plugins.OctoPNP.camera.head.disable_LED_gcode">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row-fluid">
+                        <div class="span12">
+                            <div class="row-fluid">
+                                <div class="span1"></div>
                                 <div class="span4">{{ _('Image-path') }}</div>
                                 <div class="span7">
                                     <div class="input-append">
@@ -387,6 +413,32 @@
                                 <div class="span7">
                                     <div class="input-append">
                                         <input type="number" step="1.0" class="input-mini text-right" data-bind="value: settings.plugins.OctoPNP.camera.bed.binary_thresh">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row-fluid">
+                        <div class="span12">
+                            <div class="row-fluid">
+                                <div class="span1"></div>
+                                <div class="span4">{{ _('Enable illumination G-code') }}</div>
+                                <div class="span7">
+                                    <div class="input-append">
+                                        <input type="text" class="input-xlarge" data-bind="value: settings.plugins.OctoPNP.camera.bed.enable_LED_gcode">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row-fluid">
+                        <div class="span12">
+                            <div class="row-fluid">
+                                <div class="span1"></div>
+                                <div class="span4">{{ _('Disable illumination G-code') }}</div>
+                                <div class="span7">
+                                    <div class="input-append">
+                                        <input type="text" class="input-xlarge" data-bind="value: settings.plugins.OctoPNP.camera.bed.disable_LED_gcode">
                                     </div>
                                 </div>
                             </div>

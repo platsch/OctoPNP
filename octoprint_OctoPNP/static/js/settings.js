@@ -85,6 +85,9 @@ $(function() {
         self.stopVideo = function() {
             clearInterval(self.videoTimer);
             self.videoStreamActive(false);
+            // disable LED illuminiation
+            OctoPrint.control.sendGcode(self.settings.plugins.OctoPNP.camera.head.disable_LED_gcode());
+            OctoPrint.control.sendGcode(self.settings.plugins.OctoPNP.camera.bed.disable_LED_gcode());
         };
 
         // stop potential video stream when settings dialog is closed
@@ -104,6 +107,8 @@ $(function() {
             // should we start live preview?
             self.stopVideo();
             if(self.settings.plugins.OctoPNP.camera.head.http_path().length > 0) {
+                // enable LED illuminiation
+                OctoPrint.control.sendGcode(self.settings.plugins.OctoPNP.camera.head.enable_LED_gcode());
                 self.startVideo(self.settings.plugins.OctoPNP.camera.head.http_path());
             }
 
@@ -158,6 +163,8 @@ $(function() {
             // should we start live preview?
             self.stopVideo();
             if(self.settings.plugins.OctoPNP.camera.bed.http_path().length > 0) {
+                // enable LED illuminiation
+                OctoPrint.control.sendGcode(self.settings.plugins.OctoPNP.camera.bed.enable_LED_gcode());
                 self.startVideo(self.settings.plugins.OctoPNP.camera.bed.http_path());
             }
 
@@ -297,6 +304,8 @@ $(function() {
             // should we start live preview?
             self.stopVideo();
             if(self.settings.plugins.OctoPNP.camera.bed.http_path().length > 0) {
+                // enable LED illuminiation
+                OctoPrint.control.sendGcode(self.settings.plugins.OctoPNP.camera.bed.enable_LED_gcode());
                 self.startVideo(self.settings.plugins.OctoPNP.camera.bed.http_path());
             }
 
@@ -354,6 +363,8 @@ $(function() {
             // should we start live preview?
             self.stopVideo();
             if(self.settings.plugins.OctoPNP.camera.head.http_path().length > 0) {
+                // enable LED illuminiation
+                OctoPrint.control.sendGcode(self.settings.plugins.OctoPNP.camera.head.enable_LED_gcode());
                 self.startVideo(self.settings.plugins.OctoPNP.camera.head.http_path());
             }
 
