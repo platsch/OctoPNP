@@ -88,6 +88,8 @@ $(function() {
             // disable LED illuminiation
             OctoPrint.control.sendGcode(self.settings.plugins.OctoPNP.camera.head.disable_LED_gcode());
             OctoPrint.control.sendGcode(self.settings.plugins.OctoPNP.camera.bed.disable_LED_gcode());
+            OctoPrint.control.sendGcode("G4 P100");
+            OctoPrint.control.sendGcode("M400");
         };
 
         // stop potential video stream when settings dialog is closed
