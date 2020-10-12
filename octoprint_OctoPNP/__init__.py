@@ -254,6 +254,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 self._updateUI("OPERATION", "pick")
 
                 if(self._settings.get(["tray", "type"]) == "BOX"):
+                    # enable head camera LEDs
+                    if(len(self._settings.get(["camera", "head", "enable_LED_gcode"])) > 0):
+                        self._printer.commands(self._settings.get(["camera", "head", "enable_LED_gcode"]))
                     self._logger.info( "Move camera to part: " + str(self._currentPart))
                     self._moveCameraToPart(self._currentPart)
 
@@ -418,6 +421,14 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
             self._logger.info("PART OFFSET:" + str(part_offset))
 
+            # disable head camera LEDs
+            if(len(self._settings.get(["camera", "head", "disable_LED_gcode"])) > 0):
+                self._printer.commands(self._settings.get(["camera", "head", "disable_LED_gcode"]))
+
+        # and enable bed camera LEDs
+        if(len(self._settings.get(["camera", "bed", "enable_LED_gcode"])) > 0):
+            self._printer.commands(self._settings.get(["camera", "bed", "enable_LED_gcode"]))
+
         tray_offset = self._getTrayPosFromPartNr(partnr)
         vacuum_dest = [tray_offset[0]+part_offset[0],\
                          tray_offset[1]+part_offset[1],\
@@ -564,6 +575,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                 if self._settings.get(["camera", "image_logging"]): self._saveDebugImage(bedPath)
             else:
                 self._updateUI("ERROR", "Camera not ready")
+
+        # disable bed camera LEDs
+        if(len(self._settings.get(["camera", "bed", "disable_LED_gcode"])) > 0):
+            self._printer.commands(self._settings.get(["camera", "bed", "disable_LED_gcode"]))
 
         # move to destination
         dest_z = destination[2]+self.smdparts.getPartHeight(partnr)-float(self._settings.get(["vacnozzle", "z_pressure"]))
