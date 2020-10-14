@@ -632,6 +632,9 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
             # x pos starts from point marker. Add number of components plus 1/2 component
             x += (col+0.5)  * float(feederconfig[row]["spacing"])
+            if(float(feederconfig[row]["spacing"]) > 4):
+                x -= 2.0
+
 
             # rotation of this row
             rotation = float(feederconfig[row]["rotation"])
