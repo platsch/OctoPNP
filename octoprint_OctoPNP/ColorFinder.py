@@ -27,9 +27,9 @@ import time
 
 
 if (len(sys.argv) < 2):
-    print "Usage: ColorFinder.py filename"
+    print("Usage: ColorFinder.py filename")
 else:
-    print "Press [ESC] to exit..."
+    print("Press [ESC] to exit...")
     filename = sys.argv[1]
 
     # open image file
@@ -42,7 +42,7 @@ else:
     # remove the corners from mask since they are prone to illumination problems
     circle_mask = np.zeros((h, w), np.uint8)
     circle_mask[:, :] = 255
-    cv2.circle(circle_mask,(w/2, h/2), min(w/2, h/2), 0, -1)
+    cv2.circle(circle_mask,(int(w/2), int(h/2)), int(min(w/2, h/2)), 0, -1)
 
     lower_color = np.array([22,28,26])
     upper_color = np.array([103,255,255])
@@ -72,6 +72,6 @@ else:
         time.sleep(0.01)
 
     cv2.destroyAllWindows()
-    print "Copy this color to your code:"
-    print "self.lower_mask_color = [" + str(lower_color[0]) + "," + str(lower_color[1]) + "," + str(lower_color[2]) + "]"
-    print "self.upper_mask_color = [" + str(upper_color[0]) + "," + str(upper_color[1]) + "," + str(upper_color[2]) + "]"
+    print("Copy this color to your code:")
+    print("self.lower_mask_color = np.array([" + str(lower_color[0]) + "," + str(lower_color[1]) + "," + str(lower_color[2]) + "])")
+    print("self.upper_mask_color = np.array([" + str(upper_color[0]) + "," + str(upper_color[1]) + "," + str(upper_color[2]) + "])")
