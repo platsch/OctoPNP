@@ -30,8 +30,10 @@ class ImageProcessing:
         self.box_size=box_size
         self.bed_binary_thresh = bed_cam_binary_thresh
         self.head_binary_thresh = head_cam_binary_thresh
-        self.lower_mask_color = np.array([22,28,26]) # green default
-        self.upper_mask_color = np.array([103,255,255])
+        #self.lower_mask_color = np.array([22,28,26]) # green default
+        #self.upper_mask_color = np.array([103,255,255])
+        self.lower_mask_color = np.array([0,85,76])
+        self.upper_mask_color = np.array([100,255,255])
         self._img_path = ""
         self._last_saved_image_path = None
         self._last_error = ""
