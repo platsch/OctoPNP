@@ -154,7 +154,10 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
                     "http_path" : ""
                 },
                 "image_logging": False
-            }
+            },
+            "calibration": {
+                "toolchange_gcode": "G1 X100 Y150 F3000"
+            },
         }
 
     def get_template_configs(self):

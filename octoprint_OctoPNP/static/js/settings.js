@@ -118,7 +118,9 @@ $(function() {
             self.loadOffsets(self.selectedHeadExtruder());
 
             // move to safe area
-            OctoPrint.control.sendGcode("G1 X100 Y150 F3000");
+            if(self.settings.plugins.OctoPNP.calibration.toolchange_gcode().length > 0) {
+                OctoPrint.control.sendGcode(self.settings.plugins.OctoPNP.calibration.toolchange_gcode());
+            }
             // switch to selected tool
             OctoPrint.control.sendGcode("T" + self.selectedHeadExtruder().toString());
 
@@ -174,7 +176,9 @@ $(function() {
             self.loadOffsets(self.selectedBedExtruder());
 
             // move to a safe area to avoid collisions
-            OctoPrint.control.sendGcode("G1 X100 Y150 F3000");
+            if(self.settings.plugins.OctoPNP.calibration.toolchange_gcode().length > 0) {
+                OctoPrint.control.sendGcode(self.settings.plugins.OctoPNP.calibration.toolchange_gcode());
+            }
             OctoPrint.control.sendGcode("G4 P100");
             OctoPrint.control.sendGcode("M400");
             // Switch to selected extruder
@@ -313,7 +317,9 @@ $(function() {
 
             // Move before toolchange
             //reset axis
-            OctoPrint.control.sendGcode("G1 X100 Y150 F3000");
+            if(self.settings.plugins.OctoPNP.calibration.toolchange_gcode().length > 0) {
+                OctoPrint.control.sendGcode(self.settings.plugins.OctoPNP.calibration.toolchange_gcode());
+            }
             // Switch to VacNozzle extruder
             OctoPrint.control.sendGcode("T" + self.settings.plugins.OctoPNP.vacnozzle.tool_nr().toString());
             
@@ -371,7 +377,9 @@ $(function() {
             }
 
             // Switch to head camera tool
-            OctoPrint.control.sendGcode("G1 X100 Y150 F3000");
+            if(self.settings.plugins.OctoPNP.calibration.toolchange_gcode().length > 0) {
+                OctoPrint.control.sendGcode(self.settings.plugins.OctoPNP.calibration.toolchange_gcode());
+            }
             OctoPrint.control.sendGcode("T" + self.settings.plugins.OctoPNP.camera.head.tool_nr().toString());
 
             //compute corner position

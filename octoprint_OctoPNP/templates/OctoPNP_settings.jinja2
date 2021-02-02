@@ -1,12 +1,75 @@
 <form class="form-horizontal">
     <div class="accordion" id="accordion">
 
+
+    <!-- General settings -->
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#general-settings"><h4>{{ _('General') }}</h4></a>
+            </div>
+            <div id="general-settings" class="accordion-body collapse in">
+                <div class="accordion-inner">
+                    <div class="row-fluid">
+                        <div class="span4"><h4>{{ _('Calibration') }}</h4></div>
+                    </div>
+                    <div class="row-fluid">
+                        <div class="span12">
+                            <div class="row-fluid">
+                                <div class="span1"></div>
+                                <div class="span11">This G-code will be executed between toolchanges in the calibration wizard.
+                                Use to move to a safe position to avoid collisions before the tool is moved to the camera in the next step, typically somewhere in the center of the printbed.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row-fluid">
+                        <div class="span12">
+                            <div class="row-fluid">
+                                <div class="span1"></div>
+                                <div class="span4">{{ _('Toolchange G-code') }}</div>
+                                <div class="span7">
+                                    <div class="input-append">
+                                        <input type="text" class="input-xlarge" data-bind="value: settings.plugins.OctoPNP.calibration.toolchange_gcode">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row-fluid">
+                        <div class="span4"><h4>{{ _('Logging') }}</h4></div>
+                    </div>
+                    <div class="row-fluid">
+                        <div class="span12">
+                            <div class="row-fluid">
+                                <div class="span1"></div>
+                                <div class="span11">If enabled, ALL images recorded by cameras will also be logged to "Image-path" with the current timestamp as appendix.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row-fluid">
+                        <div class="span12">
+                            <div class="row-fluid">
+                                <div class="span1"></div>
+                                <div class="span4">{{ _('Image logging') }}</div>
+                                <div class="span7">
+                                    <div class="input-append">
+                                        <input type="checkbox" data-bind="checked: settings.plugins.OctoPNP.camera.image_logging">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
         <!-- Tray settings -->
         <div class="accordion-group">
             <div class="accordion-heading">
                 <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#tray-settings"><h4>{{ _('Tray') }}</h4></a>
             </div>
-            <div id="tray-settings" class="accordion-body collapse in">
+            <div id="tray-settings" class="accordion-body collapse">
                 <div class="accordion-inner">
                     <div class="row-fluid">
                         <div class="span4"><h4>{{ _('Tray type') }}</h4></div>
