@@ -31,10 +31,7 @@ class SmdParts():
         self._et = None
 
     def isFileLoaded(self):
-        if self._et is not None:
-            return True
-        else:
-            return False
+        return bool(self._et is not None)
 
     def getPartCount(self):
         count = 0
