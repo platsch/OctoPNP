@@ -11,6 +11,7 @@ $(function() {
         self.tray_available_types = ko.observable([
             {key: "BOX", name: "Box"},
             {key: "FEEDER", name: "Belt feeder"},
+	    {key: "NUT", name: "Nut"},
         ]);
 
         self.objectPositionX = ko.observable(100.0);

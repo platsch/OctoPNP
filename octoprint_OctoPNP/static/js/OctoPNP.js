@@ -11,6 +11,7 @@ $(function() {
 
 		var _boxTray = {};
 		var _feederTray = {};
+		var _nutTray = {};
 		var _trayCanvas = document.getElementById('trayCanvas');
 
 		self.stateString = ko.observable("No file loaded");
@@ -39,6 +40,13 @@ $(function() {
 			_feederTray = new feederTray(
 				self.parts,
 				self.traySettings.feeder.feederconfiguration(),
+				_trayCanvas
+			);
+			_nutTray = new nutTray(
+				self.parts,
+				self.traySettings.nut.columns(),
+				self.traySettings.nut.rows(),
+				self.traySettings.nut.boxsize(),
 				_trayCanvas
 			);
 			_trayCanvas.addEventListener("click", self.onSmdTrayClick, false); //"click, dblclick"
@@ -104,6 +112,9 @@ $(function() {
 			else if(self.traySettings.type() == "FEEDER") {
 				result = _feederTray.selectPart(x, y);
 			}
+			else if(self.traySettings.type() == "NUT") {
+				result = _nutTray.selectPart(x, y);
+			}
 			return result;
 		}
 
@@ -156,6 +167,9 @@ $(function() {
 							}
 							else if(self.traySettings.type() == "FEEDER") {
 								_feederTray.render();
+							}
+							else if(self.traySettings.type() == "NUT") {
+								_nutTray.render();
 							}
 						}
 					}else{

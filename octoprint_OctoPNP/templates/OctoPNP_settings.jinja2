@@ -2,10 +2,10 @@
     <div class="accordion" id="accordion">
 
 
-    <!-- General settings -->
+        <!-- General settings -->
         <div class="accordion-group">
             <div class="accordion-heading">
-                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#general-settings"><h4>{{ _('General') }}</h4></a>
+                <a class="accordion-toggle" data-toggle="collapse" data- parent="#accordion" href="#general-settings"><h4>{{ _('General') }}</h4></a>
             </div>
             <div id="general-settings" class="accordion-body collapse in">
                 <div class="accordion-inner">
@@ -79,6 +79,7 @@
                             <ul>
                                 <li>Box: a simple tray with boxes, subdivided by a color-coded rim. All boxes have the same size. Components are located inside a box via camera</li>
                                 <li>Feeder: a belt feeder system. Each row has a number and holds one SMD-strip. Components are assigned to individual rows.</li>
+                                <li>Nut-Box: a box tray for Nuts</li>
                             </ul>
                         </div>
                     </div>
@@ -170,14 +171,78 @@
                             <button data-bind="click: trayFeederAddRow">Add Row</button>
                         </div>
                         <div class="row-fluid">
-                        <label class="control-label" for="tray.feeder.row_clearance">Clearance between rows</label>
-                        <div class="controls">
-                            <div class="input-append">
-                                <input id="tray.feeder.row_clearance" type="number" step="0.1" class="input-mini text-right" data-bind="value: settings.plugins.OctoPNP.tray.feeder.row_clearance">
-                                <span class="add-on">mm</span>
+                            <label class="control-label" for="tray.feeder.row_clearance">Clearance between rows</label>
+                            <div class="controls">
+                                <div class="input-append">
+                                    <input id="tray.feeder.row_clearance" type="number" step="0.1" class="input-mini text-right" data-bind="value: settings.plugins.OctoPNP.tray.feeder.row_clearance">
+                                    <span class="add-on">mm</span>
+                                </div>
                             </div>
                         </div>
                     </div>
+                    <div data-bind="visible: settings.plugins.OctoPNP.tray.type() == 'NUT'">
+                        <div calss="row-fluid">
+                            <label calss="control-label" for="tray.nut.rows">Rows</label>
+                            <div calss="controls">
+                                <input id="tray.nut.rows" type="number" step="1" calss="input-mini text-right" data-bind="value: settings.plugins.OctoPNP.tray.nut.rows">
+                            </div>
+                        </div>
+                        <div calss="row-fluid">
+                            <label calss="control-label" for="tray.nut.colums">Columns</label>
+                            <div calss="controls">
+                                <input id="tray.nut.columns" type="number" step="1" calss="input-mini text-right" data-bind="value: settings.plugins.OctoPNP.tray.nut.columns">
+                            </div>
+                        </div>
+                        <div class="row-fluid">
+                            <label class="control-label" for="tray.nut.centerToCenter">Slot Center to Center distance</label>
+                            <div class="controls">
+                                <div class="input-append">
+                                    <input id="tray.nut.centerToCenter" type="number" step="0.01" class="input-mini text-right" data-bind="value: settings.plugins.OctoPNP.tray.nut.centerToCenter">
+                                    <span class="add-on">mm</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row-fluid">
+                            <label class="control-label" for="tray.nut.partRotationFlat">Tray part rotation flat</label>
+                            <div class="controls">
+                                <input id="tray.nut.partRotationFlat" type="number" step="1" class="input-mini text-right" data-bind="value: settings.plugins.OctoPNP.tray.nut.partRotationFlat">
+                            </div>
+                        </div>
+                        <div class="row-fluid">
+                            <label class="control-label" for="tray.nut.partRotationUpright">Tray part rotation upright</label>
+                            <div class="controls">
+                                <input id="tray.nut.partRotationUpright" type="number" step="1" class="input-mini text-right" data-bind="value: settings.plugins.OctoPNP.tray.nut.partRotationUpright">
+                            </div>
+                        </div>
+                        <div class="row-fluid">
+                            <label class="control-label" for="tray.nut.boxconfiguration">Tray configuration (JSON array)</label>
+                            <div class="controls">
+                                <input id="tray.nut.boxconfiguration" type="text" class="input-big" data-bind="value: settings.plugins.OctoPNP.tray.nut.boxconfiguration">
+                            </div>
+                        </div>
+                        <button data-toggle="collapse" data-target="#config-example" class="btn btn-primary">Show example tray configuration</button>
+                        <div id="config-example" class="collapse">
+                            <pre>
+[
+  {
+    "thread_size": 3,
+    "nut": "hexnut",
+    "slot_orientation" : "flat"
+  },
+  {
+    "thread_size": 3,
+    "nut": "hexnut",
+    "slot_orientation" : "upright"
+  },
+  {
+    "thread_size": 3,
+    "nut": "squarenut",
+    "slot_orientation" : "flat"
+  },
+  ...
+]
+                            </pre>
+                        </div>
                     </div>
                     <div class="row-fluid">
                         <div class="span4"><h4>{{ _('Tray position') }}</h4></div>
@@ -640,11 +705,11 @@
                         <div class="span8">
                             <div id="webcam_container" tabindex="0" data-bind="event: { keydown: onKeyDown, mouseover: onMouseOver, mouseout: onMouseOut, focus: onFocus }">
                                 <canvas id="headCanvas" width="410" height="410"></canvas>
-                            
+
                                 <div class="keycontrol_overlay" data-bind="visible: showKeycontrols">
 
                                     <div class="keycontrol_overlay_heading">{{ _("Keyboard controls active") }} <a href="#" data-bind="click: toggleKeycontrolHelp"><i data-bind="css: { 'icon-chevron-down': !keycontrolHelpActive(), 'icon-chevron-up': keycontrolHelpActive() }"></i></a></div>
-                                    
+
                                     <div data-bind="visible: keycontrolHelpActive">
                                         <div class="keycontrol_overlay_column">
                                             <kbd>&rarr;</kbd> / <kbd>&larr;</kbd>: {{ _("X Axis") }} +/-<br>
@@ -676,7 +741,7 @@
                             <button data-bind="click: saveHeadCameraOffset, enable: statusHeadCameraOffset">{{ _('Save camera offset') }}</button>
                             <button data-bind="click: saveExtruderHeadCameraOffset, enable: (statusHeadCameraOffset() && isSupportedFirmware() && (selectedHeadExtruder() >= 0))">{{ _('Save tool offset') }}</button>
                             <br><br>
-                            
+
                             <h4>Ex <-> BedCamera</h4>
                             <button data-bind="click: bedCameraPosition, enable: isConnected">{{ _('Extruder to Camera') }}</button><br>
                             Tool E: <input type="number" step="1" class="input-mini text-right" data-bind="value: selectedBedExtruder">
@@ -689,7 +754,7 @@
                                 <button data-bind="click: pnpNozzleOffset, enable: isConnected">{{ _('PNPNozzle to Camera') }}</button>
                                 <button data-bind="click: savePnpNozzleOffset, enable: statusPnpNozzleOffset">{{ _('Save nozzle offset') }}</button>
                             </div>
-                            
+
                             <h4>Tray position</h4>
                             <button data-bind="click: function() { $root.trayPosition('TL') }, enable: isConnected">{{ _('TL') }}</button>
                             <button data-bind="click: function() { $root.trayPosition('TR') }, enable: isConnected">{{ _('TR') }}</button><br>
