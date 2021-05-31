@@ -24,5 +24,5 @@ im.getPartOrientation("../utils/testimages/orientation_bed_atmega_SO8_green.png"
 #im.getPartPosition("../utils/testimages/orientation_bed_atmega_SO8_green.png", 55.65)
 #im.getPartOrientation("../utils/testimages/bed_resistor_1206.png", 55.65)
 
-end_time = time.time();
+end_time = time.time()
 print("--- %s seconds ---" % (time.time() - start_time))

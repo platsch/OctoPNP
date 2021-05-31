@@ -210,7 +210,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
         #extraxt part informations from inline xmly
         if event == "FileSelected":
             self._currentPart = None
-            xml = "";
+            xml = ""
             gcode_path = self._file_manager.path_on_disk(payload.get("origin"), payload.get("path"))
             f = open(gcode_path, 'r')
             for line in f:
@@ -679,7 +679,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
 
     def _grabImages(self, camera):
         result = True
-        grabScript = "";
+        grabScript = ""
         if(camera == "HEAD"):
             grabScript = self._settings.get(["camera", "head", "grab_script_path"])
         if(camera == "BED"):
@@ -790,7 +790,7 @@ class OctoPNP(octoprint.plugin.StartupPlugin,
     # adjust_focus: add camera focus distance to current z position.
     # Can be disabled to take multiple shots without moving the z-axis
     def _helper_get_head_camera_image_xy(self, x, y, callback, adjust_focus=True):
-        result = False;
+        result = False
 
         self._logger.info("Trying to take image at pos [" + str(x) + ":" + str(y) + "] for external plugin")
 

@@ -223,16 +223,16 @@ class ImageProcessing:
             ret, binary_img = cv2.threshold(gray_img, binary_thresh, 255, cv2.THRESH_BINARY)
 
         # depending on the OpenCV Version findContours returns 2 or 3 objects...
-        #contours, hierarchy = cv2.findContours(binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, (0, 0));
+        #contours, hierarchy = cv2.findContours(binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, (0, 0))
         contours = cv2.findContours(binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, offset=(0, 0))[0]
 
 
         #cv2.drawContours(img, contours, -1, (0,255,0), 3) # draw basic contours
 
-        minArea = binary_img.shape[0] * binary_img.shape[1] * min_area_factor; # how to find a better value??? input from part description?
+        minArea = binary_img.shape[0] * binary_img.shape[1] * min_area_factor # how to find a better value??? input from part description?
         maxArea = binary_img.shape[0] * binary_img.shape[1] * max_area_factor # Y*X | don't detect full image
 
-        rectPoints = [];
+        rectPoints = []
 
         for contour in contours:
             rect = cv2.minAreaRect(contour)
