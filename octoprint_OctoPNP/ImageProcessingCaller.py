@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 """ This file is part of OctoPNP
-    
+
     This is a test script to execute the imageprocessing-steps independent from the main software
     and particularly without a running printer.
-   
+
     Main author: Florens Wasserfall <wasserfall@kalanka.de>
 """
 
