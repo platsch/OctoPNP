@@ -38,8 +38,10 @@ plugin_additional_data = []
 
 ########################################################################################################################
 
+
 def package_data_dirs(source, sub_folders):
     import os
+
     dirs = []
 
     for d in sub_folders:
@@ -53,6 +55,7 @@ def package_data_dirs(source, sub_folders):
                 dirs.append(os.path.join(dirname, f))
 
     return dirs
+
 
 def params():
     # Our metadata, as defined above
@@ -68,7 +71,12 @@ def params():
     packages = [plugin_package]
 
     # we might have additional data files in sub folders that need to be installed too
-    package_data = {plugin_package: package_data_dirs(plugin_package, ['static', 'templates', 'translations', 'cameras'] + plugin_additional_data)}
+    package_data = {
+        plugin_package: package_data_dirs(
+            plugin_package,
+            ["static", "templates", "translations", "cameras"] + plugin_additional_data,
+        )
+    }
     include_package_data = True
 
     # If you have any package data that needs to be accessible on the file system, such as templates or static assets
@@ -81,9 +89,10 @@ def params():
     # Hook the plugin into the "octoprint.plugin" entry point, mapping the plugin_identifier to the plugin_package.
     # That way OctoPrint will be able to find the plugin and load it.
     entry_points = {
-            "octoprint.plugin": ["%s = %s" % (plugin_identifier, plugin_package)]
-            }
+        "octoprint.plugin": ["%s = %s" % (plugin_identifier, plugin_package)]
+    }
 
     return locals()
+
 
 setuptools.setup(**params())
