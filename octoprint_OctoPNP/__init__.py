@@ -149,6 +149,16 @@ class OctoPNP(
                 "lower_nozzle_gcode": "",
                 "lift_nozzle_gcode": "",
             },
+            "magnetnozzle": {
+                "use_offsets": False,
+                "x": 0,
+                "y": 0,
+                "tool_nr": 2,
+                "grip_magnet_gcode": "M42 P48 S255",
+                "release_magnet_gcode": "M42 P48 S0",
+                "lower_nozzle_gcode": "",
+                "lift_nozzle_gcode": ""
+            },
             "camera": {
                 "head": {
                     "x": 0,
