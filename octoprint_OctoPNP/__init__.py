@@ -128,6 +128,15 @@ class OctoPNP(
                         {"width": 12.0, "spacing": 8.0, "rotation": 90},
                     ],
                 },
+                "nut": {
+                    "rows": 5,
+                    "columns": 5,
+                    "boxsize": 10,
+                    "centerToCenter": 0,
+                    "partRotationFlat": 0,
+                    "partRotationUpright": 0,
+                    "boxconfiguration": "[ {\"thread_size\": \"2\", \"nut\": \"hexnut\", \"slot_orientation\": \"upright\"},   {\"thread_size\": \"2.5\", \"nut\": \"hexnut\", \"slot_orientation\": \"upright\"},   {\"thread_size\": \"3\", \"nut\": \"hexnut\", \"slot_orientation\": \"flat\"},   {\"thread_size\": \"8\", \"nut\": \"hexnut\", \"slot_orientation\": \"upright\"},   {\"thread_size\": \"8\", \"nut\": \"hexnut\", \"slot_orientation\": \"flat\"},   {\"thread_size\": \"3\", \"nut\": \"squarenut\", \"slot_orientation\": \"upright\"},   {\"thread_size\": \"10\", \"nut\": \"squarenut\", \"slot_orientation\": \"flat\"},   {\"thread_size\": \"8\", \"nut\": \"squarenut\", \"slot_orientation\": \"upright\"},   {\"thread_size\": \"6\", \"nut\": \"squarenut\", \"slot_orientation\": \"flat\"},   {\"thread_size\": \"4\", \"nut\": \"squarenut\", \"slot_orientation\": \"upright\"} ]"
+                }
             },
             "vacnozzle": {
                 "use_offsets": False,
@@ -190,6 +199,7 @@ class OctoPNP(
                 "js/settings.js",
                 "js/boxTray.js",
                 "js/feederTray.js",
+                "js/nutTray.js",
                 "js/trayUtil.js",
             ]
         )
