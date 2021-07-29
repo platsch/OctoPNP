@@ -137,8 +137,12 @@ $(function() {
 			if(plugin == "OctoPNP") {
 				if(data.event == "FILE") {
 					self.parts([]);  // reset component list
+					var typeStr = "SMD"
+					if ( self.traySettings.type() == "NUT" ) {
+						typeStr = "Nut"
+					}
 					if(data.data.hasOwnProperty("partCount")) {
-						self.stateString("Loaded file with " + data.data.partCount + " SMD parts");
+						self.stateString("Loaded file with " + data.data.partCount + " " + typeStr + " parts.");
 
 						// init feeder configuration
 						if(self.traySettings.type() == "FEEDER") {
@@ -173,7 +177,7 @@ $(function() {
 							}
 						}
 					}else{
-						self.stateString("No SMD part in this file!");
+						self.stateString("No " + typeStr + " parts in this file!");
 					}
 				}
 				else if(data.event == "OPERATION") {
