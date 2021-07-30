@@ -11,7 +11,7 @@ $(function() {
         self.tray_available_types = ko.observable([
             {key: "BOX", name: "Box"},
             {key: "FEEDER", name: "Belt feeder"},
-	    {key: "NUT", name: "Nut"},
+            {key: "NUT", name: "Nut"},
         ]);
 
         self.objectPositionX = ko.observable(100.0);
@@ -97,7 +97,7 @@ $(function() {
         self.onSettingsHidden = function() {
             self.stopVideo();
         }
-        
+
         // Calibrate offset between selected tool and head-camera.
         // Use T-1 for toolchanger if head camera is attached to the carriage -> no tool offset.
         self.headCameraOffset = function() {
@@ -106,7 +106,7 @@ $(function() {
             self.statusTrayPosition(false);
             self.statusBedCameraOffset(false);
             self.statusPnpNozzleOffset(false);
-            
+
             // should we start live preview?
             self.stopVideo();
             if(self.settings.plugins.OctoPNP.camera.head.http_path().length > 0) {
@@ -225,23 +225,23 @@ $(function() {
         self.saveExtruderHeadCameraOffset = function() {
             // save offset
             self.saveExtruderOffset(self.selectedHeadExtruder());
-            
+
             // deactivate Button
             self.statusHeadCameraOffset(false);
 
             // stop potential live video preview
             self.stopVideo();
         };
-        
-        
+
+
         self.saveExtruderBedCameraOffset = function() {
             // invert X and Y axis
             self.offsetCorrectionX(self.offsetCorrectionX()*-1);
             self.offsetCorrectionY(self.offsetCorrectionY()*-1);
-            
+
             // save offset
             self.saveExtruderOffset(self.selectedBedExtruder());
-            
+
             // deactivate Button
             self.statusBedCameraOffset(false);
 
@@ -296,8 +296,8 @@ $(function() {
             // stop potential live video preview
             self.stopVideo();
         };
-        
-        
+
+
         // This should only be used if the PnP nozzle offset it not handled by the printer firmware
         // Move Vacuum bed camera to Nozzle.
         self.pnpNozzleOffset = function() {
@@ -321,18 +321,29 @@ $(function() {
             if(self.settings.plugins.OctoPNP.calibration.toolchange_gcode().length > 0) {
                 OctoPrint.control.sendGcode(self.settings.plugins.OctoPNP.calibration.toolchange_gcode());
             }
-            // Switch to VacNozzle extruder
-            OctoPrint.control.sendGcode("T" + self.settings.plugins.OctoPNP.vacnozzle.tool_nr().toString());
-            
+            if(self.traySettings.type() == "BOX" || "FEEDER") {
+                // Switch to VacNozzle extruder
+                OctoPrint.control.sendGcode("T" + self.settings.plugins.OctoPNP.vacnozzle.tool_nr().toString());
+
+                //preperation for move camera to object
+                var x = parseFloat(self.settings.plugins.OctoPNP.camera.bed.x()) - parseFloat(self.settings.plugins.OctoPNP.vacnozzle.x());
+                var y = parseFloat(self.settings.plugins.OctoPNP.camera.bed.y()) - parseFloat(self.settings.plugins.OctoPNP.vacnozzle.y());
+
+            } else if(self.traySettings.type() == "NUT") {
+                // Switch to MagnetNozzle extruder
+                OctoPrint.control.sendGcode("T" + self.settings.plugins.OctoPNP.magnetnozzle.tool_nr().toString());
+
+                var x = parseFloat(self.settings.plugins.OctoPNP.camera.bed.x()) - parseFloat(self.settings.plugins.OctoPNP.magnetnozzle.x());
+                var y = parseFloat(self.settings.plugins.OctoPNP.camera.bed.y()) - parseFloat(self.settings.plugins.OctoPNP.magnetnozzle.y());
+            }
+
             //move camera to object
-            var x = parseFloat(self.settings.plugins.OctoPNP.camera.bed.x()) - parseFloat(self.settings.plugins.OctoPNP.vacnozzle.x());
-            var y = parseFloat(self.settings.plugins.OctoPNP.camera.bed.y()) - parseFloat(self.settings.plugins.OctoPNP.vacnozzle.y());
             OctoPrint.control.sendGcode("G1 X" + x + " Y" + y + " F3000");
             if(self.settings.plugins.OctoPNP.camera.bed.focus_axis().length > 0) {
                 var z = parseFloat(self.settings.plugins.OctoPNP.camera.bed.z());
                 OctoPrint.control.sendGcode("G1 " + self.settings.plugins.OctoPNP.camera.bed.focus_axis() + z);
             }
-            
+
             //reset offset correction values
             self.offsetCorrectionX(0.0);
             self.offsetCorrectionY(0.0);
@@ -345,12 +356,17 @@ $(function() {
                 setTimeout(function() {self._getImage('BED');}, 8000);
             }
         };
-        
+
         // delete if pnp offset in eeprom
         self.savePnpNozzleOffset = function() {
             //save values
-            self.settings.plugins.OctoPNP.vacnozzle.x(parseFloat(self.settings.plugins.OctoPNP.vacnozzle.x())-self.offsetCorrectionX());
-            self.settings.plugins.OctoPNP.vacnozzle.y(parseFloat(self.settings.plugins.OctoPNP.vacnozzle.y())-self.offsetCorrectionY());
+            if(self.traySettings.type() == "BOX" || "FEEDER") {
+                self.settings.plugins.OctoPNP.vacnozzle.x(parseFloat(self.settings.plugins.OctoPNP.vacnozzle.x())-self.offsetCorrectionX());
+                self.settings.plugins.OctoPNP.vacnozzle.y(parseFloat(self.settings.plugins.OctoPNP.vacnozzle.y())-self.offsetCorrectionY());
+            } else if(self.traySettings.type() == "NUT") {
+                self.settings.plugins.OctoPNP.magnetnozzle.x(parseFloat(self.settings.plugins.OctoPNP.magnetnozzle.x())-self.offsetCorrectionX());
+                self.settings.plugins.OctoPNP.magnetnozzle.y(parseFloat(self.settings.plugins.OctoPNP.magnetnozzle.y())-self.offsetCorrectionY());
+            }
 
             //deactivate Keycontrol
             self.keycontrolPossible(false);
@@ -359,7 +375,7 @@ $(function() {
             // stop potential live video preview
             self.stopVideo();
         };
-        
+
         // calibrate tray position relative to primary extruder
         self.trayPosition = function(corner) {
             //deactivate other processes
@@ -663,7 +679,7 @@ $(function() {
                         var match = (new RegExp(/Tool (\d+).*?X(-*\d+\.\d+).*?Y(-*\d+\.\d+)/i).exec(line));
                         if (match) {
                             if ((self.statusHeadCameraOffset() && match[1] == self.selectedHeadExtruder()) || (self.statusBedCameraOffset() && match[1] == self.selectedBedExtruder()))
-                            self.extruderOffsetX(parseFloat(match[2]));
+                                self.extruderOffsetX(parseFloat(match[2]));
                             self.extruderOffsetY(parseFloat(match[3]));
                         }
                     });
