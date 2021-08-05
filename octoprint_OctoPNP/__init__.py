@@ -86,6 +86,7 @@ class OctoPNP(
     FEEDRATE = 4000.000
 
     smdparts = SmdParts()
+    partPositions = {}
 
     def __init__(self):
         # pylint: disable=super-init-not-called
@@ -509,6 +510,17 @@ class OctoPNP(
         self._printer.commands("G1 E{0} F{1}".format(rot, self.FEEDRATE))
         self._logger.info("object rotation: " + str(rot))
 
+    def __move_magnet_to_part_and_pick(self, tool_dest):
+        self._printer.commands("T" + str(self._settings.get(["magnet", "tool_nr"])))
+        self._printer.commands("G1 X{0} Y{1} F{2}".format(
+            tool_dest["x"], tool_dest["y"], self.FEEDRATE))
+        self._printer.commands("G1 Z{0}".format(tool_dest["z"]+10))
+        self._releaseMagnet()
+        self._printer.commands("G1 Z{0} F1000".format(tool_dest["z"]))
+        self._gripMagnet()
+        self._printer.commands("G4 P500")
+        self._printer.commands("G1 Z{0} F1000".format(tool_dest["z"]+5))
+
     def __move_vac_to_part_and_pick(self, tray_axis, tool_dest):
         self._printer.commands("T" + str(self._settings.get(["vacnozzle", "tool_nr"])))
         self.__double_M400()
@@ -534,7 +546,12 @@ class OctoPNP(
         part_offset = self.__get_part_offset()
         tray_offset = self._getTrayPosFromPartNr(partnr)
         tool = {"x": 0.0,"y": 0.0,"z": 0.0}
-        tool["z"] = float(self._settings.get(["vacnozzle", "z_pressure"]))
+
+        if self._settings.get(["tray", "type"]) == "NUT":
+            tool["x"] = float(self._settings.get(["magnetnozzle", "x"]))
+            tool["y"] = float(self._settings.get(["magnetnozzle", "y"]))
+        else:
+            tool["z"] = float(self._settings.get(["vacnozzle", "z_pressure"]))
 
         tool_dest = {
             "x": tray_offset["x"] + part_offset.x - tool["x"],
@@ -543,40 +560,46 @@ class OctoPNP(
 
         if tray_offset["type"] == "BOX":
             tool_dest["z"] += self.smdparts.getPartHeight(partnr)
+        nozzleType = "vacnozzle"
+        if self._settings.get(["tray", "type"]) == "NUT":
+            nozzleType = "magnetnozzle"
 
         # only apply X/Y offsets if not handled by the firmware
-        if self._settings.get(["vacnozzle", "use_offsets"]):
-            tool_dest["x"] -= float(self._settings.get(["vacnozzle", "x"]))
-            tool_dest["y"] -= float(self._settings.get(["vacnozzle", "y"]))
+        if self._settings.get([nozzleType, "use_offsets"]):
+            tool_dest["x"] -= float(self._settings.get([nozzleType, "x"]))
+            tool_dest["y"] -= float(self._settings.get([nozzleType, "y"]))
 
         tray_axis = str(self._settings.get(["tray", "axis"]))
 
-        self.__move_vac_to_part_and_pick(tray_axis, tool_dest)
+        if self._settings.get(["tray", "type"]) == "NUT":
+            self.__move_magnet_to_part_and_pick(tool_dest)
+        else:
+            self.__move_vac_to_part_and_pick(tray_axis, tool_dest)
 
-        # move to bed camera
-        tool_dest["x"] = float(self._settings.get(["camera", "bed", "x"]))
-        tool_dest["y"] = float(self._settings.get(["camera", "bed", "y"]))
-        tool_dest["z"] = float(self._settings.get(["camera", "bed", "z"])
-            ) + self.smdparts.getPartHeight(partnr)
+            # move to bed camera
+            tool_dest["x"] = float(self._settings.get(["camera", "bed", "x"]))
+            tool_dest["y"] = float(self._settings.get(["camera", "bed", "y"]))
+            tool_dest["z"] = float(self._settings.get(["camera", "bed", "z"])
+                ) + self.smdparts.getPartHeight(partnr)
 
-        # only apply X/Y offsets if not handled by the firmware
-        if self._settings.get(["vacnozzle", "use_offsets"]):
-            tool_dest["x"] -= float(self._settings.get(["vacnozzle", "x"]))
-            tool_dest["y"] -= float(self._settings.get(["vacnozzle", "y"]))
+            # only apply X/Y offsets if not handled by the firmware
+            if self._settings.get(["vacnozzle", "use_offsets"]):
+                tool_dest["x"] -= float(self._settings.get(["vacnozzle", "x"]))
+                tool_dest["y"] -= float(self._settings.get(["vacnozzle", "y"]))
 
-        self._printer.commands(
-            "G1 X{0} Y{1} F{2}".format(tool_dest["x"], tool_dest["y"], self.FEEDRATE)
-        )
-        self._printer.commands("M400")
-
-        self.__rotate_obj(self.smdparts.getPartDestination(partnr)[3] + tray_offset["z"])
-
-        camera_axis = str(self._settings.get(["camera", "bed", "focus_axis"]))
-        if len(camera_axis) > 0:
             self._printer.commands(
-                "G1 {0}{1} F{2}".format(camera_axis, tool_dest["z"], self.FEEDRATE)
+                "G1 X{0} Y{1} F{2}".format(tool_dest["x"], tool_dest["y"], self.FEEDRATE)
             )
-        self._logger.info("Moving to bed camera")
+            self._printer.commands("M400")
+
+            self.__rotate_obj(self.smdparts.getPartDestination(partnr)[3] + tray_offset["z"])
+
+            camera_axis = str(self._settings.get(["camera", "bed", "focus_axis"]))
+            if len(camera_axis) > 0:
+                self._printer.commands(
+                    "G1 {0}{1} F{2}".format(camera_axis, tool_dest["z"], self.FEEDRATE)
+                )
+            self._logger.info("Moving to bed camera")
 
     def __get_orientation_offset(self, bedPath):
         orientation_offset = self.imgproc.getPartOrientation(
@@ -720,6 +743,11 @@ class OctoPNP(
             tray["x"] = (col - 1) * boxsize + boxsize / 2 + col * rimsize
             tray["y"] = (row - 1) * boxsize + boxsize / 2 + row * rimsize
 
+        if self._settings.get(["tray", "type"]) == "NUT":
+            boxsize = float(self._settings.get(["tray", "nut", "boxsize"]))
+            tray["x"] = col * boxsize + float(self._settings.get(["tray", "x"]))
+            tray["y"] = row * boxsize + float(self._settings.get(["tray", "y"]))
+
         if tray["type"] == "FEEDER":
             feederconfig = self._settings.get(["tray", "feeder", "feederconfiguration"])
             for i in range(1, row + 1):
@@ -742,6 +770,22 @@ class OctoPNP(
             tray["x"] += float(self._settings.get(["tray", "x"]))
             tray["y"] += float(self._settings.get(["tray", "y"]))
         return tray
+
+    def _gripMagnet(self):
+        self._printer.commands("M400")
+        self._printer.commands("M400")
+        self._printer.commands("G4 P500")
+        for line in self._settings.get(["magnetnozzle", "grip_magnet_gcode"]).splitlines():
+            self._printer.commands(line)
+        self._printer.commands("G4 P500")
+
+    def _releaseMagnet(self):
+        self._printer.commands("M400")
+        self._printer.commands("M400")
+        self._printer.commands("G4 P500")
+        for line in self._settings.get(["magnetnozzle", "release_magnet_gcode"]).splitlines():
+            self._printer.commands(line)
+        self._printer.commands("G4 P500")
 
     def __vacuumNozzle(self, act):
         self.__double_M400()
@@ -792,8 +836,11 @@ class OctoPNP(
         if self.smdparts.isFileLoaded():
             # compile part information
             partIds = self.smdparts.getPartIds()
+            self.partPositions = {}
             partArray = []
             partPos = 1
+            usedTrayPositions = []
+            config = json.loads(self._settings.get(["tray", "nut", "boxconfiguration"]))
             for partId in partIds:
                 # assign components to tray boxes.
                 if self._settings.get(["tray", "type"]) == "BOX":
@@ -803,6 +850,47 @@ class OctoPNP(
                             % int(self._settings.get(["tray", "box", "columns"]))) + 1
                     self.smdparts.setPartPosition(partId, row, col)
                     partPos += 1
+
+                    if self._settings.get(["tray", "type"]) == "NUT":
+                        threadSize = self.smdparts.getPartThreadSize(partId)
+                        partType = self.smdparts.getPartType(partId)
+                        partOrientation = self.smdparts.getPartOrientation(partId).lower()
+                        trayPosition = None
+                        # find empty tray position, where the part fits
+                        for i, traybox in enumerate(config):
+                            if(float(traybox.get("thread_size")) == float(threadSize) and
+                                traybox.get("nut") == partType and
+                                traybox.get("slot_orientation") == partOrientation and
+                                i not in usedTrayPositions):
+                                usedTrayPositions.append(i)
+                                trayPosition = i
+                                self.partPositions[partId] = i
+                                break
+                        if trayPosition is None:
+                            output_str = "Error, no tray box for part no " + \
+                                str(partId) + \
+                                " (" + \
+                                partType + \
+                                " M" + \
+                                str(threadSize) + \
+                                ", part orientation: " + \
+                                partOrientation + \
+                                ") left"
+                            print(output_str)
+                            self._updateUI(output_str)
+                            return
+                        partArray.append(
+                            dict(
+                                id = partId,
+                                name = self.smdparts.getPartName(partId),
+                                partPosition = trayPosition,
+                                shape = self.smdparts.getPartShape(partId),
+                                type=partType,
+                                threadSize = threadSize,
+                                partOrientation = partOrientation
+                            )
+                        )
+                        continue # jumpover to next for loop iteration.
 
                 partArray.append(
                     dict(
