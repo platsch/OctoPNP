@@ -307,11 +307,10 @@ class OctoPNP(
                 self._printer.commands("M362 OctoPNP")
 
                 return (None,)  # suppress command
-            else:
-                self._logger.info(
-                    "ERROR, received M361 command while placing part: "
-                    + str(self._currentPart)
-                )
+            self._logger.info(
+                "ERROR, received M361 command while placing part: "
+                + str(self._currentPart)
+            )
 
     """
     This hook is designed as some kind of a "state machine". The reason is,
