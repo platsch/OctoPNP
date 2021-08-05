@@ -915,10 +915,8 @@ class OctoPNP(
             if self._currentPart:
                 data["part"] = self._currentPart
         elif event == "INFO":
-            data = dict(
-                type=parameter,
-            )
-        elif event is "HEADIMAGE" or event is "BEDIMAGE":
+            data = dict(type=parameter)
+        elif event in ( "HEADIMAGE", "BEDIMAGE"):
             # open image and convert to base64
             f = open(parameter, "rb")
             data = dict(
