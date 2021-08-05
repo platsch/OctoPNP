@@ -63,10 +63,8 @@ class ImageProcessing:
             lower_y = int(max(rotated_box[0][1], rotated_box[3][1]))
 
             # workaround for bounding boxes that are bigger then the image
-            if left_x < 0:
-                left_x = 0
-            if upper_y < 0:
-                upper_y = 0
+            left_x = max(left_x,0)
+            upper_y = max(upper_y,0)
             if right_x < 0:
                 right_x = img.shape[1]
             if lower_y < 0:
