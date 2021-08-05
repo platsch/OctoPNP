@@ -43,10 +43,10 @@ $(function() {
 				_trayCanvas
 			);
 			_nutTray = new nutTray(
-				self.parts,
 				self.traySettings.nut.columns(),
 				self.traySettings.nut.rows(),
 				self.traySettings.nut.boxsize(),
+				self.traySettings.nut.boxconfiguration(),
 				_trayCanvas
 			);
 			_trayCanvas.addEventListener("click", self.onSmdTrayClick, false); //"click, dblclick"
