@@ -235,11 +235,11 @@ class OctoPNP(
             gcode_path = self._file_manager.path_on_disk(
                 payload.get("origin"), payload.get("path")
             )
-            f = open(gcode_path, "r")
-            for line in f:
-                expression = re.search("<.*>", line)
-                if expression:
-                    xml += expression.group() + "\n"
+            with open(gcode_path, "r") as f:
+                for line in f:
+                    expression = re.search("<.*>", line)
+                    if expression:
+                        xml += expression.group() + "\n"
             if xml:
                 # check for root node existence
                 if not re.search("<object.*>", xml.splitlines()[0]):
