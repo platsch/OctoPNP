@@ -546,8 +546,10 @@ class OctoPNP(
         part_offset = self.__get_part_offset()
         tray_offset = self._getTrayPosFromPartNr(partnr)
         tool = {"x": 0.0,"y": 0.0,"z": 0.0}
+        nozzleType = "vacnozzle"
 
         if self._settings.get(["tray", "type"]) == "NUT":
+            nozzleType = "magnetnozzle"
             tool["x"] = float(self._settings.get(["magnetnozzle", "x"]))
             tool["y"] = float(self._settings.get(["magnetnozzle", "y"]))
         else:
@@ -560,9 +562,6 @@ class OctoPNP(
 
         if tray_offset["type"] == "BOX":
             tool_dest["z"] += self.smdparts.getPartHeight(partnr)
-        nozzleType = "vacnozzle"
-        if self._settings.get(["tray", "type"]) == "NUT":
-            nozzleType = "magnetnozzle"
 
         # only apply X/Y offsets if not handled by the firmware
         if self._settings.get([nozzleType, "use_offsets"]):
