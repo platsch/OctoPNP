@@ -1,18 +1,28 @@
-function nutTray(partlist, cols, rows, boxSize, canvas) {
+function nutTray(cols, rows, boxSize, config, canvas) {
 	var self = this;
 
 	var _cols = cols;
 	var _rows= rows;
 	var _trayBoxSize = boxSize;
 	var _trayCanvas = canvas;
-	var _parts = partlist;
+	var _config = JSON.parse(config);
+	var _parts = {};
 
-
-	self.render = function() {
+	self.erase = function() {
+		_parts = {};
 		_drawTray();
-		for (var i in _parts()) {
-			_drawPart(_parts()[i], "black");
-		}
+	}
+
+	self.addPart = function(part) {
+		// sanitiy checks!?
+		// add part to dict
+		_parts[part.id] = part;
+
+		_parts[part.id].row = parseInt(((part.partPosition) / _cols)) + 1;
+		_parts[part.id].col = (part.partPosition) % _cols + 1;
+
+		// and draw to canvas
+		_drawPart(part.id, part.threadSize, part.type, "#aaa");
 	}
 
 	self.selectPart = function(x, y) {
@@ -20,13 +30,15 @@ function nutTray(partlist, cols, rows, boxSize, canvas) {
 		col = Math.floor(x/(canvasBoxSize+1)) + 1;
 		row = Math.floor(((_rows*canvasBoxSize)-y)/(canvasBoxSize-1)) + 1;
 
-		self.render();
-
-		var part = _getPartId(col, row);
-		if(part) {
-			_drawPart(part, "red");
+		for (var id in _parts) {
+			_drawPart(id, _parts[id].threadSize, _parts[id].type, "#aaa");
 		}
-		return part.id;
+
+		var partId = _getPartId(col, row);
+		if(partId) {
+			_drawPart(partId, _parts[partId].threadSize, _parts[partId].type, "red");
+		}
+		return partId;
 	}
 
 
@@ -45,9 +57,9 @@ function nutTray(partlist, cols, rows, boxSize, canvas) {
 				ctx.fillRect(0,0,size_x,size_y);
 				ctx.strokeRect (0,0,size_x,size_y);
 
-				for(var x=0; x<_cols; x++) {
-					for(var y=0; y<_rows; y++) {
-						_drawTrayBox(x+1, y+1, canvasBoxSize);
+				for(var x = 0; x < _rows; x++) {
+					for(var y = 0; y < _cols; y++) {
+						_drawTrayBox(y + 1, x + 1, canvasBoxSize);
 					}
 				}
 			}
@@ -56,16 +68,83 @@ function nutTray(partlist, cols, rows, boxSize, canvas) {
 
 
 	//draw a part into a tray box
-	function _drawPart(part, color) {
+	function _drawPart(partID, threadSize, type, color) {
+		part = _parts[partID];
+
 		//clear old box
 		var canvasBoxSize = _getCanvasBoxSize();
 		_drawTrayBox(part.col, part.row, canvasBoxSize);
 
-		var scale = canvasBoxSize/_trayBoxSize;
-		var col_offset = part.col*canvasBoxSize-canvasBoxSize+4;
-		var row_offset = _rows*canvasBoxSize-part.row*canvasBoxSize+4;
-		// use function fom trayUtil.js to actually draw the component
-		drawPart(part, _trayCanvas, col_offset+canvasBoxSize/2, row_offset+canvasBoxSize/2, col_offset, row_offset, scale, color, 0);
+		if (_trayCanvas && _trayCanvas.getContext) {
+			var ctx = _trayCanvas.getContext("2d");
+			var scale = canvasBoxSize/_trayBoxSize;
+			if (ctx) {
+				var col_offset = part.col*canvasBoxSize-canvasBoxSize+4;
+				var row_offset = _rows*canvasBoxSize-part.row*canvasBoxSize+4;
+
+				//print part names
+				ctx.font = "8px Verdana";
+				ctx.fillStyle = "#000000";
+				ctx.textBaseline = "top";
+				ctx.fillText("partnr " + part.id, col_offset, row_offset + canvasBoxSize - 16);
+
+				partOutlineSize = (partSize * 5 + 3) * (canvasBoxSize / 100)
+				// let size = parseFloat(threadSize) * 5;
+				let size = partOutlineSize;
+				x = (part.col - 1) * canvasBoxSize + 4 / 2 + canvasBoxSize / 2;
+				y = _rows * canvasBoxSize - (part.row - 1) * canvasBoxSize + 4 / 2 - canvasBoxSize / 2;
+
+				ctx.fillStyle = color;
+				ctx.beginPath();
+				if (slotOrientation === "flat") {
+					if (type === "hexnut") {
+						for (let i = 0; i < 360; i += 60) {
+							ctx.lineTo(x + Math.sin(i * Math.PI / 180) * size * 0.45, y + Math.cos(i * Math.PI / 180) * size * 0.45);
+						}
+					}
+					else if (type === "squarenut") {
+						ctx.lineTo(x - size / 2, y -  size / 2);
+						ctx.lineTo(x +  size / 2,y - size / 2);
+						ctx.lineTo(x + size / 2,y + size / 2);
+						ctx.lineTo(x - size / 2, y + size / 2);
+					}
+					ctx.closePath();
+					ctx.fill();
+
+					ctx.beginPath();
+					ctx.fillStyle = "white";
+					ctx.arc(x, y, size / 7.0, 0, 2 * Math.PI);
+					ctx.fill();
+					ctx.closePath();
+				} else if (slotOrientation === "upright") {
+					if (type === "hexnut") {
+						ctx.beginPath();
+						ctx.lineTo(x + partOutlineSize / 6, y - partOutlineSize / 2);
+						ctx.lineTo(x + partOutlineSize / 6, y + partOutlineSize / 2);
+						ctx.lineTo(x - partOutlineSize / 6, y + partOutlineSize / 2);
+						ctx.lineTo(x - partOutlineSize / 6, y - partOutlineSize / 2);
+						ctx.closePath();
+						ctx.fill();
+
+						ctx.beginPath();
+						ctx.moveTo(x - partOutlineSize / 6, y + partOutlineSize / 4);
+						ctx.lineTo(x + partOutlineSize / 6, y + partOutlineSize / 4);
+						ctx.moveTo(x - partOutlineSize / 6, y - partOutlineSize / 4);
+						ctx.lineTo(x + partOutlineSize / 6, y - partOutlineSize / 4);
+						ctx.stroke();
+					} else if (type === "squarenut") {
+						ctx.beginPath();
+						ctx.lineTo(x + partOutlineSize / 6, y - partOutlineSize / 2);
+						ctx.lineTo(x + partOutlineSize / 6, y + partOutlineSize / 2);
+						ctx.lineTo(x - partOutlineSize / 6, y + partOutlineSize / 2);
+						ctx.lineTo(x - partOutlineSize / 6, y - partOutlineSize / 2);
+						ctx.fill();
+					}
+				}
+
+
+			}
+		}
 	}
 
 	// draw a single tray box
@@ -75,11 +154,59 @@ function nutTray(partlist, cols, rows, boxSize, canvas) {
 		if (_trayCanvas && _trayCanvas.getContext) {
 			var ctx = _trayCanvas.getContext("2d");
 			if (ctx) {
-				ctx.lineWidth = 4;
-				ctx.strokeStyle = "green";
+				var canvasBoxSize = _getCanvasBoxSize();
+				ctx.lineWidth = 1;
+				ctx.strokeStyle = "black";
 				ctx.fillStyle = "white";
 				ctx.strokeRect (col*size+ctx.lineWidth/2,(_rows-1)*size-row*size+ctx.lineWidth/2,size-ctx.lineWidth/2,size-ctx.lineWidth/2);
 				ctx.fillRect (col*size+ctx.lineWidth,(_rows-1)*size-row*size+ctx.lineWidth,size-ctx.lineWidth,size-ctx.lineWidth);
+				x = col * size + ctx.lineWidth / 2 + size / 2 + 1.5;
+				y = (_rows - 1) * size - row * size + ctx.lineWidth / 2 + size / 2 + 1.5;
+
+				nutShape = _config[(parseInt(row)) * parseInt(_cols) + parseInt(col)].nut
+				partSize = _config[(parseInt(row)) * parseInt(_cols) + parseInt(col)].thread_size
+				slotOrientation = _config[(parseInt(row)) * parseInt(_cols) + parseInt(col)].slot_orientation
+				partOutlineSize = (partSize * 5 + 3) * (canvasBoxSize / 100)
+
+				ctx.beginPath();
+				ctx.fillStyle = '#888';
+				ctx.font = "8px Verdana";
+				ctx.fillText("M" + partSize + " " + nutShape.replace("nut",""), x - canvasBoxSize / 2.0 + 4, y - canvasBoxSize / 2.0 + 10);
+				ctx.fillText(slotOrientation, x - canvasBoxSize / 2.0 + 4, y - canvasBoxSize / 2.0 + 18);
+				ctx.fillStyle = '#000';
+				if (nutShape === "hexnut") {
+					if (slotOrientation === "flat") {
+						for (let i = 0; i < 360; i += 60) {
+							ctx.lineTo(x + Math.sin(i * Math.PI / 180) * partOutlineSize * 0.45, y + Math.cos(i * Math.PI / 180) * partOutlineSize * 0.45);
+						}
+					} else if (slotOrientation === "upright") {
+						ctx.moveTo(x - partOutlineSize / 6, y + partOutlineSize / 4);
+						ctx.lineTo(x + partOutlineSize / 6, y + partOutlineSize / 4);
+						ctx.moveTo(x - partOutlineSize / 6, y - partOutlineSize / 4);
+						ctx.lineTo(x + partOutlineSize / 6, y - partOutlineSize / 4);
+
+						ctx.moveTo(x - partOutlineSize / 6, y - partOutlineSize / 2);
+						ctx.lineTo(x + partOutlineSize / 6, y - partOutlineSize / 2);
+						ctx.lineTo(x + partOutlineSize / 6, y + partOutlineSize / 2);
+						ctx.lineTo(x - partOutlineSize / 6, y + partOutlineSize / 2);
+						ctx.lineTo(x - partOutlineSize / 6, y - partOutlineSize / 2);
+					}
+				} else if (nutShape === "squarenut") {
+					if (slotOrientation === "flat") {
+						ctx.lineTo(x - partOutlineSize / 2, y - partOutlineSize / 2);
+						ctx.lineTo(x + partOutlineSize / 2, y - partOutlineSize / 2);
+						ctx.lineTo(x + partOutlineSize / 2, y + partOutlineSize / 2);
+						ctx.lineTo(x - partOutlineSize / 2, y + partOutlineSize / 2);
+					} else if (slotOrientation === "upright") {
+						ctx.lineTo(x + partOutlineSize / 6, y - partOutlineSize / 2);
+						ctx.lineTo(x + partOutlineSize / 6, y + partOutlineSize / 2);
+						ctx.lineTo(x - partOutlineSize / 6, y + partOutlineSize / 2);
+						ctx.lineTo(x - partOutlineSize / 6, y - partOutlineSize / 2);
+					}
+				}
+				ctx.closePath();
+				ctx.lineWidth = 1;
+				ctx.stroke();
 			}
 		}
 	}
@@ -101,12 +228,13 @@ function nutTray(partlist, cols, rows, boxSize, canvas) {
 	// select partId from col/row
 	function _getPartId(col, row) {
 		var result = false;
-		for (var i in _parts()) {
-			if((_parts()[i].col == col) && (_parts()[i].row == row)) {
-				result = _parts()[i];
+		for (var id in _parts) {
+			if((_parts[id].col == col) && (_parts[id].row == row)) {
+				result = id;
 				break;
 			}
 		}
 		return result;
 	}
 }
+
