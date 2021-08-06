@@ -405,7 +405,7 @@ class OctoPNP(
                 self._state = self.STATE_PLACE
                 self._logger.info("Align part " + str(self._currentPart))
 
-                self._alignPart()
+                self._alignPart(self._currentPart)
                 self.__helper_gcode_sending()
 
                 # still having trouble with images taken before alignment was fully executed...
@@ -608,27 +608,36 @@ class OctoPNP(
             orientation_offset = 0.0
         return orientation_offset
 
-    def _alignPart(self):
+    def _alignPart(self, partnr):
         orientation_offset = 0.0
 
-        # take picture
-        self._logger.info("Taking bed align picture NOW")
-        bedPath = self._settings.get(["camera", "bed", "path"])
-        if self._grabImages("BED"):
-            # update UI
-            self._updateUI("BEDIMAGE", bedPath)
+        if self._settings.get(["tray", "type"]) == "NUT":
+            # find destination at the object
+            orientation_offset = self.smdparts.getPartRotation(partnr)
+            if self.smdparts.getPartOrientation(partnr).lower() == "flat":
+                orientation_offset += self._settings.get(["tray", "nut", "partRotationFlat"])
 
-            # get rotation offset
-            orientation_offset = self.__get_orientation_offset(bedPath)
-
-            # update UI
-            self._updateUI("BEDIMAGE", self.imgproc.getLastSavedImagePath())
-
-            # Log image for debugging and documentation
-            if self._settings.get(["camera", "image_logging"]):
-                self._saveDebugImage(bedPath)
+            elif self.smdparts.getPartOrientation(partnr).lower() == "upright":
+                orientation_offset += self._settings.get(["tray", "nut", "partRotationUpright"])
         else:
-            self._updateUI("ERROR", "Camera not ready")
+            # take picture
+            self._logger.info("Taking bed align picture NOW")
+            bedPath = self._settings.get(["camera", "bed", "path"])
+            if self._grabImages("BED"):
+                # update UI
+                self._updateUI("BEDIMAGE", bedPath)
+
+                # get rotation offset
+                orientation_offset = self.__get_orientation_offset(bedPath)
+
+                # update UI
+                self._updateUI("BEDIMAGE", self.imgproc.getLastSavedImagePath())
+
+                # Log image for debugging and documentation
+                if self._settings.get(["camera", "image_logging"]):
+                    self._saveDebugImage(bedPath)
+            else:
+                self._updateUI("ERROR", "Camera not ready")
 
         self.__rotate_obj(orientation_offset)
 
