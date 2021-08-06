@@ -13,6 +13,13 @@ function nutTray(cols, rows, boxSize, config, canvas) {
 		_drawTray();
 	}
 
+	self.render = function() {
+		_drawTray();
+		for (var i in _parts) {
+			_drawPart(_parts[i], "black");
+		}
+	}
+
 	self.addPart = function(part) {
 		// sanitiy checks!?
 		// add part to dict
