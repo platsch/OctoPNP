@@ -38,6 +38,9 @@ class ImageProcessing:
         self._interactive = False
         self._debug = True
 
+    def SetInteractive(self, val):
+        self._interactive = val
+
     # Locates a part in a box. Box size must be given to constructor. Image must contain only
     # one box with white background.
     # Returns displacement with respect to the center of the box if a part is detected, False otherwise.
