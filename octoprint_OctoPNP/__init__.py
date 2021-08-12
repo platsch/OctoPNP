@@ -33,7 +33,7 @@ import shutil
 import flask
 import octoprint.plugin
 
-from .SmdParts import SmdParts
+from .PartsHandler import PartsHandler
 from .ImageProcessing import ImageProcessing
 
 
@@ -85,7 +85,7 @@ class OctoPNP(
 
     FEEDRATE = 4000.000
 
-    smdparts = SmdParts()
+    partshandler = PartsHandler()
     partPositions = {}
 
     def __init__(self):
@@ -250,7 +250,7 @@ class OctoPNP(
             mapping = flask.request.values["mapping"]
             mapping = json.loads(mapping)
             for part in mapping:
-                self.smdparts.setPartPosition(
+                self.partshandler.setPartPosition(
                     int(part), int(mapping[part]["row"]), int(mapping[part]["col"])
                 )
         return flask.make_response("", 200)
@@ -275,12 +275,12 @@ class OctoPNP(
                     xml = '<object name="defaultpart">\n' + xml + "\n</object>"
 
                 # parse xml data
-                msg = self.smdparts.load(xml)
+                msg = self.partshandler.load(xml)
                 if msg == "":
                     # TODO: validate part informations against tray
                     self._logger.info(
                         "Extracted information on %d parts from gcode file %s",
-                        self.smdparts.getPartCount(),
+                        self.partshandler.getPartCount(),
                         payload.get("name")
                     )
                     self._updateUI("FILE", "")
@@ -289,7 +289,7 @@ class OctoPNP(
                     self._updateUI("ERROR", "XML parsing error: " + msg)
             else:
                 # gcode file contains no part information -> clear smdpart object
-                self.smdparts.unload()
+                self.partshandler.unload()
                 self._updateUI("FILE", "")
 
     def __set_cam_LED(self, cam, act):
@@ -561,7 +561,7 @@ class OctoPNP(
             "z": tray_offset["z"] - tool["z"]}
 
         if tray_offset["type"] == "BOX":
-            tool_dest["z"] += self.smdparts.getPartHeight(partnr)
+            tool_dest["z"] += self.partshandler.getPartHeight(partnr)
 
         # only apply X/Y offsets if not handled by the firmware
         if self._settings.get([nozzleType, "use_offsets"]):
@@ -579,7 +579,7 @@ class OctoPNP(
             tool_dest["x"] = float(self._settings.get(["camera", "bed", "x"]))
             tool_dest["y"] = float(self._settings.get(["camera", "bed", "y"]))
             tool_dest["z"] = float(self._settings.get(["camera", "bed", "z"])
-                ) + self.smdparts.getPartHeight(partnr)
+                ) + self.partshandler.getPartHeight(partnr)
 
             # only apply X/Y offsets if not handled by the firmware
             if self._settings.get(["vacnozzle", "use_offsets"]):
@@ -591,7 +591,7 @@ class OctoPNP(
             )
             self._printer.commands("M400")
 
-            self.__rotate_obj(self.smdparts.getPartDestination(partnr)[3] + tray_offset["z"])
+            self.__rotate_obj(self.partshandler.getPartDestination(partnr)[3] + tray_offset["z"])
 
             camera_axis = str(self._settings.get(["camera", "bed", "focus_axis"]))
             if len(camera_axis) > 0:
@@ -613,11 +613,11 @@ class OctoPNP(
 
         if self._settings.get(["tray", "type"]) == "NUT":
             # find destination at the object
-            orientation_offset = self.smdparts.getPartRotation(partnr)
-            if self.smdparts.getPartOrientation(partnr).lower() == "flat":
+            orientation_offset = self.partshandler.getPartRotation(partnr)
+            if self.partshandler.getPartOrientation(partnr).lower() == "flat":
                 orientation_offset += self._settings.get(["tray", "nut", "partRotationFlat"])
 
-            elif self.smdparts.getPartOrientation(partnr).lower() == "upright":
+            elif self.partshandler.getPartOrientation(partnr).lower() == "upright":
                 orientation_offset += self._settings.get(["tray", "nut", "partRotationUpright"])
         else:
             # take picture
@@ -645,7 +645,7 @@ class OctoPNP(
         displacement = [0, 0]
 
         # find destination at the object
-        destination = self.smdparts.getPartDestination(partnr)
+        destination = self.partshandler.getPartDestination(partnr)
 
         # take picture to find part offset
         self._logger.info("Taking bed offset picture NOW")
@@ -702,7 +702,8 @@ class OctoPNP(
 
         # move to destination
         dest_z = (
-            destination[2] + self.smdparts.getPartHeight(partnr)
+            destination[2]
+            + self.partshandler.getPartHeight(partnr)
             - float(self._settings.get(["vacnozzle", "z_pressure"]))
         )
 
@@ -732,7 +733,7 @@ class OctoPNP(
     # Get the position of the box (center of the box) containing
     # part x relative to the [0,0] corner of the tray
     def _getTrayPosFromPartNr(self, partnr):
-        partPos = self.smdparts.getPartPosition(int(partnr))
+        partPos = self.partshandler.getPartPosition(int(partnr))
         row = partPos["row"]
         col = partPos["col"]
         self._logger.info(
@@ -841,9 +842,9 @@ class OctoPNP(
         self._logger.info("saved %s image to %s", name, dest_path)
 
     def __event_file(self):
-        if self.smdparts.isFileLoaded():
+        if self.partshandler.isFileLoaded():
             # compile part information
-            partIds = self.smdparts.getPartIds()
+            partIds = self.partshandler.getPartIds()
             self.partPositions = {}
             partArray = []
             partPos = 1
@@ -856,13 +857,13 @@ class OctoPNP(
                             / int(self._settings.get(["tray", "box", "columns"])) + 1)
                     col = ((partPos - 1)
                             % int(self._settings.get(["tray", "box", "columns"]))) + 1
-                    self.smdparts.setPartPosition(partId, row, col)
+                    self.partshandler.setPartPosition(partId, row, col)
                     partPos += 1
 
                     if self._settings.get(["tray", "type"]) == "NUT":
-                        threadSize = self.smdparts.getPartThreadSize(partId)
-                        partType = self.smdparts.getPartType(partId)
-                        partOrientation = self.smdparts.getPartOrientation(partId).lower()
+                        threadSize = self.partshandler.getPartThreadSize(partId)
+                        partType = self.partshandler.getPartType(partId)
+                        partOrientation = self.partshandler.getPartOrientation(partId).lower()
                         trayPosition = None
                         # find empty tray position, where the part fits
                         for i, traybox in enumerate(config):
@@ -890,9 +891,9 @@ class OctoPNP(
                         partArray.append(
                             dict(
                                 id = partId,
-                                name = self.smdparts.getPartName(partId),
+                                name = self.partshandler.getPartName(partId),
                                 partPosition = trayPosition,
-                                shape = self.smdparts.getPartShape(partId),
+                                shape = self.partshandler.getPartShape(partId),
                                 type=partType,
                                 threadSize = threadSize,
                                 partOrientation = partOrientation
@@ -900,17 +901,17 @@ class OctoPNP(
                         )
                         continue # jumpover to next for loop iteration.
 
-                partArray.append(
-                    dict(
-                        id = partId,
-                        name = self.smdparts.getPartName(partId),
-                        row = self.smdparts.getPartPosition(partId)["row"],
-                        col = self.smdparts.getPartPosition(partId)["col"],
-                        shape = self.smdparts.getPartShape(partId),
-                        pads = self.smdparts.getPartPads(partId)
+                    partArray.append(
+                        dict(
+                            id=partId,
+                            name=self.partshandler.getPartName(partId),
+                            row=self.partshandler.getPartPosition(partId)["row"],
+                            col=self.partshandler.getPartPosition(partId)["col"],
+                            shape=self.partshandler.getPartShape(partId),
+                            pads=self.partshandler.getPartPads(partId)
+                        )
                     )
-                )
-            return dict(partCount = self.smdparts.getPartCount(), parts = partArray)
+            return dict(partCount = self.partshandler.getPartCount(), parts = partArray)
         return dict(info="dummy")
 
     def _updateUI(self, event, parameter):

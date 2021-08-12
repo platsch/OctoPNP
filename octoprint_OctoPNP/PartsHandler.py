@@ -1,14 +1,14 @@
 # coding=utf-8
 from __future__ import absolute_import
 
-__author__ = "Florens Wasserfall <wasserfall@kalanka.de>"
+__author__ = "Florens Wasserfall <wasserfall@kalanka.de> Jan-Tarek Butt <tarek@ring0.de>"
 __license__ = "GNU Affero General Public License http://www.gnu.org/licenses/agpl.html"
 
 
 import xml.etree.ElementTree as ET
 
 
-class SmdParts:
+class PartsHandler:
 
     def __init__(self):
         self.__et = None
@@ -67,17 +67,17 @@ class SmdParts:
         )
 
     def getPartType(self, partnr):
-        return self._et.find("./part[@id='" + str(partnr) + "']/type").get("identifier")
+        return self.__et.find("./part[@id='" + str(partnr) + "']/type").get("identifier")
 
     def getPartThreadSize(self, partnr):
-        return self._et.find("./part[@id='" + str(partnr) + "']/type").get("thread_size")
+        return self.__et.find("./part[@id='" + str(partnr) + "']/type").get("thread_size")
 
     # Upright, Flat
     def getPartOrientation(self, partnr):
-        return self._et.find("./part[@id='" + str(partnr) + "']/orientation").get("orientation")
+        return self.__et.find("./part[@id='" + str(partnr) + "']/orientation").get("orientation")
 
     def getPartRotation(self, partnr):
-        return float(self._et.find("./part[@id='" + str(partnr) + "']/rotation").get("z"))
+        return float(self.__et.find("./part[@id='" + str(partnr) + "']/rotation").get("z"))
 
     def getPartShape(self, partnr):
         result = []
