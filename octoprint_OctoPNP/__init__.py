@@ -53,6 +53,7 @@ def __plugin_load__():
     global __plugin_implementation__
     __plugin_implementation__ = octopnp
 
+
     global __plugin_hooks__
     __plugin_hooks__ = {
         "octoprint.comm.protocol.gcode.sending": octopnp.hook_gcode_sending,
@@ -136,7 +137,18 @@ class OctoPNP(
                     "centerToCenter": 0,
                     "partRotationFlat": 0,
                     "partRotationUpright": 0,
-                    "boxconfiguration": "[ {\"thread_size\": \"2\", \"nut\": \"hexnut\", \"slot_orientation\": \"upright\"},   {\"thread_size\": \"2.5\", \"nut\": \"hexnut\", \"slot_orientation\": \"upright\"},   {\"thread_size\": \"3\", \"nut\": \"hexnut\", \"slot_orientation\": \"flat\"},   {\"thread_size\": \"8\", \"nut\": \"hexnut\", \"slot_orientation\": \"upright\"},   {\"thread_size\": \"8\", \"nut\": \"hexnut\", \"slot_orientation\": \"flat\"},   {\"thread_size\": \"3\", \"nut\": \"squarenut\", \"slot_orientation\": \"upright\"},   {\"thread_size\": \"10\", \"nut\": \"squarenut\", \"slot_orientation\": \"flat\"},   {\"thread_size\": \"8\", \"nut\": \"squarenut\", \"slot_orientation\": \"upright\"},   {\"thread_size\": \"6\", \"nut\": \"squarenut\", \"slot_orientation\": \"flat\"},   {\"thread_size\": \"4\", \"nut\": \"squarenut\", \"slot_orientation\": \"upright\"} ]"
+                    "boxconfiguration": "[\
+        {\"thread_size\": \"2\", \"nut\": \"hexnut\", \"slot_orientation\": \"upright\"},\
+        {\"thread_size\": \"2.5\", \"nut\": \"hexnut\", \"slot_orientation\": \"upright\"},\
+        {\"thread_size\": \"3\", \"nut\": \"hexnut\", \"slot_orientation\": \"flat\"},\
+        {\"thread_size\": \"8\", \"nut\": \"hexnut\", \"slot_orientation\": \"upright\"},\
+        {\"thread_size\": \"8\", \"nut\": \"hexnut\", \"slot_orientation\": \"flat\"},\
+        {\"thread_size\": \"3\", \"nut\": \"squarenut\", \"slot_orientation\": \"upright\"},\
+        {\"thread_size\": \"10\", \"nut\": \"squarenut\", \"slot_orientation\": \"flat\"},\
+        {\"thread_size\": \"8\", \"nut\": \"squarenut\", \"slot_orientation\": \"upright\"},\
+        {\"thread_size\": \"6\", \"nut\": \"squarenut\", \"slot_orientation\": \"flat\"},\
+        {\"thread_size\": \"4\", \"nut\": \"squarenut\", \"slot_orientation\": \"upright\"}\
+                    ]"
                 }
             },
             "vacnozzle": {
@@ -398,7 +410,6 @@ class OctoPNP(
                     self._printer.commands("G4 P1")
 
                 self._printer.commands("M362 OctoPNP")
-
                 return (None,)  # suppress command
 
             if self._state == self.STATE_ALIGN:
@@ -415,7 +426,6 @@ class OctoPNP(
                     self._printer.commands("G4 P1")
 
                 self._printer.commands("M362 OctoPNP")
-
                 return (None,)  # suppress command
 
             if self._state == self.STATE_PLACE:
@@ -433,7 +443,6 @@ class OctoPNP(
                 # resume paused printjob into normal operation
                 if self._printer.is_paused() or self._printer.is_pausing():
                     self._printer.resume_print()
-
                 return (None,)  # suppress command
 
         # handle camera positioning for external request (helper function)
@@ -548,7 +557,7 @@ class OctoPNP(
         tool = {"x": 0.0,"y": 0.0,"z": 0.0}
         nozzleType = "vacnozzle"
 
-        if self._settings.get(["tray", "type"]) == "NUT":
+        if tray_offset["type"] == "NUT":
             nozzleType = "magnetnozzle"
             tool["x"] = float(self._settings.get(["magnetnozzle", "x"]))
             tool["y"] = float(self._settings.get(["magnetnozzle", "y"]))
@@ -570,7 +579,7 @@ class OctoPNP(
 
         tray_axis = str(self._settings.get(["tray", "axis"]))
 
-        if self._settings.get(["tray", "type"]) == "NUT":
+        if tray_offset["type"] == "NUT":
             self.__move_magnet_to_part_and_pick(tool_dest)
         else:
             self.__move_vac_to_part_and_pick(tray_axis, tool_dest)
@@ -702,8 +711,7 @@ class OctoPNP(
 
         # move to destination
         dest_z = (
-            destination[2]
-            + self.partshandler.getPartHeight(partnr)
+            destination[2] + self.partshandler.getPartHeight(partnr)
             - float(self._settings.get(["vacnozzle", "z_pressure"]))
         )
 
@@ -712,9 +720,9 @@ class OctoPNP(
             destination[0] -= float(self._settings.get(["vacnozzle", "x"]))
             destination[1] -= float(self._settings.get(["vacnozzle", "y"]))
         cmd = "G1 X{0} Y{1} F{2}".format(
-                destination[0] + displacement[0],
-                destination[1] + displacement[1],
-                self.FEEDRATE)
+            destination[0] + displacement[0],
+            destination[1] + displacement[1],
+            self.FEEDRATE)
 
         self._logger.info("object destination: " + cmd)
         # lift printhead
@@ -752,13 +760,14 @@ class OctoPNP(
             tray["x"] = (col - 1) * boxsize + boxsize / 2 + col * rimsize
             tray["y"] = (row - 1) * boxsize + boxsize / 2 + row * rimsize
 
-        if self._settings.get(["tray", "type"]) == "NUT":
+        if tray["type"] == "NUT":
             boxsize = float(self._settings.get(["tray", "nut", "boxsize"]))
             tray["x"] = col * boxsize + float(self._settings.get(["tray", "x"]))
             tray["y"] = row * boxsize + float(self._settings.get(["tray", "y"]))
 
         if tray["type"] == "FEEDER":
             feederconfig = self._settings.get(["tray", "feeder", "feederconfiguration"])
+            # TODO use map call instead for?
             for i in range(1, row + 1):
                 tray["y"] += float(feederconfig[i]["width"]) + float(
                     self._settings.get(["tray", "feeder", "row_clearance"])
@@ -780,21 +789,18 @@ class OctoPNP(
             tray["y"] += float(self._settings.get(["tray", "y"]))
         return tray
 
-    def _gripMagnet(self):
-        self._printer.commands("M400")
-        self._printer.commands("M400")
+    def __magnet(self, act):
+        self.__double_M400()
         self._printer.commands("G4 P500")
-        for line in self._settings.get(["magnetnozzle", "grip_magnet_gcode"]).splitlines():
+        for line in self._settings.get(["magnetnozzle", act]).splitlines():
             self._printer.commands(line)
         self._printer.commands("G4 P500")
 
+    def _gripMagnet(self):
+        self.__magnet("grip_magnet_gcode")
+
     def _releaseMagnet(self):
-        self._printer.commands("M400")
-        self._printer.commands("M400")
-        self._printer.commands("G4 P500")
-        for line in self._settings.get(["magnetnozzle", "release_magnet_gcode"]).splitlines():
-            self._printer.commands(line)
-        self._printer.commands("G4 P500")
+        self.__magnet("release_magnet_gcode")
 
     def __vacuumNozzle(self, act):
         self.__double_M400()
@@ -826,9 +832,7 @@ class OctoPNP(
                 self._logger.error(camera + " camera not ready!")
                 result = False
         except IOError:
-            self._logger.error(
-                "Unable to execute " + camera + " camera grab script!"
-            )
+            self._logger.error("Unable to execute " + camera + " camera grab script!")
             self._logger.info("Script path: " + grabScript)
             result = False
         return result
@@ -843,6 +847,7 @@ class OctoPNP(
 
     def __event_file(self):
         if self.partshandler.isFileLoaded():
+
             # compile part information
             partIds = self.partshandler.getPartIds()
             self.partPositions = {}
@@ -850,6 +855,7 @@ class OctoPNP(
             partPos = 1
             usedTrayPositions = []
             config = json.loads(self._settings.get(["tray", "nut", "boxconfiguration"]))
+
             for partId in partIds:
                 # assign components to tray boxes.
                 if self._settings.get(["tray", "type"]) == "BOX":
@@ -860,57 +866,52 @@ class OctoPNP(
                     self.partshandler.setPartPosition(partId, row, col)
                     partPos += 1
 
-                    if self._settings.get(["tray", "type"]) == "NUT":
-                        threadSize = self.partshandler.getPartThreadSize(partId)
-                        partType = self.partshandler.getPartType(partId)
-                        partOrientation = self.partshandler.getPartOrientation(partId).lower()
-                        trayPosition = None
-                        # find empty tray position, where the part fits
-                        for i, traybox in enumerate(config):
-                            if(float(traybox.get("thread_size")) == float(threadSize) and
-                                traybox.get("nut") == partType and
-                                traybox.get("slot_orientation") == partOrientation and
-                                i not in usedTrayPositions):
-                                usedTrayPositions.append(i)
-                                trayPosition = i
-                                self.partPositions[partId] = i
-                                break
-                        if trayPosition is None:
-                            output_str = "Error, no tray box for part no " + \
-                                str(partId) + \
-                                " (" + \
-                                partType + \
-                                " M" + \
-                                str(threadSize) + \
-                                ", part orientation: " + \
-                                partOrientation + \
-                                ") left"
-                            print(output_str)
-                            self._updateUI(output_str)
-                            return
-                        partArray.append(
-                            dict(
-                                id = partId,
-                                name = self.partshandler.getPartName(partId),
-                                partPosition = trayPosition,
-                                shape = self.partshandler.getPartShape(partId),
-                                type=partType,
-                                threadSize = threadSize,
-                                partOrientation = partOrientation
-                            )
-                        )
-                        continue # jumpover to next for loop iteration.
-
+                if self._settings.get(["tray", "type"]) == "NUT":
+                    nut = {
+                        "threadSize": self.partshandler.getPartThreadSize(partId),
+                        "partType": self.partshandler.getPartType(partId),
+                        "partOrientation": self.partshandler.getPartOrientation(partId).lower(),
+                        "trayPosition": None}
+                    # find empty tray position, where the part fits
+                    for i, traybox in enumerate(config):
+                        if(float(traybox.get("thread_size")) == float(nut["threadSize"]) and
+                            traybox.get("nut") == nut["partType"] and
+                            traybox.get("slot_orientation") == nut["partOrientation"] and
+                            i not in usedTrayPositions):
+                            usedTrayPositions.append(i)
+                            nut["trayPosition"] = i
+                            self.partPositions[partId] = i
+                            break
+                    if nut["trayPosition"] is None:
+                        output_str = "Error, no tray box for part no {0} ({1} M{2}, part \
+                            orientation: {3}) left".format(
+                                partId, nut["partType"], nut["threadSize"], nut["partOrientation"])
+                        print(output_str)
+                        self._updateUI("ERROR", output_str)
+                        return dict(info="dummy")
                     partArray.append(
                         dict(
-                            id=partId,
-                            name=self.partshandler.getPartName(partId),
-                            row=self.partshandler.getPartPosition(partId)["row"],
-                            col=self.partshandler.getPartPosition(partId)["col"],
-                            shape=self.partshandler.getPartShape(partId),
-                            pads=self.partshandler.getPartPads(partId)
+                            id = partId,
+                            name = self.partshandler.getPartName(partId),
+                            partPosition = nut["trayPosition"],
+                            shape = self.partshandler.getPartShape(partId),
+                            type = nut["partType"],
+                            threadSize = nut["threadSize"],
+                            partOrientation = nut["partOrientation"]
                         )
                     )
+                    continue # jumpover to next for loop iteration.
+
+                partArray.append(
+                    dict(
+                        id = partId,
+                        name = self.partshandler.getPartName(partId),
+                        row = self.partshandler.getPartPosition(partId)["row"],
+                        col = self.partshandler.getPartPosition(partId)["col"],
+                        shape = self.partshandler.getPartShape(partId),
+                        pads = self.partshandler.getPartPads(partId),
+                    )
+                )
             return dict(partCount = self.partshandler.getPartCount(), parts = partArray)
         return dict(info="dummy")
 
