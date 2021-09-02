@@ -883,10 +883,10 @@ class OctoPNP(
                             self.partPositions[partId] = i
                             break
                     if nut["trayPosition"] is None:
-                        output_str = "Error, no tray box for part no {0} ({1} M{2}, part \
-                            orientation: {3}) left".format(
+                        output_str = ("No tray box for part no {0} ({1} M{2}, part "
+                                "orientation: {3}) left").format(
                                 partId, nut["partType"], nut["threadSize"], nut["partOrientation"])
-                        print(output_str)
+                        self._logger.error(output_str)
                         self._updateUI("ERROR", output_str)
                         return dict(info="dummy")
                     partArray.append(
