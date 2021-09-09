@@ -90,7 +90,7 @@ def params():
     zip_safe = False
 
     # Read the requirements from our requirements.txt file
-    with open("requirements.txt") as f:
+    with open("requirements.txt", 'r', encoding='utf-8') as f:
         install_requires = f.readlines()
 
     # Hook the plugin into the "octoprint.plugin" entry point, mapping the plugin_identifier
