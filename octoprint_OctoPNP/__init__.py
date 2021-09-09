@@ -235,7 +235,7 @@ class OctoPNP(
             gcode_path = self._file_manager.path_on_disk(
                 payload.get("origin"), payload.get("path")
             )
-            with open(gcode_path, "r") as f:
+            with open(gcode_path, "r", encoding='utf-8') as f:
                 for line in f:
                     expression = re.search("<.*>", line)
                     if expression:
