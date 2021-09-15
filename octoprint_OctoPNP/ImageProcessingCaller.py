@@ -8,15 +8,15 @@
     Main author: Florens Wasserfall <wasserfall@kalanka.de>
 """
 
-import ImageProcessing
 import time
+import ImageProcessing
 
 im = ImageProcessing.ImageProcessing(15.0, 120, 120)
 
 
 start_time = time.time()
 
-im._interactive = True
+im.SetInteractive(True)
 # im.locatePartInBox("../utils/testimages/head_atmega_SO8.png", False)
 # im.locatePartInBox("../utils/testimages/head_atmega_SO8_2.png", False)
 # print im.getPartOrientation("../utils/testimages/bed_atmega_SO8_rotated.png", 30)

@@ -18,12 +18,15 @@
     Main author: Florens Wasserfall <wasserfall@kalanka.de>
 """
 
+import os
+from collections import namedtuple
 import cv2
 import numpy as np
-import os
 
 
 class ImageProcessing:
+
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, box_size, bed_cam_binary_thresh, head_cam_binary_thresh):
         self.box_size = box_size
         self.bed_binary_thresh = bed_cam_binary_thresh
@@ -38,11 +41,14 @@ class ImageProcessing:
         self._interactive = False
         self._debug = True
 
-    # Locates a part in a box. Box size must be given to constructor. Image must contain only
-    # one box with white background.
-    # Returns displacement with respect to the center of the box if a part is detected, False otherwise.
-    # boolean relative_to_camera sets wether the offset should be relative to the box or to the camera.
-    # ===================================================================================================
+    def SetInteractive(self, val):
+        self._interactive = val
+
+    # Locates a part in a box. Box size must be given to constructor. Image must contain only one
+    # box with white background. Returns displacement with respect to the center of the box if
+    # a part is detected, False otherwise. boolean relative_to_camera sets wether the offset should
+    # be relative to the box or to the camera.
+    # =============================================================================================
     def locatePartInBox(self, img_path, relative_to_camera):
         result = False
 
@@ -57,52 +63,50 @@ class ImageProcessing:
         if rotated_crop_rect:
             rotated_box = cv2.boxPoints(rotated_crop_rect)
 
-            left_x = int(min(rotated_box[0][0], rotated_box[1][0]))
-            right_x = int(max(rotated_box[2][0], rotated_box[3][0]))
-            upper_y = int(min(rotated_box[1][1], rotated_box[2][1]))
-            lower_y = int(max(rotated_box[0][1], rotated_box[3][1]))
+            x = namedtuple('X', 'left right')(
+                int(min(rotated_box[0][0], rotated_box[1][0])),
+                int(max(rotated_box[2][0], rotated_box[3][0]))
+            )
+
+            y = namedtuple('Y', 'upper lower')(
+                int(min(rotated_box[1][1], rotated_box[2][1])),
+                int(max(rotated_box[0][1], rotated_box[3][1]))
+            )
 
             # workaround for bounding boxes that are bigger then the image
-            if left_x < 0:
-                left_x = 0
-            if upper_y < 0:
-                upper_y = 0
-            if right_x < 0:
-                right_x = img.shape[1]
-            if lower_y < 0:
-                lower_y = img.shape[0]
+            x.left = max(x.left,0)
+            y.upper = max(y.upper,0)
+            if x.right < 0:
+                x.right = img.shape[1]
+            if y.lower < 0:
+                y.lower = img.shape[0]
 
             # Crop image
-            img_crop = img[upper_y:lower_y, left_x:right_x]
+            img_crop = img[y.upper:y.lower, x.left:x.right]
 
             # now find part inside the box
             cm_rect = self._rotatedBoundingBox(
                 img_crop, self.head_binary_thresh, 0.001, 0.7
             )
             if cm_rect:
-                cm_x = cm_rect[0][0]
-                cm_y = cm_rect[0][1]
+                cm = namedtuple('cm', 'x y')( cm_rect[0][0], cm_rect[0][1] )
 
-                res_x = img_crop.shape[1]
-                res_y = img_crop.shape[0]
+                res = namedtuple('res', 'x y')( img_crop.shape[1], img_crop.shape[0])
 
-                displacement_x = (cm_x - res_x / 2) * self.box_size / res_x
-                displacement_y = ((res_y - cm_y) - res_y / 2) * self.box_size / res_y
+                displacement = namedtuple('displacement', 'x y')(
+                        (cm.x - res.x / 2) * self.box_size / res.x,
+                        ((res.y - cm.y) - res.y / 2 ) * self.box_size / res.y
+                )
                 if relative_to_camera:
                     # incorporate the position of the tray box in relation to the image
-                    displacement_x += (
-                        (left_x - (img.shape[1] - right_x)) / 2 * self.box_size / res_x
-                    )
-                    displacement_y -= (
-                        (upper_y - (img.shape[0] - (lower_y)))
-                        / 2
-                        * self.box_size
-                        / res_y
-                    )
-                result = displacement_x, displacement_y
+                    displacement.x += (x.left - (img.shape[1] - x.right)
+                            ) / 2 * self.box_size / res.x
+                    displacement.y -= (y.upper - (img.shape[0] - (y.lower))
+                            ) / 2 * self.box_size / res.y
+                result = displacement.x, displacement.y
 
                 # Generate result image and return
-                cv2.circle(img_crop, (int(cm_x), int(cm_y)), 5, (0, 255, 0), -1)
+                cv2.circle(img_crop, (int(cm.x), int(cm.y)), 5, (0, 255, 0), -1)
                 filename = "/finalcm_" + os.path.basename(self._img_path)
                 finalcm_path = os.path.dirname(self._img_path) + filename
                 cv2.imwrite(finalcm_path, img_crop)
@@ -110,7 +114,6 @@ class ImageProcessing:
 
                 if self._interactive:
                     cv2.imshow("Part in box: ", img_crop)
-                if self._interactive:
                     cv2.waitKey(0)
             else:
                 self._last_error = "Unable to find part in box"
@@ -123,7 +126,7 @@ class ImageProcessing:
     # and determining the main orientation of this box
     # Returns the angle of main edges relativ to the
     # next main axis [-45°:45°]
-    def getPartOrientation(self, img_path, pxPerMM, offset=0):
+    def getPartOrientation(self, img_path, offset=0):
         self._img_path = img_path
         result = False
 
@@ -133,7 +136,6 @@ class ImageProcessing:
         mask = self._maskBackground(img)
 
         # we should use actual object size here
-        min_area_factor = pxPerMM ** 2 / (img.shape[1] * img.shape[0])  # 1mm²
         rect = self._rotatedBoundingBox(img, 50, 0.005, 0.7, mask)
 
         if rect:
@@ -161,7 +163,6 @@ class ImageProcessing:
 
         if self._interactive:
             cv2.imshow("contours", img)
-        if self._interactive:
             cv2.waitKey(0)
 
         # save result as image for GUI
@@ -184,20 +185,20 @@ class ImageProcessing:
 
         mask = self._maskBackground(img)
 
-        res_x = img.shape[1]
-        res_y = img.shape[0]
+        res = namedtuple('res', 'x y')( img.shape[1], img.shape[0])
 
         # we should use actual object size here
-        min_area_factor = pxPerMM ** 2 / (res_x * res_y)  # 1mm²
+        min_area_factor = pxPerMM ** 2 / (res.x * res.y)  # 1mm²
         rect = self._rotatedBoundingBox(img, 50, min_area_factor, 0.7, mask)
 
         if rect:
-            cm_x = rect[0][0]
-            cm_y = rect[0][1]
+            cm = namedtuple('cm', 'x y')( rect[0][0], rect[0][1])
 
-            displacement_x = (cm_x - res_x / 2) / pxPerMM
-            displacement_y = ((res_y - cm_y) - res_y / 2) / pxPerMM
-            result = [displacement_x, -displacement_y]
+            displacement = namedtuple('displacement', 'x y')(
+                    (cm.x - res.x / 2) / pxPerMM,
+                    ((res.y - cm.y) - res.y / 2) / pxPerMM
+            )
+            result = [displacement.x, -displacement.y]
         else:
             self._last_error = "Unable to locate part for correcting the position"
             if self._debug:
@@ -205,7 +206,7 @@ class ImageProcessing:
             result = False
 
         # write image for UI
-        cv2.circle(img, (int(cm_x), int(cm_y)), 5, (0, 255, 0), -1)
+        cv2.circle(img, (int(cm.x), int(cm.y)), 5, (0, 255, 0), -1)
         filename = "/final_" + os.path.basename(self._img_path)
         final_img_path = os.path.dirname(self._img_path) + filename
         cv2.imwrite(final_img_path, img)
@@ -213,7 +214,6 @@ class ImageProcessing:
 
         if self._interactive:
             cv2.imshow("Center of Mass", img)
-        if self._interactive:
             cv2.waitKey(0)
 
         return result
@@ -222,12 +222,31 @@ class ImageProcessing:
     def getLastSavedImagePath(self):
         if self._last_saved_image_path:
             return self._last_saved_image_path
-        else:
-            return False
+        return False
 
     # ==============================================================================
     def getLastErrorMessage(self):
         return self._last_error
+
+    # ==============================================================================
+    def __getRectPoints(self, contours, area, img):
+        rectPoints = []
+        #TODO maybe a map call is possible?
+        for contour in contours:
+            rect = cv2.minAreaRect(contour)
+            rectArea = rect[1][0] * rect[1][1]
+            #TODO What about the equal state?
+            if area.max > rectArea > area.min:
+                box = cv2.boxPoints(rect)
+                #TODO maybe a map call is possible?
+                for point in box:
+                    rectPoints.append(np.array(point, dtype=np.int32))
+                if self._interactive:
+                    box = np.int0(box)
+                    cv2.drawContours(img, [box], 0, (0, 0, 255), 2)
+            # cv2.imshow("contours",binary_img)
+            # cv2.waitKey(0)
+        return rectPoints
 
     # ==============================================================================
     def _rotatedBoundingBox(
@@ -239,47 +258,33 @@ class ImageProcessing:
             # convert image to grey and blur
             gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             gray_img = cv2.blur(gray_img, (3, 3))
-            ret, binary_img = cv2.threshold(
+            _, binary_img = cv2.threshold(
                 gray_img, binary_thresh, 255, cv2.THRESH_BINARY
             )
 
         # depending on the OpenCV Version findContours returns 2 or 3 objects...
-        # contours, hierarchy = cv2.findContours(binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, (0, 0))
+        # contours, hierarchy = cv2.findContours(
+        #   binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, (0, 0)
+        # )
         contours = cv2.findContours(
             binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, offset=(0, 0)
         )[0]
 
         # cv2.drawContours(img, contours, -1, (0,255,0), 3) # draw basic contours
 
-        minArea = (
-            binary_img.shape[0] * binary_img.shape[1] * min_area_factor
-        )  # how to find a better value??? input from part description?
-        maxArea = (
+        area = namedtuple('area', 'min max')(
+            # how to find a better value??? input from part description?
+            binary_img.shape[0] * binary_img.shape[1] * min_area_factor,
+            # Y*X | don't detect full image
             binary_img.shape[0] * binary_img.shape[1] * max_area_factor
-        )  # Y*X | don't detect full image
+        )
 
-        rectPoints = []
+        rectPoints = self.__getRectPoints(contours, area, img)
 
-        for contour in contours:
-            rect = cv2.minAreaRect(contour)
-            rectArea = rect[1][0] * rect[1][1]
-            if rectArea > minArea and rectArea < maxArea:
-                box = cv2.boxPoints(rect)
-                for point in box:
-                    rectPoints.append(np.array(point, dtype=np.int32))
-                if self._interactive:
-                    box = np.int0(box)
-                if self._interactive:
-                    cv2.drawContours(img, [box], 0, (0, 0, 255), 2)
-            # cv2.imshow("contours",binary_img)
-            # cv2.waitKey(0)
         if self._interactive:
             cv2.imshow("Binarized image", binary_img)
-        if self._interactive:
             cv2.waitKey(0)
-        if self._interactive:
             cv2.imshow("contours", img)
-        if self._interactive:
             cv2.waitKey(0)
 
         if len(rectPoints) >= 4:
@@ -301,13 +306,10 @@ class ImageProcessing:
     #      to crop badly illuminated corners
     # ==============================================================================
     def _maskBackground(self, img, mask_corners=True):
-        h, w, c = np.shape(img)
+        h, w, _ = np.shape(img)
 
         blur_img = cv2.blur(img, (5, 5))
         hsv = cv2.cvtColor(blur_img, cv2.COLOR_BGR2HSV)
-
-        lower_color = np.array([22, 28, 26])
-        upper_color = np.array([103, 255, 255])
 
         # create binary mask by finding background color range
         mask = cv2.inRange(hsv, self.lower_mask_color, self.upper_mask_color)
@@ -328,7 +330,6 @@ class ImageProcessing:
 
         if self._interactive:
             cv2.imshow("binary mask", mask)
-        if self._interactive:
             cv2.waitKey(0)
 
         return mask

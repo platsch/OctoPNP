@@ -34,10 +34,7 @@ class SmdParts:
         return bool(self._et is not None)
 
     def getPartCount(self):
-        count = 0
-        for elem in self._et.findall("./part"):
-            count += 1
-        return count
+        return len(self._et.findall("./part"))
 
     # returns a list of all available parts
     def getPartIds(self):
