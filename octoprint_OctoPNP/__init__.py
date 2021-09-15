@@ -192,17 +192,17 @@ class OctoPNP(
         result = ""
         if "imagetype" in flask.request.values:
             camera = flask.request.values["imagetype"]
-            if (camera == "HEAD") or (camera == "BED"):
+            if camera in ("HEAD", "BED"):
                 if self._grabImages(camera):
                     imagePath = self._settings.get(["camera", camera.lower(), "path"])
                     try:
-                        f = open(imagePath, "rb")
-                        result = flask.jsonify(
-                            src="data:image/"
-                            + os.path.splitext(imagePath)[1]
-                            + ";base64,"
-                            + str(base64.b64encode(bytes(f.read())), "utf-8")
-                        )
+                        with open(imagePath, "rb") as f:
+                            result = flask.jsonify(
+                                src="data:image/"
+                                + os.path.splitext(imagePath)[1]
+                                + ";base64,"
+                                + str(base64.b64encode(bytes(f.read())), "utf-8")
+                            )
                     except IOError:
                         result = flask.jsonify(
                             error="Unable to open Image after fetching. Image path: "
@@ -263,9 +263,9 @@ class OctoPNP(
                 self.smdparts.unload()
                 self._updateUI("FILE", "")
 
-    """
-    Use the gcode hook to interrupt the printing job on custom M361 commands.
-    """
+#   """
+#   Use the gcode hook to interrupt the printing job on custom M361 commands.
+#   """
 
     def hook_gcode_queuing(
         self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs
@@ -312,17 +312,17 @@ class OctoPNP(
                 + str(self._currentPart)
             )
 
-    """
-    This hook is designed as some kind of a "state machine". The reason is,
-    that we have to circumvent the buffered gcode execution in the printer.
-    To take a picture, the buffer must be emptied to ensure that the printer has executed all previous moves
-    and is now at the desired position. To achieve this, a M400 command is injected after the
-    camera positioning command, followed by a M362. This causes the printer to send the
-    next acknowledging ok not until the positioning is finished. Since the next command is a M362,
-    octoprint will call the gcode hook again and we are back in the game, iterating to the next state.
-    Since both, Octoprint and the printer firmware are using a queue, we inject some "G4 P1" commands
-    as a "clearance buffer". Those commands simply cause the printer to wait for a millisecond.
-    """
+#   """
+#   This hook is designed as some kind of a "state machine". The reason is,
+#   that we have to circumvent the buffered gcode execution in the printer.
+#   To take a picture, the buffer must be emptied to ensure that the printer has executed all previous moves
+#   and is now at the desired position. To achieve this, a M400 command is injected after the
+#   camera positioning command, followed by a M362. This causes the printer to send the
+#   next acknowledging ok not until the positioning is finished. Since the next command is a M362,
+#   octoprint will call the gcode hook again and we are back in the game, iterating to the next state.
+#   Since both, Octoprint and the printer firmware are using a queue, we inject some "G4 P1" commands
+#   as a "clearance buffer". Those commands simply cause the printer to wait for a millisecond.
+#   """
 
     def hook_gcode_sending(
         self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs
