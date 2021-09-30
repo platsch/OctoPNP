@@ -21,29 +21,35 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 
-import octoprint.plugin
-import flask
 import json
 import re
 from subprocess import call
+from collections import namedtuple
 import os
 import time
 import datetime
 import base64
 import shutil
+import octoprint.plugin
+import flask
 
 from .SmdParts import SmdParts
 from .ImageProcessing import ImageProcessing
 
 
+# pylint: disable=attribute-defined-outside-init
 __plugin_name__ = "OctoPNP"
 __plugin_pythoncompat__ = ">=2.7,<4"
+__plugin_implementation__ = ""
+__plugin_hooks__ = {}
+__plugin_helpers__ = {}
 
 # instantiate plugin object and register hook for gcode injection
 def __plugin_load__():
 
     octopnp = OctoPNP()
 
+    # pylint: disable=global-statement
     global __plugin_implementation__
     __plugin_implementation__ = octopnp
 
@@ -55,8 +61,9 @@ def __plugin_load__():
 
     global __plugin_helpers__
     __plugin_helpers__ = dict(
-        get_head_camera_pxPerMM=octopnp._helper_get_head_camera_pxPerMM,
-        get_head_camera_image=octopnp._helper_get_head_camera_image_xy,  # parameter: [x, y, callback, adjust_focus=True]
+        get_head_camera_pxPerMMi = octopnp._helper_get_head_camera_pxPerMM,
+        get_head_camera_image = octopnp._helper_get_head_camera_image_xy
+        # parameter: [x, y, callback, adjust_focus=True]
     )
 
 
@@ -81,6 +88,7 @@ class OctoPNP(
     smdparts = SmdParts()
 
     def __init__(self):
+        # pylint: disable=super-init-not-called
         self._state = self.STATE_NONE
         self._currentPart = 0
         self._helper_was_paused = False
@@ -186,7 +194,8 @@ class OctoPNP(
             ]
         )
 
-    # Flask endpoint for the GUI to request camera images. Possible request parameters are "BED" and "HEAD".
+    # Flask endpoint for the GUI to request camera images.
+    # Possible request parameters are "BED" and "HEAD".
     @octoprint.plugin.BlueprintPlugin.route("/camera_image", methods=["GET"])
     def getCameraImage(self):
         result = ""
@@ -198,10 +207,9 @@ class OctoPNP(
                     try:
                         with open(imagePath, "rb") as f:
                             result = flask.jsonify(
-                                src="data:image/"
-                                + os.path.splitext(imagePath)[1]
-                                + ";base64,"
-                                + str(base64.b64encode(bytes(f.read())), "utf-8")
+                                src="data:image/{0};base64,{1}".format(
+                                    os.path.splitext(imagePath)[1],
+                                    str(base64.b64encode(bytes(f.read())), "utf-8"))
                             )
                     except IOError:
                         result = flask.jsonify(
@@ -252,35 +260,40 @@ class OctoPNP(
                     self._logger.info(
                         "Extracted information on %d parts from gcode file %s",
                         self.smdparts.getPartCount(),
-                        payload.get("name"),
+                        payload.get("name")
                     )
                     self._updateUI("FILE", "")
                 else:
-                    self._logger.info("XML parsing error: " + msg)
+                    self._logger.error("XML parsing error: " + msg)
                     self._updateUI("ERROR", "XML parsing error: " + msg)
             else:
                 # gcode file contains no part information -> clear smdpart object
                 self.smdparts.unload()
                 self._updateUI("FILE", "")
 
+    def __set_cam_LED(self, cam, act):
+        if len(self._settings.get(["camera", cam, act])) > 0:
+            self._printer.commands(self._settings.get(["camera", cam, act]))
+
 #   """
 #   Use the gcode hook to interrupt the printing job on custom M361 commands.
 #   """
 
     def hook_gcode_queuing(
-        self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs
+        self, _comm_instance, _phase, cmd, _cmd_type, _gcode, *_args, **_kwargs
     ):
         if "M361" in cmd:
             if self._state == self.STATE_NONE:
                 self._state = self.STATE_PICK
-                command = re.search("P\d*", cmd).group()  # strip the M361
+                command = re.search(r"P\d*", cmd).group()  # strip the M361
                 self._currentPart = int(command[1:])
 
                 self._logger.info(
                     "Received M361 command to place part: " + str(self._currentPart)
                 )
 
-                # pause running printjob to prevent octoprint from sending new commands from the gcode file during the interactive PnP process
+                # pause running printjob to prevent octoprint from sending new commands
+                # from the gcode file during the interactive PnP process
                 if self._printer.is_printing() or self._printer.is_resuming():
                     self._printer.pause_print()
 
@@ -288,44 +301,62 @@ class OctoPNP(
 
                 if self._settings.get(["tray", "type"]) == "BOX":
                     # enable head camera LEDs
-                    if (
-                        len(self._settings.get(["camera", "head", "enable_LED_gcode"]))
-                        > 0
-                    ):
-                        self._printer.commands(
-                            self._settings.get(["camera", "head", "enable_LED_gcode"])
-                        )
+                    self.__set_cam_LED("head", "enable_LED_gcode")
                     self._logger.info("Move camera to part: " + str(self._currentPart))
                     self._moveCameraToPart(self._currentPart)
 
                 self._printer.commands("M400")
                 self._printer.commands("G4 P1")
                 self._printer.commands("M400")
-                for i in range(10):
+                for _ in range(10):
                     self._printer.commands("G4 P1")
 
                 self._printer.commands("M362 OctoPNP")
+            else:
+                self._logger.error(
+                    "Received M361 command while placing part: " + str(self._currentPart)
+                )
 
-                return (None,)  # suppress command
-            self._logger.info(
-                "ERROR, received M361 command while placing part: "
-                + str(self._currentPart)
-            )
+    def __helper_gcode_sending(self):
+        self._printer.commands("M400")
+        self._printer.commands("G4 P1")
+        self._printer.commands("M400")
+
+    # The current printjob is resumed and octoPNP is set into default state before
+    # returning the obtained image by callback to allow recursive executions of the
+    # camera_helper by 3. party plugins (the camera helper is triggered from within
+    # the callback method).
+    def __M362_OctoPNP_camera_external(self):
+        result = self._grabImages("HEAD")
+        # resume paused printjob into normal operation
+        if (self._printer.is_paused() or self._printer.is_pausing()
+                ) and not self._helper_was_paused:
+            self._printer.resume_print()
+        # leave external state
+        self._state = self.STATE_NONE
+        if self._helper_callback:
+            if result:
+                self._helper_callback(self._settings.get(["camera", "head", "path"]))
+            else:
+                self._helper_callback(False)
+        else:
+            self._logger.info("Unable to return image to calling plugin, invalid callback")
 
 #   """
-#   This hook is designed as some kind of a "state machine". The reason is,
-#   that we have to circumvent the buffered gcode execution in the printer.
-#   To take a picture, the buffer must be emptied to ensure that the printer has executed all previous moves
-#   and is now at the desired position. To achieve this, a M400 command is injected after the
-#   camera positioning command, followed by a M362. This causes the printer to send the
-#   next acknowledging ok not until the positioning is finished. Since the next command is a M362,
-#   octoprint will call the gcode hook again and we are back in the game, iterating to the next state.
-#   Since both, Octoprint and the printer firmware are using a queue, we inject some "G4 P1" commands
-#   as a "clearance buffer". Those commands simply cause the printer to wait for a millisecond.
+#   This hook is designed as some kind of a "state machine". The reason is, that we have to
+#   circumvent the buffered gcode execution in the printer. To take a picture, the buffer must be
+#   emptied to ensure that the printer has executed all previous moves and is now at the desired
+#   position. To achieve this, a M400 command is injected after the camera positioning command,
+#   followed by a M362. This causes the printer to send the next acknowledging ok not until the
+#   positioning is finished. Since the next command is a M362, octoprint will call the gcode hook
+#   again and we are back in the game, iterating to the next state. Since both, Octoprint and the
+#   printer firmware are using a queue, we inject some "G4 P1" commands as a "clearance buffer".
+#   Those commands simply cause the printer to wait for a millisecond.
 #   """
 
+    # pylint: disable=inconsistent-return-statements
     def hook_gcode_sending(
-        self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs
+        self, _comm_instance, _phase, cmd, _cmd_type, _gcode, *_args, **_kwargs
     ):
         if "M362 OctoPNP" in cmd:
             if self._state == self.STATE_PICK:
@@ -340,11 +371,9 @@ class OctoPNP(
                 )
 
                 self._pickPart(self._currentPart)
-                self._printer.commands("M400")
-                self._printer.commands("G4 P1")
-                self._printer.commands("M400")
+                self.__helper_gcode_sending()
 
-                for i in range(10):
+                for _ in range(10):
                     self._printer.commands("G4 P1")
 
                 self._printer.commands("M362 OctoPNP")
@@ -356,14 +385,12 @@ class OctoPNP(
                 self._logger.info("Align part " + str(self._currentPart))
 
                 self._alignPart(self._currentPart)
-                self._printer.commands("M400")
-                self._printer.commands("G4 P1")
-                self._printer.commands("M400")
+                self.__helper_gcode_sending()
 
                 # still having trouble with images taken before alignment was fully executed...
                 self._printer.commands("G4 S2")
 
-                for i in range(10):
+                for _ in range(10):
                     self._printer.commands("G4 P1")
 
                 self._printer.commands("M362 OctoPNP")
@@ -374,11 +401,9 @@ class OctoPNP(
                 self._logger.info("Place part " + str(self._currentPart))
 
                 self._placePart(self._currentPart)
-                self._printer.commands("M400")
-                self._printer.commands("G4 P1")
-                self._printer.commands("M400")
+                self.__helper_gcode_sending()
 
-                for i in range(10):
+                for _ in range(10):
                     self._printer.commands("G4 P1")
 
                 self._logger.info("Finished placing part " + str(self._currentPart))
@@ -392,73 +417,30 @@ class OctoPNP(
 
         # handle camera positioning for external request (helper function)
         if "M362 OctoPNP_camera_external" in cmd:
-            result = self._grabImages("HEAD")
-
-            # the current printjob is resumed and octoPNP is set into default state
-            # before returning the obtained image by callback to allow recursive executions
-            # of the camera_helper by 3. party plugins (the camera helper is triggered from within the callback method).
-
-            # resume paused printjob into normal operation
-            if (
-                self._printer.is_paused() or self._printer.is_pausing()
-            ) and not self._helper_was_paused:
-                self._printer.resume_print()
-
-            # leave external state
-            self._state = self.STATE_NONE
-
-            if result:
-                if self._helper_callback:
-                    self._helper_callback(
-                        self._settings.get(["camera", "head", "path"])
-                    )
-            else:
-                if self._helper_callback:
-                    self._helper_callback(False)
-
-            if not self._helper_callback:
-                self._logger.info(
-                    "Unable to return image to calling plugin, invalid callback"
-                )
-
+            self.__M362_OctoPNP_camera_external()
             # suppress the magic command (M365)
             return (None,)
 
     def _moveCameraToPart(self, partnr):
         # switch to camera tool
-        self._printer.commands(
-            "T" + str(self._settings.get(["camera", "head", "tool_nr"]))
-        )
+        self._printer.commands("T" + str(self._settings.get(["camera", "head", "tool_nr"])))
         # move camera to part position
         tray_offset = self._getTrayPosFromPartNr(partnr)  # get box position on tray
-        camera_offset = [
-            tray_offset[0] - float(self._settings.get(["camera", "head", "x"])),
-            tray_offset[1] - float(self._settings.get(["camera", "head", "y"])),
-            float(self._settings.get(["camera", "head", "z"])) + tray_offset[2],
-        ]
-        cmd = (
-            "G1 X"
-            + str(camera_offset[0])
-            + " Y"
-            + str(camera_offset[1])
-            + " F"
-            + str(self.FEEDRATE)
-        )
+        camera_offset = namedtuple('cam', 'x y z')(
+                tray_offset[0] - float(self._settings.get(["camera", "head", "x"])),
+                tray_offset[1] - float(self._settings.get(["camera", "head", "y"])),
+                float(self._settings.get(["camera", "head", "z"])) + tray_offset[2])
+        cmd = "G1 X{0} Y{1} F{2}".format(camera_offset.x, camera_offset.y, self.FEEDRATE)
         self._logger.info("Move camera to: " + cmd)
         self._printer.commands("G91")  # relative positioning
         self._printer.commands("G1 Z5 F" + str(self.FEEDRATE))  # lift printhead
         if self._settings.get(["tray", "axis"]) != "Z":
-            self._printer.commands(
-                "G1 " + self._settings.get(["tray", "axis"]) + str(camera_offset[2] + 5)
-            )  # lower tray
+            self._printer.commands("G1 {0}{1}".format(
+                self._settings.get(["tray", "axis"]), camera_offset.z + 5))  # lower tray
         self._printer.commands("G90")  # absolute positioning
         self._printer.commands(cmd)
-        self._printer.commands(
-            "G1 "
-            + self._settings.get(["tray", "axis"])
-            + str(camera_offset[2])
-            + " F"
-            + str(self.FEEDRATE)
+        self._printer.commands("G1 {0}{1} F{2}".format(
+            self._settings.get(["tray", "axis"]), camera_offset.z, self.FEEDRATE)
         )  # move tray to camera
 
     def _pickPart(self, partnr):
