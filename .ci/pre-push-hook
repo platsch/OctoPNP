@@ -1,0 +1,9 @@
+#!/bin/sh
+
+echo "Executing pre-push hook..."
+gitRootDir=$(git rev-parse --show-toplevel)
+if ! "$gitRootDir"/.ci/shelllint.sh ; then exit 1; fi
+if ! "$gitRootDir"/.ci/pylint.sh ; then exit 1; fi
+if ! "$gitRootDir"/.ci/cpplint.sh ; then exit 1; fi
+if ! "$gitRootDir"/.ci/jslint.sh ; then exit 1; fi
+exit 0
