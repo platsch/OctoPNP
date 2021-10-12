@@ -254,8 +254,8 @@ class OctoPNP(
                     xml = '<object name="defaultpart">\n' + xml + "\n</object>"
 
                 # parse xml data
-                sane, msg = self.smdparts.load(xml)
-                if sane:
+                msg = self.smdparts.load(xml)
+                if msg == "":
                     # TODO: validate part informations against tray
                     self._logger.info(
                         "Extracted information on %d parts from gcode file %s",
