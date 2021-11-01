@@ -50,7 +50,7 @@ class ImageProcessing:
     # be relative to the box or to the camera.
     # =============================================================================================
     def locatePartInBox(self, img_path, relative_to_camera):
-        result = False
+        result = namedtuple('displacement', 'x y')(0, 0)
 
         self._img_path = img_path
         # open image file
@@ -58,7 +58,7 @@ class ImageProcessing:
 
         # detect box boundaries
         rotated_crop_rect = self._rotatedBoundingBox(
-            img, self.head_binary_thresh, 0.6, 0.95
+            img, self.head_binary_thresh, namedtuple('','min max')(0.6, 0.95)
         )
         if rotated_crop_rect:
             rotated_box = cv2.boxPoints(rotated_crop_rect)
@@ -86,24 +86,22 @@ class ImageProcessing:
 
             # now find part inside the box
             cm_rect = self._rotatedBoundingBox(
-                img_crop, self.head_binary_thresh, 0.001, 0.7
+                img_crop, self.head_binary_thresh, namedtuple('','min max')(0.001, 0.7)
             )
             if cm_rect:
                 cm = namedtuple('cm', 'x y')( cm_rect[0][0], cm_rect[0][1] )
 
                 res = namedtuple('res', 'x y')( img_crop.shape[1], img_crop.shape[0])
 
-                displacement = namedtuple('displacement', 'x y')(
-                        (cm.x - res.x / 2) * self.box_size / res.x,
-                        ((res.y - cm.y) - res.y / 2 ) * self.box_size / res.y
-                )
+                result.x = (cm.x - res.x / 2) * self.box_size / res.x
+                result.y = ((res.y - cm.y) - res.y / 2 ) * self.box_size / res.y
+
                 if relative_to_camera:
                     # incorporate the position of the tray box in relation to the image
-                    displacement.x += (x.left - (img.shape[1] - x.right)
+                    result.x += (x.left - (img.shape[1] - x.right)
                             ) / 2 * self.box_size / res.x
-                    displacement.y -= (y.upper - (img.shape[0] - (y.lower))
+                    result.y -= (y.upper - (img.shape[0] - (y.lower))
                             ) / 2 * self.box_size / res.y
-                result = displacement.x, displacement.y
 
                 # Generate result image and return
                 cv2.circle(img_crop, (int(cm.x), int(cm.y)), 5, (0, 255, 0), -1)
@@ -136,7 +134,7 @@ class ImageProcessing:
         mask = self._maskBackground(img)
 
         # we should use actual object size here
-        rect = self._rotatedBoundingBox(img, 50, 0.005, 0.7, mask)
+        rect = self._rotatedBoundingBox(img, 50, namedtuple('','min max')(0.005, 0.7), mask)
 
         if rect:
             # draw rotated bounding box for visualization
@@ -189,7 +187,8 @@ class ImageProcessing:
 
         # we should use actual object size here
         min_area_factor = pxPerMM ** 2 / (res.x * res.y)  # 1mm²
-        rect = self._rotatedBoundingBox(img, 50, min_area_factor, 0.7, mask)
+        rect = self._rotatedBoundingBox(
+                img, 50, namedtuple('','min max')(min_area_factor, 0.7), mask)
 
         if rect:
             cm = namedtuple('cm', 'x y')( rect[0][0], rect[0][1])
@@ -250,7 +249,7 @@ class ImageProcessing:
 
     # ==============================================================================
     def _rotatedBoundingBox(
-        self, img, binary_thresh, min_area_factor, max_area_factor, binary_img=()
+        self, img, binary_thresh, area_factor, binary_img=()
     ):
         result = False
 
@@ -274,9 +273,9 @@ class ImageProcessing:
 
         area = namedtuple('area', 'min max')(
             # how to find a better value??? input from part description?
-            binary_img.shape[0] * binary_img.shape[1] * min_area_factor,
+            binary_img.shape[0] * binary_img.shape[1] * area_factor.min,
             # Y*X | don't detect full image
-            binary_img.shape[0] * binary_img.shape[1] * max_area_factor
+            binary_img.shape[0] * binary_img.shape[1] * area_factor.max
         )
 
         rectPoints = self.__getRectPoints(contours, area, img)
