@@ -11,6 +11,7 @@ $(function() {
 
 		var _boxTray = {};
 		var _feederTray = {};
+		var _nutTray = {};
 		var _trayCanvas = document.getElementById('trayCanvas');
 
 		self.stateString = ko.observable("No file loaded");
@@ -39,6 +40,13 @@ $(function() {
 			_feederTray = new feederTray(
 				self.parts,
 				self.traySettings.feeder.feederconfiguration(),
+				_trayCanvas
+			);
+			_nutTray = new nutTray(
+				self.traySettings.nut.columns(),
+				self.traySettings.nut.rows(),
+				self.traySettings.nut.boxsize(),
+				self.traySettings.nut.boxconfiguration(),
 				_trayCanvas
 			);
 			_trayCanvas.addEventListener("click", self.onSmdTrayClick, false); //"click, dblclick"
@@ -104,6 +112,9 @@ $(function() {
 			else if(self.traySettings.type() == "FEEDER") {
 				result = _feederTray.selectPart(x, y);
 			}
+			else if(self.traySettings.type() == "NUT") {
+				result = _nutTray.selectPart(x, y);
+			}
 			return result;
 		}
 
@@ -126,8 +137,12 @@ $(function() {
 			if(plugin == "OctoPNP") {
 				if(data.event == "FILE") {
 					self.parts([]);  // reset component list
+					var typeStr = "SMD"
+					if ( self.traySettings.type() == "NUT" ) {
+						typeStr = "Nut"
+					}
 					if(data.data.hasOwnProperty("partCount")) {
-						self.stateString("Loaded file with " + data.data.partCount + " SMD parts");
+						self.stateString("Loaded file with " + data.data.partCount + " " + typeStr + " parts.");
 
 						// init feeder configuration
 						if(self.traySettings.type() == "FEEDER") {
@@ -157,9 +172,12 @@ $(function() {
 							else if(self.traySettings.type() == "FEEDER") {
 								_feederTray.render();
 							}
+							else if(self.traySettings.type() == "NUT") {
+								_nutTray.render();
+							}
 						}
 					}else{
-						self.stateString("No SMD part in this file!");
+						self.stateString("No " + typeStr + " parts in this file!");
 					}
 				}
 				else if(data.event == "OPERATION") {

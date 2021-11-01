@@ -1,14 +1,14 @@
 # coding=utf-8
 from __future__ import absolute_import
 
-__author__ = "Florens Wasserfall <wasserfall@kalanka.de>"
+__author__ = "Florens Wasserfall <wasserfall@kalanka.de> Jan-Tarek Butt <tarek@ring0.de>"
 __license__ = "GNU Affero General Public License http://www.gnu.org/licenses/agpl.html"
 
 
 import xml.etree.ElementTree as ET
 
 
-class SmdParts:
+class PartsHandler:
 
     def __init__(self):
         self.__et = None
@@ -66,6 +66,19 @@ class SmdParts:
             self.__et.find("./part[@id='" + str(partnr) + "']/size").get("height")
         )
 
+    def getPartType(self, partnr):
+        return self.__et.find("./part[@id='" + str(partnr) + "']/type").get("identifier")
+
+    def getPartThreadSize(self, partnr):
+        return self.__et.find("./part[@id='" + str(partnr) + "']/type").get("thread_size")
+
+    # Upright, Flat
+    def getPartOrientation(self, partnr):
+        return self.__et.find("./part[@id='" + str(partnr) + "']/orientation").get("orientation")
+
+    def getPartRotation(self, partnr):
+        return float(self.__et.find("./part[@id='" + str(partnr) + "']/rotation").get("z"))
+
     def getPartShape(self, partnr):
         result = []
         if self.__et.find("./part[@id='" + str(partnr) + "']/shape") is not None:
@@ -101,12 +114,14 @@ class SmdParts:
         )
         orientation = self.__et.find(
                 "./part[@id='" + str(partnr) + "']/destination"
-                ).get("orientation")
+            ).get("orientation")
         if orientation is None:
             orientation = 0
         return [x, y, z, float(orientation)]
 
     def __sanitize(self):
+        nut_or_smd = "smd"
+
         # valid object?
         msg = self.__validate_object()
 
@@ -142,12 +157,16 @@ class SmdParts:
                 msg = self.__wrapper_sanitize_attribute(
                     part, "pads", ["x1", "y1", "x2", "y2"], float
                 )
+                if part.find("pads") is None:
+                    nut_or_smd = "nut"
 
             # destination
             if msg == "":
-                msg = self.__sanitizeTag(
-                        part, "destination", ["x", "y", "z", "orientation"], float
-                    )
+                vector = ["x", "y", "z", "orientation"]
+                if nut_or_smd == "nut":
+                    vector = ["x", "y", "z"]
+
+                msg = self.__sanitizeTag(part, "destination", vector, float)
 
         return msg
 
