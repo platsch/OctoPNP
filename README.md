@@ -136,10 +136,8 @@ The calibration "wizard" is an experimental set of tools to quickly achieve seve
 
 ![octopnp_settings_calibration_small](https://cloud.githubusercontent.com/assets/4190756/12115026/fe216f54-b3ae-11e5-9a04-4f83776c2cf6.png)
 
-## Developmend
-
-### Code Analizer
-This mechanism will help you to find potential errors and give you suggstions for possebile better solutions for some programlanguages.
+## Development / Code Analyzer
+The included static code analyzer scripts might help to find potential errors and give suggstions for possible better solutions.
 
 ### Preparing for Windows
 Installing shellcheck:
@@ -155,7 +153,7 @@ Installing clang-tidy:
 
 
 ### Enable git hook
-Please add this hook to your local git installation by symlinking it:
+For automatic code analysis before every commit, add this hook to your local git installation by symlinking it:
 ```bash
 ln -s ../../.ci/pre-push-hook .git/hooks/pre-commit
 ```
